@@ -8,6 +8,11 @@
 		"url": "https://github.com/KonkerLabs/libKonkerESP"
 	},
 	"export": {
+		"include": [
+			"./konker.h",
+			"*.*",
+			"*/*"
+		],
 		"exclude": [
 			"extras",
 			"docs",
@@ -15,11 +20,6 @@
 			"test",
 			"*.doxyfile",
 			"*.pdf"
-		],
-		"include": [
-			"*.*",
-			"*/*",
-			"konker.h"
 		]
 	},
 	"authors": [{

@@ -31,8 +31,8 @@ void healthUpdate(char *health_channel){
   _last_time_health_send = millis();
 
 
-	StaticJsonBuffer<256> jsonBuffer;
-	JsonObject& jsonMSG = jsonBuffer.createObject();
+	StaticJsonDocument<256> jsonBuffer;
+	JsonObject jsonMSG = jsonBuffer.as<JsonObject>();
 
 	delay(10);
 
@@ -61,7 +61,8 @@ void healthUpdate(char *health_channel){
 	jsonMSG["hfail"] = hf;
 
 
-  jsonMSG.printTo(bufferJ, sizeof(bufferJ));
+  //jsonMSG.printTo(bufferJ, sizeof(bufferJ));
+  serializeJson(jsonMSG, bufferJ);
 	char mensagemjson[1024];
   strcpy(mensagemjson,bufferJ);
 	Serial.println("Publishing on channel:" + (String)health_channel);

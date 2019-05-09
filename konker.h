@@ -477,14 +477,16 @@ bool getPlataformCredentials(char *configFilePath){
 	//////////////////////////
 	///step2 config file opened
 	Serial.println("Parsing: " + (String)fileContens);
-	DynamicJsonBuffer jsonBuffer;
-	JsonObject configJson = jsonBuffer.parseObject(fileContens);
-	if (configJson.success()) {
-		Serial.println("Json file parsed!");
-	}else{
+	DynamicJsonDocument jsonBuffer(1024);
+	DeserializationError err = deserializeJson(jsonBuffer, fileContens);
+//	JsonObject configJson = jsonBuffer.parseObject(fileContens);
+  JsonObject configJson = jsonBuffer.as<JsonObject>();
+  
+	if (err) {
 		Serial.println("Failed to read Json file");
 		return 0;
-	}
+	} 
+	Serial.println("Json file parsed!");
 
 
 	//////////////////////////
@@ -492,7 +494,8 @@ bool getPlataformCredentials(char *configFilePath){
 	Serial.println("Config file exists, reading...");
 
 	char bufferConfigJson[1024]="";
-	configJson.printTo(bufferConfigJson, 1024);
+	//configJson.printTo(bufferConfigJson, 1024);
+	serializeJson(configJson, bufferConfigJson); 
 	Serial.println("Content: "+ String(bufferConfigJson));
 	if (configJson.containsKey("srv") && configJson.containsKey("prt") &&
 	configJson.containsKey("usr") && configJson.containsKey("pwd") && configJson.containsKey("prx")){
