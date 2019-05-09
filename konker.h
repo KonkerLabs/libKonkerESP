@@ -172,9 +172,9 @@ WL_DISCONNECTED = 6*/
 //garantee a disconection before trying to connect
 void tryConnect(char *ssid, char *pass){
 	WiFi.mode(WIFI_OFF);
-	delay(100);
+	delay(500);
 	WiFi.mode(WIFI_STA);
-	delay(100);
+	delay(500);
 	//check if we have ssid and pass and force those, if not, try with last saved values
 	Serial.println("WiFi.begin("+(String)ssid+", "+(String)pass+")");
 	WiFi.begin(ssid, pass);
@@ -207,10 +207,19 @@ String getConnectMessage(int status_code) {
 }
 
 int connectionStatus(){
-	int wifiStartTime=millis();
-	while(WiFi.status() != WL_CONNECTED && (millis()-wifiStartTime)<__wifiTimout) {
-			delay(500);
+	unsigned long wifiStartTime=millis();
+	Serial.println("checking for connection status");
+	Serial.print("wifi timeout = ");
+	Serial.println(__wifiTimout);
+	Serial.print("startTime = ");
+	Serial.println(wifiStartTime);
+	Serial.print("now = ");
+	Serial.println(millis());
+	int counter = 100;
+	while(WiFi.status() != WL_CONNECTED && (millis()-wifiStartTime)<__wifiTimout && counter > 0) {
+			mydelay(500);
 			Serial.print("."); 
+			counter = counter - 1;
 	}
 
 	int connRes = WiFi.status();
@@ -319,16 +328,16 @@ bool tryConnectClientWifi(unsigned int wifiNum){
 	int connRes;
 	if(strcmp(fileSavedSSID,"")!=0){
 		if (fileSavedSSID[0]!='\0'){
-			Serial.println("Trying to connect to saved WiFi  (will try 2 times):" +  (String)fileSavedSSID);
+			Serial.println("(a) Trying to connect to saved WiFi  (will try 2 times):" +  (String)fileSavedSSID);
 			connRes=tryConnectWifi(fileSavedSSID,fileSavedPSK,2);
 		}else{
-			Serial.println("Trying to connect to WiFi (will try 2 times):" +  (String)wifiCredentials[wifiNum].savedSSID);
+			Serial.println("(b) Trying to connect to WiFi (will try 2 times):" +  (String)wifiCredentials[wifiNum].savedSSID);
 			connRes=tryConnectWifi(wifiCredentials[wifiNum].savedSSID,wifiCredentials[wifiNum].savedPSK,2);
 		}
 
 	}else{
 		if(wifiCredentials[wifiNum].savedSSID[0]!='\0'){
-			Serial.println("Trying to connect to WiFi (will try 2 times):" +  (String)wifiCredentials[wifiNum].savedSSID);
+			Serial.println("(c) Trying to connect to WiFi (will try 2 times):" +  (String)wifiCredentials[wifiNum].savedSSID);
 			connRes=tryConnectWifi(wifiCredentials[wifiNum].savedSSID,wifiCredentials[wifiNum].savedPSK,2);
 		}else{
 			Serial.println("No WiFi saved, ignoring...");
@@ -478,9 +487,11 @@ bool getPlataformCredentials(char *configFilePath){
 	///step2 config file opened
 	Serial.println("Parsing: " + (String)fileContens);
 	DynamicJsonDocument jsonBuffer(1024);
+	//DynamicJsonDocument configJson(1024);
 	DeserializationError err = deserializeJson(jsonBuffer, fileContens);
 //	JsonObject configJson = jsonBuffer.parseObject(fileContens);
   JsonObject configJson = jsonBuffer.as<JsonObject>();
+	//DeserializationError err = deserializeJson(configJson, fileContens);
   
 	if (err) {
 		Serial.println("Failed to read Json file");
@@ -677,7 +688,7 @@ void getWifiCredentialsEncripted(){
 		Serial.println("argSSID" + String(i) + "=" + argSSID);
 		Serial.println("argPSK" + String(i) + "=" + argPSK);
 
-		if(argSSID!="" && argPSK!=""){
+		if(argSSID!="") { // } && argPSK!=""){ // ACCEPT NULL PASSWORDS
 			argSSID.toCharArray(wifiCredentials[i].savedSSID, 32);
 			//argPSK.toCharArray(savedPSK, 64);
 			numWifiCredentials++;
@@ -742,7 +753,7 @@ void getWifiCredentialsEncripted(){
 
 //while connected to ESP wifi make a GET to http://192.168.4.1/wifisave?s=SSID_NAME&p=SSID_PASSWORD
 void getWifiCredentialsNotEncripted(){
-	Serial.println("Handle getWifiCredentials");
+	Serial.println("Handle getWifiCredentials (not encrypted)");
 	String page = "<http><body><b>getWifiCredentials</b></body></http>";
 
 	//get up to 3 wifi credentials
@@ -754,7 +765,7 @@ void getWifiCredentialsNotEncripted(){
 		Serial.println("argPSK" + String(i) + "=" + argPSK);
 
 
-		if(argSSID!="" && argPSK!=""){
+		if(argSSID!="") { // && argPSK!=""){
 			argSSID.toCharArray(wifiCredentials[i].savedSSID, 32);
 			argPSK.toCharArray(wifiCredentials[i].savedPSK, 64);
 			numWifiCredentials++;
@@ -778,7 +789,7 @@ void setWifiCredentialsNotEncripted(char SSID1[32],char PSK1[64]){
 	SPIFFS.remove(wifiFile);
 		//cria file system se não existir
 	spiffsMount();
-	Serial.println("Handle getWifiCredentials");
+	Serial.println("Handle getWifiCredentials (a)");
 	String page = "<http><body><b>getWifiCredentials</b></body></http>";
 
 
@@ -804,7 +815,7 @@ void setWifiCredentialsNotEncripted(char SSID1[32],char PSK1[64],char SSID2[32],
 	SPIFFS.remove(wifiFile);
 		//cria file system se não existir
 	spiffsMount();
-	Serial.println("Handle getWifiCredentials");
+	Serial.println("Handle getWifiCredentials (b)");
 	String page = "<http><body><b>getWifiCredentials</b></body></http>";
 
 
@@ -903,13 +914,13 @@ void setWifiCredentialsNotEncripted(
 bool startAPForWifiCredentials(char *apName, int timoutMilis){
 	Serial.println("Starting AP " + (String)apName);
 	setupWiFi(apName);
-	delay(200);
+	mydelay(200);
 
 
 	//Wait for connection with timout
 	int counter=0;
 	while (!apConnected && (counter*500)<timoutMilis) {
-		delay(500);
+		mydelay(500);
 		counter=counter+1;
 	}
 	if((counter*500)>=timoutMilis){
@@ -918,8 +929,10 @@ bool startAPForWifiCredentials(char *apName, int timoutMilis){
 
 
   if (_encripted==true){
+		Serial.println("***ENCRYPTED***");
     	webServer.on("/wifisave", getWifiCredentialsEncripted);
   }else{
+		Serial.println("NOT ENCRYPTED");
     	webServer.on("/wifisave", getWifiCredentialsNotEncripted);
   }
 
@@ -931,16 +944,17 @@ bool startAPForWifiCredentials(char *apName, int timoutMilis){
 	Serial.println("local ip");
 	Serial.println(WiFi.localIP());
 
+	gotCredentials=0;
 	while(!gotCredentials){
-		delay(500);
+		mydelay(500);
 		webServer.handleClient();
 	}
-	gotCredentials=0;
+	//gotCredentials=0;
 
 	webServer.stop();
 
 	WiFi.disconnect(true);
-	delay(1000);
+	mydelay(1000);
 	#ifndef ESP32
 	(void)wifi_station_dhcpc_start();
 	#else
@@ -978,13 +992,7 @@ bool set_platform_credentials(char *server, char *port, char *user, char *passwo
       if (DEBUG) Serial.println("Could not open the file with write permition!");
       return 0;
     }
-	Serial.println("Saving config file /crd.json");
-
-
-
-
-
-
+		Serial.println("Saving config file /crd.json");
 
     configFile.print(configuration);
     configFile.close();
@@ -1113,9 +1121,11 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted){
 	if(strcmp(WiFi.SSID().c_str(),(char*)"KonkerDevNetwork")!=0){
 		if(WiFi.SSID().c_str()[0]!='\0'){
 			Serial.println("Saving wifi memory");
+			Serial.print("numWifiCredentials=");
+			Serial.println(numWifiCredentials);
 
 			//ordering
-			for(int i=0;i<numWifiCredentials-1;i++){
+			for(unsigned int i=0;i<numWifiCredentials-1;i++){
 				char tempSSID[32]="";
 				char tempPSK[64]="";
 				strcpy(tempSSID, wifiCredentials[i].savedSSID);
@@ -1138,7 +1148,7 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted){
 				}
 			}
 
-			for(int i=0;i<numWifiCredentials-1;i++){
+			for(unsigned int i=0;i<numWifiCredentials-1;i++){
 				Serial.printf("saving wifi '%s' password '%s'\n", wifiCredentials[i].savedSSID, wifiCredentials[i].savedPSK);
 				saveWifiConnectionInFile(wifiFile, wifiCredentials[i].savedSSID, wifiCredentials[i].savedPSK,i);
 			}
@@ -1199,7 +1209,7 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted){
 		Serial.println("Credentials received, trying to connect to production WiFi");
 		if(!tryConnectClientWifi()){
 			Serial.println("Failed! Rebooting...");
-			delay(3000);
+			mydelay(3000);
 			#ifndef ESP32
 			ESP.reset();
 			#else
@@ -1210,12 +1220,12 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted){
 
 		Serial.println("WiFi configuration done!");
 		Serial.println("Saving wifi memory");
-		for(int i=0;i<numWifiCredentials;i++){
+		for(unsigned int i=0;i<numWifiCredentials;i++){
 			saveWifiConnectionInFile(wifiFile,wifiCredentials[i].savedSSID,wifiCredentials[i].savedPSK, i);
 		}
 
 
-		delay(1000);
+		mydelay(1000);
 		Serial.println("Rebooting...");
 		#ifndef ESP32
 		ESP.reset();
@@ -1224,7 +1234,7 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted){
 		#endif
 	}else{
 		Serial.println("Timout! Rebooting...");
-		delay(3000);
+		mydelay(3000);
 		   #ifndef ESP32
 		ESP.reset();
 		#else

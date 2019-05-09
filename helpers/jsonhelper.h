@@ -45,7 +45,10 @@ long long char2LL(char *str){
 
 bool parse_JSON_item(JsonObject jsonMSG, char *itemName, char *returnVal){
 	if (jsonMSG.containsKey(itemName)){
-		strcpy(returnVal,jsonMSG[itemName]);
+		Serial.print("copying data - ");
+		const char* data = jsonMSG[itemName];
+		Serial.println(data);
+		strcpy(returnVal,data);
 		return 1;
 	}else{
 		return 0;
@@ -149,16 +152,24 @@ unsigned int updateJsonArrayFile(String filePath, JsonObject jsonNewValues, unsi
 		Serial.println("Parsing: " + (String)fileContens);
 	}else{
 		Serial.println("Failed to open, creating it :" + filePath);
-		StaticJsonDocument<200> jsonBuffer;
+		StaticJsonDocument<1024> doc;
+		doc.add(jsonNewValues);
+		serializeJson(doc, bufferJ);
+		Serial.println("ORIGINAL DOC = ");
+		serializeJson(jsonNewValues, Serial);
+		Serial.println("\nNEW ARRAY = ");
+		serializeJson(doc, Serial);
+		Serial.println("");
 		//JsonArray array = jsonBuffer.createArray();
-		JsonArray array = jsonBuffer.as<JsonArray>();
-		array.add(jsonNewValues);
-		serializeJson(array, bufferJ);
+		//JsonArray array = jsonBuffer.as<JsonArray>();
+		//array.add(jsonNewValues);
+		//serializeJson(array, bufferJ);
 		//array.printTo(bufferJ, sizeof(bufferJ));
 		if(!saveFile(filePath, bufferJ)){
 			Serial.println("Failed to create file : " + filePath);
 			return 0;
 		}else{
+			Serial.println("file saves OK : " + filePath);
 			return 1;
 		}
 	}
@@ -209,6 +220,13 @@ unsigned int updateJsonArrayFile(String filePath, String jsonString, unsigned in
 	//JsonObject jsonParsed = jsonBuffer.parseObject(jsonString);
 	auto error = deserializeJson(jsonBuffer, jsonString);
 	JsonObject jsonParsed = jsonBuffer.as<JsonObject>();
+	Serial.println("ORIGINAL");
+	Serial.println(jsonString);
+	Serial.println("DOC BUFFE");
+	serializeJson(jsonBuffer, Serial);
+	Serial.println("\nDOC OBJECT ROOT");
+	serializeJson(jsonParsed, Serial);
+	Serial.println("");
 	//if (jsonParsed.success()) {
 	if (!error) {
 		return updateJsonArrayFile(filePath,jsonParsed, arrayIndex);
@@ -319,12 +337,19 @@ bool  getJsonArrayItemFromFile(String filePath, unsigned int arrayIndex, char *i
 	}
 
 	//updating file
-	const size_t CAPACITY = JSON_OBJECT_SIZE(30);
+	const size_t CAPACITY = 1024; // JSON_OBJECT_SIZE(30);
 	DynamicJsonDocument jsonBuffer(CAPACITY);
 	auto error = deserializeJson(jsonBuffer, jsonfileContens);
 	// JsonArray array = jsonBuffer.parseArray(jsonfileContens);
 	JsonArray array = jsonBuffer.as<JsonArray>();
 	if (!error) {
+		Serial.print("index = ");
+		Serial.println(arrayIndex);
+		Serial.print("array = ");
+		serializeJson(array, Serial);
+		Serial.print("\njsonBuffer = ");
+		serializeJson(jsonBuffer, Serial);
+		Serial.println("");
 	//if (array.success()) {
 		if(arrayIndex>(array.size()-1)){
 			return 0;

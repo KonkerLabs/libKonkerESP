@@ -31,8 +31,8 @@ void healthUpdate(char *health_channel){
   _last_time_health_send = millis();
 
 
-	StaticJsonDocument<256> jsonBuffer;
-	JsonObject jsonMSG = jsonBuffer.as<JsonObject>();
+	StaticJsonDocument<256> jsonMSG;
+	// JsonObject jsonMSG = jsonBuffer.as<JsonObject>();
 
 	delay(10);
 

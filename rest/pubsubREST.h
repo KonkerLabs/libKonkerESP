@@ -204,7 +204,10 @@ bool subHttp(char const channel[],CHANNEL_CALLBACK_SIGNATURE){
     http.end();   //Close connection
     if (strPayload!="[]"){    
       unsigned char* payload = (unsigned char*) strPayload.c_str(); // cast from string to unsigned char*
+      Serial.println(strPayload);
+      Serial.println("calling callback");
       chan_callback(payload,playloadSize);
+      Serial.println("callback called");
     }
     return 1;
   }

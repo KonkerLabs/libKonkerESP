@@ -31,7 +31,7 @@ char prefix[5] = "data";
 char _health_channel[] = "_health";
 char _rootDomain[64]="data.demo.konkerlabs.net";
 int _rootPort=80;
-int __wifiTimout=10000;
+unsigned long __wifiTimout=10000L;
 
 char *getChipId(){
   return  ChipId;
@@ -85,6 +85,16 @@ String urldecode(String source){
 
   urldecode2(decodedChrs,chrSource);
   return (String)decodedChrs;
+}
+
+
+void mydelay(unsigned long _delay) {
+        delay(_delay);
+        return; 
+        unsigned long now = millis();
+        while ((millis() - now) < _delay) {
+                // do nothing
+        }
 }
 
 
