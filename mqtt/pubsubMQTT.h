@@ -114,6 +114,7 @@ bool pubMQTT(char const channel[], char const msg[]){
   //Serial.print(">");
   delay(200);
   pubCode=client.publish(topic, msg);
+  std::cout << "channel " << topic << " msg=" << msg << std::endl;
 
   if (pubCode!=1){
     Serial.println("failed");

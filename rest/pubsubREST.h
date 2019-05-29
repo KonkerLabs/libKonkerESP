@@ -1,6 +1,8 @@
 #ifndef pubsubREST
 #define pubsubREST
 
+#include <iostream> 
+
 #include "../helpers/globals.h"
 #ifndef ESP32
 #include <ESP8266HTTPClient.h>
@@ -9,12 +11,13 @@
 #endif
 
 unsigned long _last_time_http_request=0;
-unsigned long _millis_delay_per_http_request=1000;
+unsigned long _millis_delay_per_http_request=5000;
 void buildHTTPSUBTopic(char const channel[], char *topic){
   char bffPort[6];
-  itoa (_rootPort,bffPort,10);
-  if (String(_rootDomain).indexOf("http://", 0)>0){
-    strcpy (topic,_rootDomain);
+//  itoa (_rootPort,bffPort,10);
+  itoa(_httpPort, bffPort, 10);
+  if (String(_httpDomain).indexOf("http://", 0)>0){
+    strcpy (topic,_httpDomain);
     strcat (topic,":");
     strcat (topic,bffPort);
     strcat (topic,"/");
@@ -25,7 +28,7 @@ void buildHTTPSUBTopic(char const channel[], char *topic){
     strcat (topic,channel);
   }else{
     strcpy (topic,"http://");
-    strcat (topic,_rootDomain);
+    strcat (topic,_httpDomain);
     strcat (topic,":");
     strcat (topic,bffPort);
     strcat (topic,"/");
@@ -39,9 +42,10 @@ void buildHTTPSUBTopic(char const channel[], char *topic){
 
 void buildHTTPPUBTopic(char const channel[], char *topic){
   char bffPort[6];
-  itoa (_rootPort,bffPort,10);
-  if (String(_rootDomain).indexOf("http://", 0)>0){
-    strcpy (topic,_rootDomain);
+//  itoa (_rootPort,bffPort,10);
+  itoa(_httpPort, bffPort, 10);
+  if (String(_httpDomain).indexOf("http://", 0)>0){
+    strcpy (topic,_httpDomain);
     strcat (topic,":");
     strcat (topic,bffPort);
     strcat (topic,"/");
@@ -52,7 +56,7 @@ void buildHTTPPUBTopic(char const channel[], char *topic){
     strcat (topic,channel);
   }else{
     strcpy (topic,"http://");
-    strcat (topic,_rootDomain);
+    strcat (topic,_httpDomain);
     strcat (topic,":");
     strcat (topic,bffPort);
     strcat (topic,"/");
@@ -74,6 +78,8 @@ bool testHTTPSubscribeConn(){
   _last_time_http_request = millis();
   bool subCode=0;
 
+  std::cout << "sending HTTP" << std::endl;
+
   HTTPClient http;  //Declare an object of class HTTPClient
   http.addHeader("Content-Type", "application/json");
   http.setAuthorization(device_login, device_pass);
@@ -81,6 +87,8 @@ bool testHTTPSubscribeConn(){
   char buffer[100];
 
   buildHTTPSUBTopic("test",buffer);
+
+  std::cout << "trying to connect to " << buffer << std::endl;
 
   http.begin((String)buffer);
 
@@ -129,12 +137,18 @@ bool pubHttp(char const channel[], char const msg[], int& ret_code){
 
   buildHTTPPUBTopic(channel,buffer);
 
+  http.setTimeout(10000);
+
   http.begin((String)buffer);
 
+  std::cout << "(B) POST TO DATA" << std::endl;
+  
   int httpCode=http.POST(String(msg));
+  std::cout << "(E) POST TO DATA" << std::endl;
   //Serial.println("Publishing to " + String(topic) + "; Body: " + String(msg) + "; httpcode: " + String(httpCode));
   //Serial.print(">");
   http.end();   //Close connection
+  std::cout << "(_) POST TO DATA" << std::endl;
 
   ret_code = httpCode;
 

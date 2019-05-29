@@ -1,5 +1,7 @@
 #ifndef jsonhelper
 #define jsonhelper
+#include <iostream>
+#define ARDUINOJSON_USE_LONG_LONG 1
 
 #include <ArduinoJson.h>
 #include "./helpers/fileHelper.h"
@@ -177,7 +179,7 @@ unsigned int updateJsonArrayFile(String filePath, JsonObject jsonNewValues, unsi
 
 
 	//updating file
-	const size_t CAPACITY = JSON_OBJECT_SIZE(30);
+	const size_t CAPACITY = 1024; // JSON_OBJECT_SIZE(30);
 	DynamicJsonDocument jsonBuffer(CAPACITY);
 	auto error = deserializeJson(jsonBuffer, fileContens);
 	//JsonArray array = jsonBuffer.parseArray(fileContens);
@@ -257,7 +259,7 @@ bool updateJsonFile(String filePath, JsonObject jsonNewValues){
 
 
 	//updating file
-	const size_t CAPACITY = JSON_OBJECT_SIZE(30);
+	const size_t CAPACITY = 1024; // JSON_OBJECT_SIZE(30);
 	DynamicJsonDocument jsonBuffer(CAPACITY);
 
 	auto error = deserializeJson(jsonBuffer, fileContens);
@@ -309,7 +311,7 @@ bool  getJsonItemFromFile(String filePath, char *itemName, char *returnVal){
 	}
 
 	//updating file
-	const size_t CAPACITY = JSON_OBJECT_SIZE(30);
+	const size_t CAPACITY = 1024; // JSON_OBJECT_SIZE(30);
 	DynamicJsonDocument jsonBuffer(CAPACITY);
 
 	auto error = deserializeJson(jsonBuffer, jsonfileContens);

@@ -1,6 +1,6 @@
 {
 	"name": "libKonkerESP",
-	"version": "3.0.5",
+	"version": "3.0.11",
 	"keywords": "Konker, espressif8266, espressif32, MQTT, rest, iot",
 	"description": "espressif8266 and espressif32 Library for Konker enabled products, support for ArduinoJson 6.x",
 	"repository": {

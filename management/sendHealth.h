@@ -19,6 +19,15 @@ int _netFailureAdress=0;
 int _mqttFailureAdress=1;
 int _httpFailureAdress=2;
 
+char *getMacAddress(char *macString) {
+  byte mac[6];
+  WiFi.macAddress(mac);
+//  char macString[20];
+  sprintf(macString, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4],mac[5]);
+  Serial.println(macString);
+  return macString;
+}
+
 //envia mensagem para a plataforma
 void healthUpdate(char *health_channel){
   if (_last_time_health_send!=0){
@@ -31,7 +40,7 @@ void healthUpdate(char *health_channel){
   _last_time_health_send = millis();
 
 
-	StaticJsonDocument<256> jsonMSG;
+	StaticJsonDocument<512> jsonMSG;
 	// JsonObject jsonMSG = jsonBuffer.as<JsonObject>();
 
 	delay(10);
@@ -46,6 +55,9 @@ void healthUpdate(char *health_channel){
   jsonMSG["build"] = (String)PIO_SRC_REV;
 	jsonMSG["wifi"]=(String)WiFi.SSID();
 	jsonMSG["rssi"]=(String)WiFi.RSSI();
+
+  char macAddr[20]; 
+  jsonMSG["MAC"]= getMacAddress(macAddr);
 
   char buffer [16];
   unsigned char bytes[4];

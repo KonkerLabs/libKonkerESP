@@ -21,7 +21,8 @@ bool shouldSaveConfig = false;
 bool failedComm=-1;
 char server[64];
 int port;
-char NAME[6]="S0000";
+#define MAX_NAME_SIZE 10
+char NAME[MAX_NAME_SIZE]="S0000";
 char ChipId[32];
 char device_login[32];
 char device_pass[32];
@@ -31,7 +32,11 @@ char prefix[5] = "data";
 char _health_channel[] = "_health";
 char _rootDomain[64]="data.demo.konkerlabs.net";
 int _rootPort=80;
-unsigned long __wifiTimout=10000L;
+int _httpPort=80;
+char _httpDomain[255]="data.demo.konkerlabs.net";
+unsigned long __httpCheckTimout = 5*60000L;
+unsigned long __httpLastCheckTS = 0;
+unsigned long __wifiTimout=10000L; // 10s to allow auto generated IP (mulitplied by retries)
 
 char *getChipId(){
   return  ChipId;

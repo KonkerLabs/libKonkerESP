@@ -1,6 +1,8 @@
 #ifndef konker
 #define konker
 
+#include <iostream>
+
 #include "./helpers/globals.h"
 #include "./helpers/fileHelper.h"
 #include "./helpers/jsonhelper.h"
@@ -134,7 +136,15 @@ void resetALL(){
 
 
 void setName(char newName[6]){
-  strncpy(NAME, newName,6);
+
+	// avoid name overflow
+	int size = strlen(newName);
+	if (size >= MAX_NAME_SIZE) { 
+		size = MAX_NAME_SIZE-1;
+	}
+  strncpy(NAME, newName,size);
+	NAME[MAX_NAME_SIZE-1] = '\0';
+
   #ifndef ESP32
   String stringNewName=String(NAME) + String(ESP.getChipId());
   #else
@@ -154,7 +164,6 @@ void konkerLoop(){
 	healthUpdate(_health_channel);
 	
 }
-
 
 
 
@@ -206,7 +215,12 @@ String getConnectMessage(int status_code) {
 	return "UNDEFINED";
 }
 
-int connectionStatus(){
+
+// the coounter (i) multiplies the time this network wait for connection ...
+// at each pass, it will increase the waiting time, so on the limit 
+// it allows the client to use an auto-generated IP
+//
+int connectionStatus(unsigned long i){
 	unsigned long wifiStartTime=millis();
 	Serial.println("checking for connection status");
 	Serial.print("wifi timeout = ");
@@ -216,7 +230,7 @@ int connectionStatus(){
 	Serial.print("now = ");
 	Serial.println(millis());
 	int counter = 100;
-	while(WiFi.status() != WL_CONNECTED && (millis()-wifiStartTime)<__wifiTimout && counter > 0) {
+	while(WiFi.status() != WL_CONNECTED && (millis()-wifiStartTime)<(__wifiTimout*i) && counter > 0) {
 			mydelay(500);
 			Serial.print("."); 
 			counter = counter - 1;
@@ -229,20 +243,26 @@ int connectionStatus(){
 
 
 
-int connectWifi(char *ssid, char *pass) {
+int connectWifi(char *ssid, char *pass, unsigned long i) {
 	tryConnect(ssid, pass);
 
-	return connectionStatus();
+	return connectionStatus(i);
 }
 
 
 
 int tryConnectWifi(char *ssid, char *pass, int retryies) {
-	int connRes=connectWifi(ssid,pass);
+	int connRes=connectWifi(ssid,pass, 1);
+	unsigned long i = 1; 
 	while (connRes!=WL_CONNECTED && retryies>1){
 		delay(1000);
-		connRes=connectWifi(ssid,pass);
+		// printout the mac address for this device 
+		Serial.print(">>>>>>>>> DEVICE MAC ADDRESS = ");
+		Serial.println(WiFi.macAddress());
+		//
+		connRes=connectWifi(ssid,pass, i);
 		retryies=retryies-1;
+		i++;
 	}
 	return connRes;
 }
@@ -379,17 +399,19 @@ bool connectToWiFiAndPubSubServers(){
 	Serial.println("Cheking server connections..");
 	#ifdef pubsubMQTT
 	if(!connectMQTT()){
-		Serial.println("Failed!");
+		Serial.println("MQTT Connection Failed!");
     	appendToFile(healthFile,(char*)"1", _mqttFailureAdress);
 		return 0;
 	}
 	#endif
-	if(!testHTTPSubscribeConn()){
-		Serial.println("Failed!");
-	    appendToFile(healthFile,(char*)"1", _httpFailureAdress);
-		return 0;
+	if ((millis() - __httpLastCheckTS) > __httpCheckTimout) {
+		if(!testHTTPSubscribeConn()){
+			Serial.println("Failed!");
+				appendToFile(healthFile,(char*)"1", _httpFailureAdress);
+			return 0;
+		}
+		__httpLastCheckTS = millis();
 	}
-
 
 	return 1;
 }
@@ -451,7 +473,7 @@ bool checkForFactoryWifi(char *ssidConfig, char *ssidPassConfig, int powerLimit,
 	boolean keepConnecting = true;
 	unsigned long start = millis();
 	while (keepConnecting) {
-		if(connectWifi(ssidConfig, ssidPassConfig) == 3 && checkSignal(powerLimit)==1) {
+		if(connectWifi(ssidConfig, ssidPassConfig, 1) == 3 && checkSignal(powerLimit)==1) {
 			keepConnecting = false;
 			Serial.println("Connected to "  + (String)ssidConfig);
 
@@ -783,7 +805,7 @@ void getWifiCredentialsNotEncripted(){
 }
 
 
-void setWifiCredentialsNotEncripted(char SSID1[32],char PSK1[64]){
+void setWifiCredentialsNotEncripted(const char *SSID1,const  char *PSK1){
 	// reset wifi credentials from file
 	//Removing the Wifi Configuration
 	SPIFFS.remove(wifiFile);
@@ -809,7 +831,7 @@ void setWifiCredentialsNotEncripted(char SSID1[32],char PSK1[64]){
 }
 
 
-void setWifiCredentialsNotEncripted(char SSID1[32],char PSK1[64],char SSID2[32],char PSK2[64]){
+void setWifiCredentialsNotEncripted(const char *SSID1,const char *PSK1, const char *SSID2,const char *PSK2){
 	// reset wifi credentials from file
 	//Removing the Wifi Configuration
 	SPIFFS.remove(wifiFile);
@@ -848,9 +870,9 @@ void setWifiCredentialsNotEncripted(char SSID1[32],char PSK1[64],char SSID2[32],
 
 
 void setWifiCredentialsNotEncripted(
-	char SSID1[32],char PSK1[64],
-	char SSID2[32],char PSK2[64], 
-	char SSID3[32],char PSK3[64]){
+	const char *SSID1,const char *PSK1,
+	const char *SSID2,const char *PSK2, 
+	const char *SSID3,const char *PSK3){
 	// reset wifi credentials from file
 	//Removing the Wifi Configuration
 	SPIFFS.remove(wifiFile);
@@ -1025,6 +1047,10 @@ bool get_platform_credentials_from_configurator(){
   //The IP of our client is the Gateway IP
 	HTTPClient http; 
 
+	Serial.println("setting timeuot to 50s");
+
+	http.setTimeout(50000); // 50 segundos de timeout
+
   http.begin(address);     //Specify request destination
   
   int statusCode = http.GET();
@@ -1068,7 +1094,8 @@ bool get_platform_credentials_from_configurator(){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //encripted is a flag indicating to encript credentials.
-void konkerConfig(char rootURL[64], char productPefix[6], bool encripted){
+void konkerConfig(char rootURL[64], char productPefix[6], bool encripted, char *httpDomain = '\0',int httpPort=-1){
+	Serial.println("reset pin = " + resetPin);
 	pinMode(resetPin, OUTPUT);
 	digitalWrite(resetPin, HIGH);
 
@@ -1087,6 +1114,15 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted){
 		strncpy(_rootDomain,String(_rootDomain).substring(0,i).c_str(),64);
 	}else{
 		strncpy(_rootDomain,rootURL,64);
+	}
+
+	if (httpPort != -1) { 
+		_httpPort = httpPort;
+	}
+
+	if (httpDomain != '\0') {
+		strncpy(_httpDomain, httpDomain, (strlen(httpDomain) < 254 ? strlen(httpDomain) : 253));
+		_httpDomain[254] = '\0';
 	}
 
 	Serial.print("_rootDomain: ");
@@ -1178,7 +1214,9 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted){
   //desliga led indicando que passou pela configuração de fábrica
   digitalWrite(_STATUS_LED, HIGH);
 
-
+	// printout the mac address for this device 
+	Serial.print(">>>>>>>>> DEVICE MAC ADDRESS = ");
+	Serial.println(WiFi.macAddress());
 
 	//esta parte só chega se já passou pelo modo fábrica acima
 	//lembrando
@@ -1246,6 +1284,168 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted){
 
 }
 
+
+
+
+
+
+// 
+// Configuration Callback 
+// used to:
+//
+// a) change data collection frequency ... in seconds 
+// b) network information 
+// 
+// all thru messages on the config channel on the platform 
+
+// byte* payload, unsigned int length or you could use CHANNEL_CALLBACK_SIGNATURE
+
+unsigned long dataSendFrenquency=60000; //miliseconds // from Konker library
+
+unsigned long long prevMessage = 1;
+
+// 
+// used to return hold and return real time based on response from the platform 
+//
+unsigned long long platformTimestamp = 0; 
+unsigned long long localTS = millis();
+
+void resetRealTimeBaseline(unsigned long long ts) {
+	localTS = millis();
+	platformTimestamp = ts;
+	std::cout << "localTS = " << localTS << " platform milestone = " << platformTimestamp << std::endl;
+}
+
+unsigned long long getRealtTS() {
+	std::cout << "millis() = " << millis() << " pts = " << platformTimestamp << " localTS = " << localTS << " realTS = " << (platformTimestamp + (millis() - localTS)) << std::endl;
+	return (platformTimestamp + (millis() - localTS)) / 1000;
+}
+
+// callback used to perform remote configuration updateJsonArrayFile
+
+void konker_config_callback(uint8_t* payload, unsigned int length){
+
+  #define MAX_BUFFER_SIZE 1024
+  DynamicJsonDocument docConfig(MAX_BUFFER_SIZE);
+
+  Serial.println("callback proocessing....");
+
+  if (length > MAX_BUFFER_SIZE) {
+    Serial.println("cannot process messages greater than ");
+    Serial.print(MAX_BUFFER_SIZE);
+    Serial.println(" bytes long ... due to memory restrictions; please check your config payload to reduce it's size");
+    Serial.println((char*)payload);
+    return; 
+  }
+
+  auto error = deserializeJson(docConfig, payload);
+//   JsonObject& root = jsonBufferConfig.parseObject(payload);
+
+  if (error) {
+    Serial.println("error parsing configuration data");
+    Serial.println((char*)payload);
+    return;
+  }
+
+  JsonObject data = docConfig[0]["data"];
+  JsonObject meta = docConfig[0]["meta"];
+
+  unsigned long long ts = meta["timestamp"];
+	resetRealTimeBaseline(ts);
+
+  Serial.println("read data = ");
+  serializeJson(docConfig, Serial);
+  Serial.println("");
+
+
+  serializeJson(meta, Serial);
+  Serial.println("");
+  serializeJson(data, Serial);
+  Serial.println("");
+
+  // checkType(meta["timestamp"]);
+
+//  float ts = meta["timestamp"].as<float>();
+  std::cout << "received TS = " << ts << std::endl;
+  
+  // control if the message is replicated or not 
+  // and just process once each message
+  if (prevMessage == ts) {
+    std::cout << "same message ... ignoring [" << prevMessage << " x " << ts << "]" << std::endl;
+    std::cout << "DATA " << meta["timestamp"].as<unsigned long long>() << std::endl;
+    return;
+  }
+  prevMessage = ts;
+
+  // continue processing
+
+  JsonVariant freq = data["period"]; // NOTE: old field was "perid" (with typo)
+  if (!freq.isNull()) {
+    dataSendFrenquency = freq.as<int>() * 1000;
+    Serial.print("changing sensor period to ");
+    Serial.print(dataSendFrenquency);
+    Serial.println("ms");
+  }
+
+  JsonArray network = data["network"];
+  if (!network.isNull()) {
+
+    JsonObject netX[3];
+
+    // validate that network information given is valid 
+
+    for (int i = 0; i < network.size(); i++) {
+      netX[i] = network[i];
+      const char *ssid = network[i]["ssid"];
+      const char *passwd = network[i]["passwd"];
+      std::cout << "READ CONFIG: " << network[i].as<String>() << std::endl;
+      if (!(ssid && passwd)) {
+        std::cout << "ERROR: NETWORK INFORMATION (" << i << ") INVALID! ABORT CONFIGURATION CHANGE" << std::endl;
+        return ;
+      } else {
+        std::cout << "NEW NETWORK SSID = " << netX[i]["ssid"].as<char*>() << " PASSWD = " << netX[i]["passwd"].as<char*>() << std::endl;
+      }
+    }
+
+    // check if is there any change on the network configuration ... 
+    // just reset if is there any change 
+    // otherwise keek going 
+
+    int comparison = 0;
+
+    if (network.size() >= 1) {
+      comparison += strcmp(wifiCredentials[0].savedSSID, netX[0]["ssid"]) + strcmp(wifiCredentials[0].savedPSK, netX[0]["passwd"]);
+      if (network.size() >= 2) {
+        comparison += strcmp(wifiCredentials[1].savedSSID, netX[1]["ssid"]) + strcmp(wifiCredentials[1].savedPSK, netX[1]["passwd"]);
+        if (network.size() >= 3) {
+          comparison += strcmp(wifiCredentials[2].savedSSID, netX[2]["ssid"]) + strcmp(wifiCredentials[2].savedPSK, netX[2]["passwd"]);
+        }
+      }
+    }
+
+    // 
+    if (comparison > 0) {
+      std::cout << "IDENTIFIED CHANGE ON NETWORK CONFIGURATION ON " << comparison << " VALUES" << std::endl;
+
+      // if validated, then use the desired function to change 
+
+      if (network.size() == 1) {      
+        setWifiCredentialsNotEncripted(netX[0]["ssid"], netX[0]["passwd"]);
+      }
+      if (network.size() == 2) {
+        setWifiCredentialsNotEncripted(netX[0]["ssid"], netX[0]["passwd"], netX[1]["ssid"], netX[1]["passwd"]);
+      }
+      if (network.size() == 3) {
+        setWifiCredentialsNotEncripted(netX[0]["ssid"], netX[0]["passwd"], netX[1]["ssid"], netX[1]["passwd"], netX[2]["ssid"], netX[2]["passwd"]);
+      }
+    } else {
+      std::cout << "NETWORK CONFIGURATION DID NOT CHANGE" << std::endl;
+    }
+
+
+
+  }
+}
 
 
 #endif
