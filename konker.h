@@ -73,9 +73,9 @@ class ConfigWifi{
 		return this->i && this->g && this->s;
 	}
 
-	IPAddress ip;   
-	IPAddress gateway;   
-	IPAddress subnet;  
+	IPAddress ip;
+	IPAddress gateway;
+	IPAddress subnet;
   };
 
 ConfigWifi wifiConfig;
@@ -139,7 +139,7 @@ void setName(char newName[6]){
 
 	// avoid name overflow
 	int size = strlen(newName);
-	if (size >= MAX_NAME_SIZE) { 
+	if (size >= MAX_NAME_SIZE) {
 		size = MAX_NAME_SIZE-1;
 	}
   strncpy(NAME, newName,size);
@@ -162,7 +162,7 @@ void konkerLoop(){
 	#endif
 	checkForUpdates();
 	healthUpdate(_health_channel);
-	
+
 }
 
 
@@ -195,7 +195,7 @@ void tryConnect(char *ssid, char *pass){
 		Serial.println(wifiConfig.gateway);
 		Serial.print("Pre configured SUBNET: ");
 		Serial.println(wifiConfig.subnet);
-		
+
 		WiFi.config(wifiConfig.ip,wifiConfig.gateway, wifiConfig.subnet);
 	}
 
@@ -204,11 +204,11 @@ void tryConnect(char *ssid, char *pass){
 String getConnectMessage(int status_code) {
 	switch(status_code) {
 		case 255: return "WL_NO_SHIELD"; break;
-		case 0: return "WL_IDLE_STATUS"; break; 
-		case 1: return "WL_NO_SSID_AVAIL"; break; 
-		case 2: return "WL_SCAN_COMPLETED"; break; 
-		case 3: return "WL_CONNECTED"; break; 
-		case 4: return "WL_CONNECT_FAILED"; break; 
+		case 0: return "WL_IDLE_STATUS"; break;
+		case 1: return "WL_NO_SSID_AVAIL"; break;
+		case 2: return "WL_SCAN_COMPLETED"; break;
+		case 3: return "WL_CONNECTED"; break;
+		case 4: return "WL_CONNECT_FAILED"; break;
 		case 5: return "WL_CONNECTION_LOST"; break;
 		case 6: return "WL_DISCONNECTED"; break;
 	}
@@ -217,7 +217,7 @@ String getConnectMessage(int status_code) {
 
 
 // the coounter (i) multiplies the time this network wait for connection ...
-// at each pass, it will increase the waiting time, so on the limit 
+// at each pass, it will increase the waiting time, so on the limit
 // it allows the client to use an auto-generated IP
 //
 int connectionStatus(unsigned long i){
@@ -232,7 +232,7 @@ int connectionStatus(unsigned long i){
 	int counter = 100;
 	while(WiFi.status() != WL_CONNECTED && (millis()-wifiStartTime)<(__wifiTimout*i) && counter > 0) {
 			mydelay(500);
-			Serial.print("."); 
+			Serial.print(".");
 			counter = counter - 1;
 	}
 
@@ -253,10 +253,10 @@ int connectWifi(char *ssid, char *pass, unsigned long i) {
 
 int tryConnectWifi(char *ssid, char *pass, int retryies) {
 	int connRes=connectWifi(ssid,pass, 1);
-	unsigned long i = 1; 
+	unsigned long i = 1;
 	while (connRes!=WL_CONNECTED && retryies>1){
 		delay(1000);
-		// printout the mac address for this device 
+		// printout the mac address for this device
 		Serial.print(">>>>>>>>> DEVICE MAC ADDRESS = ");
 		Serial.println(WiFi.macAddress());
 		//
@@ -433,7 +433,7 @@ bool checkConnections(){
   //Serial.println("Device connected to WiFi: " + (String)WiFi.SSID());
   //Serial.print("IP Address:");
   //Serial.println(WiFi.localIP());
-  
+
   return 1;
 }
 
@@ -514,11 +514,11 @@ bool getPlataformCredentials(char *configFilePath){
 //	JsonObject configJson = jsonBuffer.parseObject(fileContens);
   JsonObject configJson = jsonBuffer.as<JsonObject>();
 	//DeserializationError err = deserializeJson(configJson, fileContens);
-  
+
 	if (err) {
 		Serial.println("Failed to read Json file");
 		return 0;
-	} 
+	}
 	Serial.println("Json file parsed!");
 
 
@@ -528,7 +528,7 @@ bool getPlataformCredentials(char *configFilePath){
 
 	char bufferConfigJson[1024]="";
 	//configJson.printTo(bufferConfigJson, 1024);
-	serializeJson(configJson, bufferConfigJson); 
+	serializeJson(configJson, bufferConfigJson);
 	Serial.println("Content: "+ String(bufferConfigJson));
 	if (configJson.containsKey("srv") && configJson.containsKey("prt") &&
 	configJson.containsKey("usr") && configJson.containsKey("pwd") && configJson.containsKey("prx")){
@@ -596,7 +596,7 @@ void WiFiApDisConnected(system_event_id_t event) {
 
 #else
 void WiFiEvent(WiFiEvent_t event) {
-	
+
 	switch(event){
 	case WIFI_EVENT_SOFTAPMODE_STACONNECTED:
 		Serial.println("Conectado");
@@ -766,7 +766,7 @@ void getWifiCredentialsEncripted(){
 		SPIFFS.remove(wifiFile);
 	}
 
-	
+
 	webServer.send(200, "text/html", page);
 
 
@@ -871,7 +871,7 @@ void setWifiCredentialsNotEncripted(const char *SSID1,const char *PSK1, const ch
 
 void setWifiCredentialsNotEncripted(
 	const char *SSID1,const char *PSK1,
-	const char *SSID2,const char *PSK2, 
+	const char *SSID2,const char *PSK2,
 	const char *SSID3,const char *PSK3){
 	// reset wifi credentials from file
 	//Removing the Wifi Configuration
@@ -1005,7 +1005,7 @@ bool set_platform_credentials(char *server, char *port, char *user, char *passwo
 	strcat(configuration,"\", \"prx\":\"");
 	strcat(configuration,prefix);
 	strcat(configuration,"\"}\0");
-	
+
 	Serial.println("configuration=" + String(configuration));
 		//cria file system se não existir
 	spiffsMount();
@@ -1045,14 +1045,14 @@ bool get_platform_credentials_from_configurator(){
 
 
   //The IP of our client is the Gateway IP
-	HTTPClient http; 
+	HTTPClient http;
 
 	Serial.println("setting timeuot to 50s");
 
 	http.setTimeout(50000); // 50 segundos de timeout
 
   http.begin(address);     //Specify request destination
-  
+
   int statusCode = http.GET();
 
 	response=http.getString();
@@ -1110,19 +1110,20 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted, char *
 
 	i =String(_rootDomain).indexOf(":");
 	if(i>0){
-		_rootPort=String(_rootDomain).substring(i+1).toInt(); 
+		_rootPort=String(_rootDomain).substring(i+1).toInt();
 		strncpy(_rootDomain,String(_rootDomain).substring(0,i).c_str(),64);
 	}else{
 		strncpy(_rootDomain,rootURL,64);
 	}
 
-	if (httpPort != -1) { 
+	if (httpPort != -1) {
 		_httpPort = httpPort;
 	}
 
-	if (httpDomain != '\0') {
-		strncpy(_httpDomain, httpDomain, (strlen(httpDomain) < 254 ? strlen(httpDomain) : 253));
-		_httpDomain[254] = '\0';
+    if (httpDomain != '\0') {
+        int len = (strlen(httpDomain) < 254 ? strlen(httpDomain) : 253);
+		strncpy(_httpDomain, httpDomain, len);
+		_httpDomain[len] = '\0';
 	}
 
 	Serial.print("_rootDomain: ");
@@ -1170,14 +1171,14 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted, char *
 					if(i==1){
 							strcpy(wifiCredentials[1].savedSSID, wifiCredentials[0].savedSSID);
 							strcpy(wifiCredentials[1].savedPSK, wifiCredentials[0].savedPSK);
-							
+
 							strcpy(wifiCredentials[0].savedSSID, tempSSID);
 							strcpy(wifiCredentials[0].savedPSK, tempPSK);
 					}
 					if(i==2){
 							strcpy(wifiCredentials[2].savedSSID, wifiCredentials[0].savedSSID);
 							strcpy(wifiCredentials[2].savedPSK, wifiCredentials[0].savedPSK);
-							
+
 							strcpy(wifiCredentials[0].savedSSID, tempSSID);
 							strcpy(wifiCredentials[0].savedPSK, tempPSK);
 					}
@@ -1214,7 +1215,7 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted, char *
   //desliga led indicando que passou pela configuração de fábrica
   digitalWrite(_STATUS_LED, HIGH);
 
-	// printout the mac address for this device 
+	// printout the mac address for this device
 	Serial.print(">>>>>>>>> DEVICE MAC ADDRESS = ");
 	Serial.println(WiFi.macAddress());
 
@@ -1289,14 +1290,14 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted, char *
 
 
 
-// 
-// Configuration Callback 
+//
+// Configuration Callback
 // used to:
 //
-// a) change data collection frequency ... in seconds 
-// b) network information 
-// 
-// all thru messages on the config channel on the platform 
+// a) change data collection frequency ... in seconds
+// b) network information
+//
+// all thru messages on the config channel on the platform
 
 // byte* payload, unsigned int length or you could use CHANNEL_CALLBACK_SIGNATURE
 
@@ -1304,10 +1305,10 @@ unsigned long dataSendFrenquency=60000; //miliseconds // from Konker library
 
 unsigned long long prevMessage = 1;
 
-// 
-// used to return hold and return real time based on response from the platform 
 //
-unsigned long long platformTimestamp = 0; 
+// used to return hold and return real time based on response from the platform
+//
+unsigned long long platformTimestamp = 0;
 unsigned long long localTS = millis();
 
 void resetRealTimeBaseline(unsigned long long ts) {
@@ -1335,7 +1336,7 @@ void konker_config_callback(uint8_t* payload, unsigned int length){
     Serial.print(MAX_BUFFER_SIZE);
     Serial.println(" bytes long ... due to memory restrictions; please check your config payload to reduce it's size");
     Serial.println((char*)payload);
-    return; 
+    return;
   }
 
   auto error = deserializeJson(docConfig, payload);
@@ -1367,8 +1368,8 @@ void konker_config_callback(uint8_t* payload, unsigned int length){
 
 //  float ts = meta["timestamp"].as<float>();
   std::cout << "received TS = " << ts << std::endl;
-  
-  // control if the message is replicated or not 
+
+  // control if the message is replicated or not
   // and just process once each message
   if (prevMessage == ts) {
     std::cout << "same message ... ignoring [" << prevMessage << " x " << ts << "]" << std::endl;
@@ -1392,7 +1393,7 @@ void konker_config_callback(uint8_t* payload, unsigned int length){
 
     JsonObject netX[3];
 
-    // validate that network information given is valid 
+    // validate that network information given is valid
 
     for (int i = 0; i < network.size(); i++) {
       netX[i] = network[i];
@@ -1407,9 +1408,9 @@ void konker_config_callback(uint8_t* payload, unsigned int length){
       }
     }
 
-    // check if is there any change on the network configuration ... 
-    // just reset if is there any change 
-    // otherwise keek going 
+    // check if is there any change on the network configuration ...
+    // just reset if is there any change
+    // otherwise keek going
 
     int comparison = 0;
 
@@ -1423,13 +1424,13 @@ void konker_config_callback(uint8_t* payload, unsigned int length){
       }
     }
 
-    // 
+    //
     if (comparison > 0) {
       std::cout << "IDENTIFIED CHANGE ON NETWORK CONFIGURATION ON " << comparison << " VALUES" << std::endl;
 
-      // if validated, then use the desired function to change 
+      // if validated, then use the desired function to change
 
-      if (network.size() == 1) {      
+      if (network.size() == 1) {
         setWifiCredentialsNotEncripted(netX[0]["ssid"], netX[0]["passwd"]);
       }
       if (network.size() == 2) {
