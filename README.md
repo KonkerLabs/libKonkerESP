@@ -2,116 +2,135 @@
 
 #### https://github.com/KonkerLabs/KonkerESPExamples
 
-Include konker.h or konkerMQTT.h  to work with this library
+Include _konker.h_ or _konkerMQTT.h_  to work with this library
 
-Initilize the konker lib at setup
+Initialize the konker lib at setup
 
-konkerConfig(<root server>,<model prefix>,<encriptation flag>);
+    konkerConfig(<mqtt server>,<model prefix>,<encryption flag>,<http server>,<http port>);
 
-<root server> : domain / ip of the Konker plataform
+- `<mqtt server>` : Domain / IP of the Konker platform
 
-Example: (char*)"data.demo.konkerlabs.net:80"
+> Example: (char*)"data.demo.konkerlabs.net:1883"
 
-<model prefix>: A user defined prefix to especify the type of the device, for example LIGHT, MOTOR, etc.
+- `<model prefix>`: A user defined prefix to especify the type of the device, for example LIGHT, MOTOR, etc.
 
-Example: (char*)"S0101"
+> Example: (char*)"S0101"
 
-<encriptation flag>: Boolean flag.  If set true, the WiFi password will be expected to be sent encripted to the device.
+- `<encryption flag>`: Boolean flag.  If set true, the WiFi password will be expected to be sent encrypted to the device.n
 
-The encriptation keys is SSID and the Konker password  of the device. To understand better please open the file konker.k and verify the getWifiCredentialsEncripted function
+The encryption keys are SSID and the Konker password  of the device. To understand better please open the file _konker.h_ and verify the `getWifiCredentialsEncripted` function
 
 If set false, the password has to be sent in plain text.
 
+- `<http server>` : Domain / IP of the Konker platform
+
+> Example: (char*)"data.demo.konkerlabs.net"
+
+- `<http port>`: Port of the platform used for HTTP connections
+
+> Example:  (int)80
+
 Example:
 
-void setup(){
-    Serial.begin(115200);
-    Serial.println("Setup");
+    void setup(){
+        Serial.begin(115200);
+        Serial.println("Setup");
 
-    konkerConfig((char*)"data.demo.konkerlabs.net:80",(char*)"S0101",false);
+        konkerConfig((char*)"data.demo.konkerlabs.net:1883",(char*)"S0101",false,(char*)"data.demo.konkerlabs.net", 80);
 
-    Serial.println("Setup finished");
-}
+        Serial.println("Setup finished");
+    }
 
 After the setup in the main loop put:
 
-konkerLoop();
-
-Example:
-
-void loop(){
-
     konkerLoop();
 
-}
+Example:
 
+    void loop(){
+        konkerLoop();
+    }
 
-You could now use  the functions:
+You can now use the following functions to publish and subscribe to a MQTT channel (remember to include _konkerMQTT.h_ to use them):
 
-pubHTTP(<channel>, <message>)
-
-pubMQTT(<channel>, <message>)  <-- to use MQTT functions you have to include konkerMQTT.h
+- `pubHTTP(<channel>, <message>)`
+- `pubMQTT(<channel>, <message>)`
 
 Example:
 
-StaticJsonBuffer<220> jsonBuffer;
-JsonObject& jsonMSG = jsonBuffer.createObject();
+    const int capacity = JSON_OBJECT_SIZE(1024);
+    StaticJsonDocument<capacity> jsonMSG;
 
+    delay(10);
 
-delay(10);
+    jsonMSG["deviceId"] = (String)getChipId();
+    jsonMSG["p"] = presenceCount;
 
-jsonMSG["deviceId"] = (String)getChipId();
-jsonMSG["p"] = presenceCount;
+    char bufferJson[1024];
+    serializeJson(jsonMSG, bufferJson);;
 
-char bufferJ[1024];
-jsonMSG.printTo(bufferJ, sizeof(bufferJ));
-char mensagemjson[1024];
-strcpy(mensagemjson,bufferJ);
+    if(!pubMQTT(status_channel, bufferJson)){
+        Serial.println("Message published");
+    }else{
+        Serial.println("Failed to publish message");
+    }
 
-if(!pubMQTT(status_channel, mensagemjson)){
-    Serial.println("Message plublished");
-}else{
-    Serial.println("Failed to publish message");
-}
+- `subHTTP(<channel>, <callback function for this channel>)` -> subscriptions in HTTP are a GET request. To verify if the value in the channel has changed you have to poll it.
 
-subHTTP(<channel>, <callback function for this channel>)  <-- subscriptions in HTTP are a GET request. To verify if the value in the channel had changed you have to make polling.
+- `subHTTP()` usually has to be in a loop or be a scheduled function.
 
-subHTTP usually have to be in a loop or schedulled funcion.
-
-
-subMQTT(<channel>, <callback function for this channel>)  <-- to use MQTT functions you have to include konkerMQTT.h. Since MQTT subscriptions stays listenning to the channel, no polling is needed.
+- `subMQTT(<channel>, <callback function for this channel>)` -> to use MQTT functions you have to include _konkerMQTT.h_. Since MQTT subscriptions stays listening to the channel, no polling is needed.
 
 The callback function will be automatically called when some new value arrives at the channel.
 
 The callback function must have this format:
 
-void function_name(byte* payload, unsigned int length){
+    void function_name(byte* payload, unsigned int length)
 
-Device credentials and setup
+# Device credentials and setup
 
 PROCEDURE
-1 - THE DEVICE HAS TO BE CONFIGURED IN FACTORY WITH THE KONKER PLATFORM CREDENTIALS
-  THE DEVICE SEARCH FOR wifi: KonkerDevNetwork  password: konkerkonker123
-  when connected, the device will search for the platform credentials file in the root folder from the host hotspot Example: \S010113610232
-  THE FILE HAS THIS FORMAT EXAMPLE:
-    {"srv":"mqtt.demo.konkerlabs.net","prt":"1883","usr":"jnu56qt1bb1i","pwd":"3S7usR9g5K","prx":"data"}
 
-2 -THE DEVICE WILL REBOOT, AND CREATE A HOTSPOT WITH ITS NAME, EXAMPLE: S010113610232
-   CONNECT TO THE HOTSPOT AND MAKE A GET REQUEST LIKE THE EXAMPLE BELOW TO SEND THE WIFI Credentials
-   You could save up to 3 diferrent wifi credentials for 3 different wifi
-   http://192.168.4.1/wifisave?s0=SSID_NAME&p0=ENCRIPTED_SSID_PASSWORD
-   More than one credential will be
-   http://192.168.4.1/wifisave?s0=SSID_NAME1&p0=ENCRIPTED_SSID_PASSWORD1&s1=SSID_NAME2&p1=ENCRIPTED_SSID_PASSWORD2
-      OR IF konkerConfig encription flag is off
-   http://192.168.4.1/wifisave?s0=SSID_NAME&p0=SSID_PASSWORD
-   
- 
-   
-   
-   
-   
-   
- #Firmware updates
- 
- For firmware updates check just call the function: checkForUpdates();
- Tip, dont leave the execution of checkForUpdates(); in the main loop.  Call this function hourly or dayly for example.
+1 - THE DEVICE HAS TO BE CONFIGURED AT FACTORY WITH THE KONKER PLATFORM CREDENTIALS
+
+The device will search for
+
+- wifi: KonkerDevNetwork
+
+- password: konkerkonker123
+
+When connected, the device will search for platform credentials file in the root folder of the device
+
+> Example: \S010113610232
+
+THE FILE HAS THIS FORMAT:
+
+> {"srv":"mqtt.demo.konkerlabs.net","prt":"1883","usr":"jnu56qt1bb1i","pwd":"3S7usR9g5K","prx":"data"}
+
+2 - IF NOT POSSIBLE TO CONNECT TO WIFI. THE DEVICE WILL REBOOT, AND CREATE A HOTSPOT WITH ITS NAME
+
+> Example: S010113610232
+
+CONNECT TO THE HOTSPOT AND MAKE A GET REQUEST LIKE THE EXAMPLE BELOW TO SEND THE WIFI
+
+__Credentials__
+
+   You could save up to 3 different wifi credentials for 3 different wifi
+
+   - http://192.168.4.1/wifisave?s0=SSID_NAME&p0=ENCRIPTED_SSID_PASSWORD
+
+More than one credential will be
+
+   - http://192.168.4.1/wifisave?s0=SSID_NAME1&p0=ENCRIPTED_SSID_PASSWORD1&s1=SSID_NAME2&p1=ENCRIPTED_SSID_PASSWORD2
+
+OR IF konkerConfig encryption flag is off
+
+   - http://192.168.4.1/wifisave?s0=SSID_NAME&p0=SSID_PASSWORD
+
+# Firmware updates
+
+- For firmware updates check just call the function:
+
+    checkForUpdates();
+
+- Tip: don't leave the execution of `checkForUpdates()` in the main loop.  Call this function hourly or daily for example.
