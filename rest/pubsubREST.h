@@ -1,7 +1,7 @@
 #ifndef pubsubREST
 #define pubsubREST
 
-#include <iostream> 
+#include <iostream>
 
 #include "../helpers/globals.h"
 #ifndef ESP32
@@ -22,7 +22,7 @@ void buildHTTPSUBTopic(char const channel[], char *topic){
     strcat (topic,bffPort);
     strcat (topic,"/");
     strcat (topic,sub_dev_modifier);
-    strcat(topic,"/");   
+    strcat(topic,"/");
     strcat (topic,device_login);
     strcat(topic,"/");
     strcat (topic,channel);
@@ -33,7 +33,7 @@ void buildHTTPSUBTopic(char const channel[], char *topic){
     strcat (topic,bffPort);
     strcat (topic,"/");
     strcat (topic,sub_dev_modifier);
-    strcat(topic,"/");    
+    strcat(topic,"/");
     strcat (topic,device_login);
     strcat(topic,"/");
     strcat (topic,channel);
@@ -50,7 +50,7 @@ void buildHTTPPUBTopic(char const channel[], char *topic){
     strcat (topic,bffPort);
     strcat (topic,"/");
     strcat (topic,pub_dev_modifier);
-    strcat(topic,"/");   
+    strcat(topic,"/");
     strcat (topic,device_login);
     strcat(topic,"/");
     strcat (topic,channel);
@@ -61,7 +61,7 @@ void buildHTTPPUBTopic(char const channel[], char *topic){
     strcat (topic,bffPort);
     strcat (topic,"/");
     strcat (topic,pub_dev_modifier);
-    strcat(topic,"/");    
+    strcat(topic,"/");
     strcat (topic,device_login);
     strcat(topic,"/");
     strcat (topic,channel);
@@ -71,7 +71,7 @@ void buildHTTPPUBTopic(char const channel[], char *topic){
 
 
 bool testHTTPSubscribeConn(){
-    //throtle this call 
+    //throtle this call
   if ((millis()-_last_time_http_request) < _millis_delay_per_http_request){
       delay((millis()-_last_time_http_request));
   }
@@ -118,8 +118,8 @@ bool testHTTPSubscribeConn(){
 
 
 
-bool pubHttp(char const channel[], char const msg[], int& ret_code){
-  //throtle this call 
+bool pubHttp(char const channel[], char const msg[], int *ret_code){
+  //throtle this call
   if ((millis()-_last_time_http_request) < _millis_delay_per_http_request){
       delay((millis()-_last_time_http_request));
   }
@@ -142,7 +142,7 @@ bool pubHttp(char const channel[], char const msg[], int& ret_code){
   http.begin((String)buffer);
 
   std::cout << "(B) POST TO DATA" << std::endl;
-  
+
   int httpCode=http.POST(String(msg));
   std::cout << "(E) POST TO DATA" << std::endl;
   //Serial.println("Publishing to " + String(topic) + "; Body: " + String(msg) + "; httpcode: " + String(httpCode));
@@ -150,7 +150,7 @@ bool pubHttp(char const channel[], char const msg[], int& ret_code){
   http.end();   //Close connection
   std::cout << "(_) POST TO DATA" << std::endl;
 
-  ret_code = httpCode;
+  *ret_code = httpCode;
 
   pubCode=interpretHTTPCode(httpCode);
 
@@ -170,14 +170,14 @@ bool pubHttp(char const channel[], char const msg[], int& ret_code){
 
 bool pubHttp(char const channel[], char const msg[]){
   int ret_code;
-  return pubHttp(channel, msg, ret_code);
+  return pubHttp(channel, msg, &ret_code);
 
 }
 
 
 
 bool subHttp(char const channel[],CHANNEL_CALLBACK_SIGNATURE){
-  //throtle this call 
+  //throtle this call
   if ((millis()-_last_time_http_request) < _millis_delay_per_http_request){
       delay((millis()-_last_time_http_request));
   }
@@ -203,7 +203,7 @@ bool subHttp(char const channel[],CHANNEL_CALLBACK_SIGNATURE){
   Serial.print(">");
 
   subCode=interpretHTTPCode(httpCode);
-  
+
   if (!subCode){
     Serial.println("failed SUB request");
     Serial.println("");
@@ -216,7 +216,7 @@ bool subHttp(char const channel[],CHANNEL_CALLBACK_SIGNATURE){
     //Serial.println("strPayload=" + strPayload);
     int playloadSize=http.getSize();
     http.end();   //Close connection
-    if (strPayload!="[]"){    
+    if (strPayload!="[]"){
       unsigned char* payload = (unsigned char*) strPayload.c_str(); // cast from string to unsigned char*
       Serial.println(strPayload);
       Serial.println("calling callback");
