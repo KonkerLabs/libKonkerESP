@@ -1,0 +1,36 @@
+{
+    "name": "DHTStable", 
+    "keywords": [
+        "dht11", 
+        "dht22", 
+        "dht33", 
+        "dht44", 
+        "am2301", 
+        "am2302", 
+        "am2303"
+    ], 
+    "description": "Stable version of the library for DHT Temperature & Humidity Sensor.", 
+    "authors": [
+        {
+            "email": "Rob.Tillaart@gmail.com", 
+            "url": null, 
+            "maintainer": true, 
+            "name": "Rob Tillaart"
+        }
+    ], 
+    "repository": {
+        "type": "git", 
+        "url": "https://github.com/RobTillaart/Arduino.git"
+    }, 
+    "version": "0.2.4", 
+    "frameworks": [
+        "arduino"
+    ], 
+    "platforms": [
+        "atmelavr"
+    ], 
+    "export": {
+        "include": "libraries/DHTstable"
+    }, 
+    "id": 1337
+}

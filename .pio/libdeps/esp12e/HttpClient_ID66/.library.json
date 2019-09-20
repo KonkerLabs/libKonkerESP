@@ -1,0 +1,49 @@
+{
+    "name": "HttpClient", 
+    "version": "2.2.0", 
+    "keywords": [
+        "communication"
+    ], 
+    "description": "Library to easily make HTTP GET, POST and PUT requests to a web server.", 
+    "frameworks": [
+        "arduino"
+    ], 
+    "platforms": [
+        "atmelavr", 
+        "atmelsam", 
+        "espressif32", 
+        "espressif8266", 
+        "intel_arc32", 
+        "microchippic32", 
+        "nordicnrf51", 
+        "nordicnrf52", 
+        "ststm32", 
+        "teensy", 
+        "timsp430"
+    ], 
+    "authors": [
+        {
+            "email": "adrianm@mcqn.com", 
+            "url": null, 
+            "maintainer": true, 
+            "name": "Adrian McEwen"
+        }
+    ], 
+    "repository": {
+        "type": "git", 
+        "url": "https://github.com/amcewen/HttpClient"
+    }, 
+    "homepage": "http://github.com/amcewen/HttpClient", 
+    "export": {
+        "include": null, 
+        "exclude": [
+            "extras", 
+            "docs", 
+            "tests", 
+            "test", 
+            "*.doxyfile", 
+            "*.pdf"
+        ]
+    }, 
+    "id": 66
+}
