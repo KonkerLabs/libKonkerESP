@@ -16,14 +16,19 @@ CredentialsClass::~CredentialsClass()
     // nothing here
 }
 
-int CredentialsClass::saveWifiCredentials()
+int CredentialsClass::storeWifiCredentials()
 {
-    uint8_t * dataptr = (uint8_t *)&wifi_cred[0];
+    uint8_t * dataptr = (uint8_t *)(void*)&wifi_cred[0];
 
     for (int i = 0; i < sizeof(wifi_cred); ++i)
     {
-        mem_cred.write(i, *dataptr);
+        mem_cred.write(i, *dataptr++);
     }
 
     return mem_cred.commit() ? 0 : -1;
+}
+
+int CredentialsClass::recoverWifiCredentials()
+{
+
 }
