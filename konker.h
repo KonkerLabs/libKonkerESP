@@ -1237,6 +1237,7 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted, char *
     return;
   }
 
+#ifndef DISABLE_AP_SETUP
 	//MODO AP (nome do device, sem senha)
 
 	//se conectar, cria o HTTP server
@@ -1280,9 +1281,7 @@ void konkerConfig(char rootURL[64], char productPefix[6], bool encripted, char *
 		ESP.restart();
 		#endif
 	}
-
-
-
+#endif
 }
 
 
