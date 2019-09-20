@@ -8,7 +8,7 @@
 /**
  * Constructor
  */
-ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(HTTPClient client, String currentVersion) : _fwEndpoint("/firmware/")
+ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(Protocol *client, String currentVersion) : _fwEndpoint("/firmware/")
 {
     _client = client;
     _currentVersion = currentVersion;
@@ -34,6 +34,16 @@ ESPHTTPKonkerUpdate::~ESPHTTPKonkerUpdate()
     _currentVersion = "";
 }
 
+void ESPHTTPKonkerUpdate::setProtocol(Protocol *client)
+{
+    _client = client;
+}
+
+void ESPHTTPKonkerUpdate::setFWchannel(String id)
+{
+    _fwEndpoint += id;
+}
+
 /**
  * Perform FW update
  * @param version char*
@@ -41,18 +51,16 @@ ESPHTTPKonkerUpdate::~ESPHTTPKonkerUpdate()
  */
 t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
 {
+    HTTPClient http;
     t_httpUpdate_return ret = t_httpUpdate_return::HTTP_UPDATE_NO_UPDATES;
-    if (_client.connected())
+
+    if (_client->checkConnection())
     {
-        //client.begin(_device.getHost(), _device.getPort(), _device.getUri());
+        Serial.print("Fetching binary at: " + _fwEndpoint + "/binary");
+        http = HTTPProtocol(_client).getClient();
+        http.setURL(_fwEndpoint + String("/binary "));
 
-        Serial.print("Fetching binary at: ");
-        //Serial.println(_device.getHost() + ":" + String(_connections.port) + _connections.uri);
-
-        //Serial.println("Authorizing...");
-        //client.setAuthorization(_credentials.device_login, _credentials.device_pass);
-        //Serial.println("Authorization successfull");
-        ret = ESP8266HTTPUpdate::handleUpdate(_client, _currentVersion, false);
+        ret = ESP8266HTTPUpdate::handleUpdate(http, _currentVersion, false);
 
         Serial.println("Return code: " + ESP8266HTTPUpdate::getLastErrorString());
     }
@@ -67,35 +75,25 @@ t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
  */
 void ESPHTTPKonkerUpdate::updateSucessCallBack(char newVersion[16])
 {
-    if(!_client.connected())
+    if(!_client->checkConnection())
     {
         Serial.println("[Update] Cannot send confirmation");
         return;
     }
 
     Serial.println("[Update] Update ok, sending confirmation.");
-    bool subCode=0;
 
-    //String fwUpdateURL= "http://" + String(_connections.host) + String (":") + String(_connections.port) + String("/registry-data/firmware/") + String(_credentials.device_login);
-    //HTTPClient http;  //Declare an object of class HTTPClient
-    //http.begin(fwUpdateURL);  //Specify request destination
-    _client.addHeader("Content-Type", "application/json");
-    _client.addHeader("Accept", "application/json");
-    //http.setAuthorization(_credentials.device_login, _credentials.device_pass);
+    //_client.addHeader("Content-Type", "application/json");
+    //_client.addHeader("Accept", "application/json");
 
     // TODO change to REBOOTING
     String smsg=String("{\"version\": \"" + String(newVersion) + "\",\"status\":\"UPDATED\"}");
-    int httpCode = _client.sendRequest("PUT", String(smsg));
+    int retCode = _client->send(_fwEndpoint.c_str(), String(smsg));
 
 
-    //Serial.println("Confirmantion send: " + fwUpdateURL  + "; Body: " + smsg + "; httpcode: " + String(httpCode));
+    Serial.println("Confirmantion sent: " + _fwEndpoint  + "; Body: " + smsg + "; httpcode: " + String(retCode));
 
-    //_client.clear();   //Close connection
-
-    //subCode = interpretHTTPCode(httpCode);
-    subCode = 0;
-
-    if (!subCode){
+    if (!retCode){
         Serial.println("[Update callback] Failed");
     }else{
         Serial.println("[Update callback] Success");
@@ -228,7 +226,7 @@ void ESPHTTPKonkerUpdate::updateVersion(String newVersion)
     if(newVersion != "")
     {
         _currentVersion = newVersion;
-    }        
+    }
     // TODO save new version to memory
     // TODO update first boot flag in memory
 }
@@ -240,45 +238,22 @@ void ESPHTTPKonkerUpdate::updateVersion(String newVersion)
  */
 bool ESPHTTPKonkerUpdate::querryPlatform(String recvVersion)
 {
-    bool subCode=0;
-    char buffer[100];
-    char bffPort[6];
+    String retPayload;
 
     Serial.println("Checking for updates...");
 
-    //String sPort=(String)_device.getPort;
-    //sPort.toCharArray(bffPort, 6);
-    //if (String(_device.getHost()).indexOf("http://", 0) <= 0)
-    /* {
-        // Add 'http://' if not in URL
-        strcpy (buffer,"http://");
-    } */
-    //strcpy (buffer,_device.getHost());
-    strcat (buffer,":");
-    strcat (buffer,bffPort);
-    strcat (buffer, "/registry-data"); // [MJ] Apenas para plataforma rodando localmente
-    strcat (buffer,"/firmware/");
-    //strcat (buffer,_device.getLogin());
-
-    //HTTPClient http;  //Declare an object of class HTTPClient
-    if(!_client.connected())
+    if(!_client->checkConnection())
     {
-        Serial.println("No connection");
+        Serial.println("No connection to platform");
         return false;
     }
-    _client.addHeader("Content-Type", "application/json");
-    _client.setTimeout(2000);
-    //http.setAuthorization(_credentials.device_login, _credentials.device_pass);
-    //http.begin((String)buffer);  //Specify request destination
-    int httpCode = _client.GET();
+    // _client.addHeader("Content-Type", "application/json");
+    // _client.setTimeout(2000);
+    int retCode = _client->receive(&retPayload);
 
-    Serial.println("Checking update at: " + String(buffer));
+    Serial.println("Checking update at: " + _fwEndpoint);
 
-    //TODO do not depend on HTTP codes to confirm update
-    //subCode = interpretHTTPCode(httpCode);
-
-    //if (!subCode)
-    if(httpCode == 404)
+    if(!retCode)
     {
         Serial.println("[Update] No new FW version");
         Serial.println("");
@@ -289,14 +264,12 @@ bool ESPHTTPKonkerUpdate::querryPlatform(String recvVersion)
         Serial.println("[Update] New version exist");
         Serial.println("");
 
-        String strPayload = _client.getString();
-        Serial.println("strPayload=" + strPayload);
-        if (strPayload != "[]")
+        Serial.println("strPayload=" + retPayload);
+        if (retPayload != "[]")
         {
-            recvVersion = this->getVersionFromPayload(strPayload);
+            recvVersion = this->getVersionFromPayload(retPayload);
         }
     }
-    //_client.clear();   //Close connection
 
-    return subCode;
+    return retCode;
 }

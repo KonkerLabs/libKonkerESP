@@ -3,7 +3,7 @@
 const char ssid[10] = "yellow";
 const char pwd[30] = "!yellow2016";
 
-// Dados do servidor 
+// Dados do servidor
 char server_ip[50] = "mqtt.demo.konkerlabs.net";
 char mqtt_port[8] = "1883";
 int http_port = 8082;
@@ -18,6 +18,7 @@ KonkerDevice device;
 void setup() {
   // put your setup code here, to run once:
   device.addWifi(ssid, pwd);
+  device.setServer(server_ip, 80);
   device.setPlatformCredentials(USER, PWD);
 }
 
