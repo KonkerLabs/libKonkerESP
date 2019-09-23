@@ -40,7 +40,7 @@ bool ConfigWifi::isConfigured() {
 
 // ---------------------------------------------------------------------------//
 
-KonkerDevice::KonkerDevice() : webServer(80), update(), wifiFile("/wifi.json")
+KonkerDevice::KonkerDevice() : wifiFile("/wifi.json"), webServer(80), update()
 {
   if (DEBUG_LEVEL>0 && !Serial){
     Serial.begin(115200);
@@ -129,7 +129,7 @@ void KonkerDevice::loop() {
     MQTTLoop();
     #endif
     checkForUpdates();
-    healthUpdate(_health_channel);
+    //healthUpdate(_health_channel);
 }
 
 // handle connection to the server used to send and receive data for this device

@@ -4,15 +4,16 @@ void BaseProtocol::init() {
 }
 
 int BaseProtocol::send(String channel, String payload) {
+    return 0;
 }
 
 int BaseProtocol::receive(String *payload) {
-
+    return 0;
 }
 
 void BaseProtocol::setConnection(String host, int port) {
   this->host = host;
-  this->port = port; 
+  this->port = port;
 }
 
 String BaseProtocol::getHost() {

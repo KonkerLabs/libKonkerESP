@@ -51,16 +51,20 @@ void ESPHTTPKonkerUpdate::setFWchannel(String id)
  */
 t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
 {
-    HTTPClient http;
+    HTTPClient *http;
     t_httpUpdate_return ret = t_httpUpdate_return::HTTP_UPDATE_NO_UPDATES;
 
     if (_client->checkConnection())
     {
         Serial.print("Fetching binary at: " + _fwEndpoint + "/binary");
-        http = HTTPProtocol(_client).getClient();
-        http.setURL(_fwEndpoint + String("/binary "));
+        _client->getClient(http);
+        if(!http)
+        {
+            http = new HTTPClient;
+        }
+        http->setURL(_fwEndpoint + String("/binary "));
 
-        ret = ESP8266HTTPUpdate::handleUpdate(http, _currentVersion, false);
+        ret = ESP8266HTTPUpdate::handleUpdate(*http, _currentVersion, false);
 
         Serial.println("Return code: " + ESP8266HTTPUpdate::getLastErrorString());
     }
@@ -73,7 +77,7 @@ t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
  * @param newVersion char*
  * @return none
  */
-void ESPHTTPKonkerUpdate::updateSucessCallBack(char newVersion[16])
+void ESPHTTPKonkerUpdate::updateSucessCallBack(const char newVersion[16])
 {
     if(!_client->checkConnection())
     {
@@ -137,7 +141,7 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
  * @param UPDATE_SUCCESS_CALLBACK_SIGNATURE
  * @return none
  */
-void ESPHTTPKonkerUpdate::runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE cb)
+void ESPHTTPKonkerUpdate::runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE)
 {
     Serial.println("UPDATING....");
     _deviceState = UPDATING;
@@ -155,7 +159,7 @@ void ESPHTTPKonkerUpdate::runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE cb)
             break;
         case HTTP_UPDATE_OK:
             // Serial.println("[Update] Not sending confirmation!!! D:D:D:D:");
-            (this->*cb)(_newVersion.c_str());
+            (this->*updateSucessCallBack_t)(_newVersion.c_str());
             ESP.restart();
             break;
     }

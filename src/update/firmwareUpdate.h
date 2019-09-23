@@ -38,9 +38,9 @@ class ESPHTTPKonkerUpdate: public ESP8266HTTPUpdate
         void setFWchannel(String id);
 
         t_httpUpdate_return update(String newVersion);
-        void updateSucessCallBack(char newVersion[]);
+        void updateSucessCallBack(const char newVersion[16]);
         bool checkForUpdate();
-        bool runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE);
+        void runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE);
         void performUpdate();
         //To be called during setup
         bool checkFirstBoot();

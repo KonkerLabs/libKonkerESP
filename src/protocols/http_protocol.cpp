@@ -13,6 +13,11 @@ HTTPProtocol::~HTTPProtocol() {
   this->disconnect();
 }
 
+void HTTPProtocol::getClient(HTTPClient* http)
+{
+    http = &this->client;
+}
+
 int HTTPProtocol::connect() {
   return this->client.begin("http://"+this->host+":"+this->port);
 }
@@ -27,8 +32,6 @@ int HTTPProtocol::disconnect() {
 bool HTTPProtocol::checkConnection() {
   return this->client.connected();
 }
-
-
 
 void HTTPProtocol::buildHTTPSUBTopic(char const channel[], char *topic){
   char bffPort[6];

@@ -30,5 +30,5 @@ int CredentialsClass::storeWifiCredentials()
 
 int CredentialsClass::recoverWifiCredentials()
 {
-
+    return -1;
 }

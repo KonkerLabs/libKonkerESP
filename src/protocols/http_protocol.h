@@ -24,7 +24,7 @@ class HTTPProtocol: public ConnectionProtocol {
     HTTPProtocol();
     ~HTTPProtocol();
 
-    HTTPClient getClient();
+    void getClient(HTTPClient* http);
 
     int send(const char * channel, String payload);
     int receive(String *payload);

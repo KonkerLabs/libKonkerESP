@@ -2,7 +2,7 @@
 #define __GLOBALS_H__
 
 //#define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (*succes_update_callback)(char[16])
-#define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (ESPHTTPKonkerUpdate::* updateSucessCallBack)(char[16])
+#define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (ESPHTTPKonkerUpdate::* updateSucessCallBack_t)(const char[16])
 
 #define DEFAULT_NAME    "S000"
 #define BUFFER_SIZE      1000
