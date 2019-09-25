@@ -8,35 +8,15 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 #include "../globals.h"
-//#include "../konker.h"
-#include "../protocols/protocol.h"
+#include "../protocols/http_protocol.h"
 
 enum State {RUNNING, UPDATING, REBOOT, UPDATED};
 
 class ESPHTTPKonkerUpdate: public ESP8266HTTPUpdate
 {
-    public:
-        ESPHTTPKonkerUpdate(HTTPClient client, String currentVersion);
-        ESPHTTPKonkerUpdate();
-        ~ESPHTTPKonkerUpdate();
-
-        void setClient(Protocol client);
-        Protocol getClient();
-        void setVersion(String version);
-        String getVersion();
-
-        t_httpUpdate_return update(String newVersion);
-        void updateSucessCallBack(char newVersion[]);
-        bool checkForUpdate();
-        bool runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE);
-        void performUpdate();
-        //To be called during setup
-        bool checkFirstBoot();
-        void sendUpdateConfirmation(String newVersion);
     private:
-        //KonkerDevice _device;
-        HTTPClient _client;
-        const String _fwEndpoint;
+        Protocol *_client;
+        String _fwEndpoint;
         String _currentVersion;
         String _newVersion;
         State _deviceState;
@@ -45,6 +25,26 @@ class ESPHTTPKonkerUpdate: public ESP8266HTTPUpdate
         String getVersionFromPayload(String strPayload);
         void updateVersion(String newVersion);
         bool querryPlatform(String recvVersion);
+
+    public:
+        ESPHTTPKonkerUpdate(Protocol *client, String currentVersion);
+        ESPHTTPKonkerUpdate();
+        ~ESPHTTPKonkerUpdate();
+
+        void setProtocol(Protocol *client);
+        Protocol *getClient();
+        void setVersion(String version);
+        String getVersion();
+        void setFWchannel(String id);
+
+        t_httpUpdate_return update(String newVersion);
+        void updateSucessCallBack(const char newVersion[16]);
+        bool checkForUpdate();
+        void runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE);
+        void performUpdate();
+        //To be called during setup
+        bool checkFirstBoot();
+        void sendUpdateConfirmation(String newVersion);
 };
 
 #endif /* _FW_UPDATE_H_ */

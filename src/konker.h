@@ -35,8 +35,8 @@ extern "C" {
 
 #define MAX_NUM_WIFI_CRED   3
 
-// define WIFI credentials and manipulation 
-// 
+// define WIFI credentials and manipulation
+//
 struct WifiCredentials
 {
     String savedSSID;
@@ -48,10 +48,10 @@ struct WifiCredentials
 class KonkerDevice {
 
   private:
-  
+
     WifiCredentials wifiCredentials[MAX_NUM_WIFI_CRED];
     int numWifiCredentials = 0;
-    
+
     int wifi_connection_errors = 0;
 
     ConnectionType defaultConnectionType;
@@ -68,7 +68,7 @@ class KonkerDevice {
     bool _encripted=true;
     // WiFiServer httpServer(80);// create object
     #ifndef ESP32
-    ESP8266WebServer webServer;    
+    ESP8266WebServer webServer;
     #else
     WebServer webServer;
     #endif
@@ -91,13 +91,13 @@ class KonkerDevice {
     String _health_channel = "_health";
 
     void flushBuffer();
-    
+
     void formatFileSystem();
 
-    Protocol* currentProtocol; 
+    Protocol* currentProtocol;
 
     String host;
-    int port; 
+    int port;
 
     String userid;
     String password;
@@ -107,7 +107,7 @@ class KonkerDevice {
     KonkerDevice();
     ~KonkerDevice();
 
-    // configuration methods 
+    // configuration methods
 
     void setServer(String host, int port);
     void setPlatformCredentials(String userid, String password);
@@ -126,7 +126,7 @@ class KonkerDevice {
 
     void saveConfiguration();
 
-    // operation methods 
+    // operation methods
 
     void startConnection();
     void stopConnection();
@@ -136,41 +136,41 @@ class KonkerDevice {
 
     void loop();
 
-    // communication interface 
+    // communication interface
 
     /* returns 1 if send is OK or <= 0 if error ocurred when sending data to the server */
     void send(String payload);
     void send(BufferEntry *data);
 
     /* returns 1 if a message exists and is copied to the buffer or 0 if nothing exists */
-    int receive(String *buffer); 
+    int receive(String *buffer);
 
     HTTPClient* getAPIClient();
 
-    // internal interface 
-    // heart beat on the server to send status information for the device
+    // internal interface
+    // heart beat to the server to send status information for the device
     void healthUpdate(String healthChannel);
-    // check if is there any update / reconfiguration for this device on the platform 
+    // check if is there any update / reconfiguration for this device on the platform
     void checkForUpdates();
 
     void setName(const char * newName);
 };
 
 //
-// simple usage 
-// 
+// simple usage
+//
 
 
-// declare a KonkerDevice() object in your sketch 
-// in setup() 
-//    ... initialize / setup konker device with platform and wifi credentials 
-//    ... if desired, define the default and fallback protocol for the device 
-// 
-// in loop() 
-//    .. call device.loop() method 
-//    .. when you want to send data ... call device.send(payload) 
-//    .. when you need to receive a data, call device.receive() to get a payload if it exists 
-// 
+// declare a KonkerDevice() object in your sketch
+// in setup()
+//    ... initialize / setup konker device with platform and wifi credentials
+//    ... if desired, define the default and fallback protocol for the device
+//
+// in loop()
+//    .. call device.loop() method
+//    .. when you want to send data ... call device.send(payload)
+//    .. when you need to receive a data, call device.receive() to get a payload if it exists
+//
 //
 
 #endif

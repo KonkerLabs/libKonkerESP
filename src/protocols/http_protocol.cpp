@@ -6,11 +6,16 @@
 #define SUB_PREFIX "sub"
 #define PUB_PREFIX "pub"
 
-HTTPProtocol::HTTPProtocol() : client() { 
+HTTPProtocol::HTTPProtocol() : client() {
 }
 
 HTTPProtocol::~HTTPProtocol() {
   this->disconnect();
+}
+
+void HTTPProtocol::getClient(HTTPClient* http)
+{
+    http = &this->client;
 }
 
 int HTTPProtocol::connect() {
@@ -28,8 +33,6 @@ bool HTTPProtocol::checkConnection() {
   return this->client.connected();
 }
 
-
-
 void HTTPProtocol::buildHTTPSUBTopic(char const channel[], char *topic){
   char bffPort[6];
 //  itoa (_rootPort,bffPort,10);
@@ -40,7 +43,7 @@ void HTTPProtocol::buildHTTPSUBTopic(char const channel[], char *topic){
   strcat (topic,bffPort);
   strcat (topic,"/");
   strcat (topic,SUB_PREFIX);
-  strcat(topic,"/");    
+  strcat(topic,"/");
   strcat (topic,this->userid);
   strcat(topic,"/");
   strcat (topic,channel);
@@ -56,7 +59,7 @@ void HTTPProtocol::buildHTTPPUBTopic(char const channel[], char *topic){
   strcat (topic,bffPort);
   strcat (topic,"/");
   strcat (topic,PUB_PREFIX);
-  strcat(topic,"/");    
+  strcat(topic,"/");
   strcat (topic,this->userid);
 //  itoa (_rootPort,bffPort,10);
   itoa(port, bffPort, 10);
@@ -66,7 +69,7 @@ void HTTPProtocol::buildHTTPPUBTopic(char const channel[], char *topic){
   strcat (topic,bffPort);
   strcat (topic,"/");
   strcat (topic,PUB_PREFIX);
-  strcat(topic,"/");    
+  strcat(topic,"/");
   strcat (topic,this->userid);
   strcat(topic,"/");
   strcat (topic,channel);
@@ -74,14 +77,11 @@ void HTTPProtocol::buildHTTPPUBTopic(char const channel[], char *topic){
 
 int HTTPProtocol::send(const char *channel, String payload) {
 
-  //throtle this call 
+  //throtle this call
   if ((millis()-_last_time_http_request) < _millis_delay_per_http_request){
       delay((millis()-_last_time_http_request));
   }
   _last_time_http_request = millis();
-
-  bool pubCode=0;
-
 
   client.addHeader("Content-Type", "application/json");
   client.addHeader("Accept", "application/json");
@@ -94,7 +94,7 @@ int HTTPProtocol::send(const char *channel, String payload) {
   client.setTimeout(10000);
 
   std::cout << "(B) POST TO DATA" << std::endl;
-  
+
   int httpCode=client.POST(payload);
   std::cout << "(E) POST TO DATA" << std::endl;
 
@@ -110,5 +110,5 @@ int HTTPProtocol::send(const char *channel, String payload) {
 }
 
 int HTTPProtocol::receive(String *payload) {
+    return 0;
 }
-

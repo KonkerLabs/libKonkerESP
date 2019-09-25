@@ -3,10 +3,10 @@
 
 #include "../globals.h"
 #include "connection_protocol.h"
-#include <ESP8266HTTPClient.h> 
+#include <ESP8266HTTPClient.h>
 
 class HTTPProtocol: public ConnectionProtocol {
-  private: 
+  private:
     HTTPClient client;
 
     long failedComm = 0;
@@ -19,15 +19,15 @@ class HTTPProtocol: public ConnectionProtocol {
     void buildHTTPSUBTopic(char const channel[], char *topic);
     void buildHTTPPUBTopic(char const channel[], char *topic);
 
-
   public:
 
     HTTPProtocol();
     ~HTTPProtocol();
 
+    void getClient(HTTPClient* http);
+
     int send(const char * channel, String payload);
     int receive(String *payload);
-
 
     int connect();
     int disconnect();

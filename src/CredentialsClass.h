@@ -14,7 +14,7 @@ class CredentialsClass
 
         ~CredentialsClass();
 
-        int saveWifiCredentials();
+        int storeWifiCredentials();
         int recoverWifiCredentials();
 
     private:

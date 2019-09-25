@@ -4,12 +4,6 @@
 
 #define MAX_NAME_SIZE    10
 
-
-
-
-
-// ---------------------------------------------------------------------------//
-
 ConfigWifi::ConfigWifi() {
     for (int x = 0; x < 4; x++) this->ip[x] = 0;
     for (int x = 0; x < 4; x++) this->gateway[x] = 0;
@@ -40,14 +34,13 @@ void ConfigWifi::setSubnet (uint8_t first_octet, uint8_t second_octet, uint8_t t
   this->s=1;
 }
 
-
 bool ConfigWifi::isConfigured() {
   return this->i && this->g && this->s;
 }
 
 // ---------------------------------------------------------------------------//
 
-KonkerDevice::KonkerDevice() : webServer(80), update(), wifiFile("/wifi.json")
+KonkerDevice::KonkerDevice() : wifiFile("/wifi.json"), webServer(80), update()
 {
   if (DEBUG_LEVEL>0 && !Serial){
     Serial.begin(115200);
@@ -55,41 +48,42 @@ KonkerDevice::KonkerDevice() : webServer(80), update(), wifiFile("/wifi.json")
   }
   WiFi.persistent(false);
   WiFi.disconnect();
-  delay(10);  
-  WiFi.setAutoConnect(false);  
+  delay(10);
+  WiFi.setAutoConnect(false);
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
   WiFi.mode(WIFI_STA);
-  delay(10);  
+  delay(10);
   WiFi.setAutoReconnect(true);
   if (DEBUG_LEVEL>0){
     Serial.println("BUILD: " + (String)BUILD_ID);
   }
+  update.setFWchannel(this->userid);
 
   delay(1000);
 }
 
 
-KonkerDevice::~KonkerDevice() {
+KonkerDevice::~KonkerDevice()
+{
 
 }
 
 void KonkerDevice::formatFileSystem()
 {
-
-
+    return;
 }
 
 void KonkerDevice::resetALL()
 {
     WiFi.mode(WIFI_OFF);
     delay(100);
-    
+
     formatFileSystem();
     if (DEBUG_LEVEL>0){
       Serial.println(F("Full reset done! FileSystem formated!"));
       Serial.println(F("You must remove this device from Konker plataform if registred, and redo factory configuration."));
     }
-    
+
 
     delay(5000);
     #ifndef ESP32
@@ -135,7 +129,7 @@ void KonkerDevice::loop() {
     MQTTLoop();
     #endif
     checkForUpdates();
-    healthUpdate(_health_channel);
+    //healthUpdate(_health_channel);
 }
 
 // handle connection to the server used to send and receive data for this device
@@ -147,7 +141,7 @@ void KonkerDevice::startConnection() {
 		this->currentProtocol = nullptr;
 	}
 
-	Protocol* newConnection; 
+	Protocol* newConnection;
 	bool connectionOriented = true;
 
 	switch (defaultConnectionType) {
@@ -170,7 +164,7 @@ void KonkerDevice::startConnection() {
 			// newConnection = new UDPProtocol();
 			connectionOriented = false;
 			break;
-		default: 
+		default:
 			newConnection = nullptr;
 			connectionOriented = false;
 	}
@@ -184,7 +178,7 @@ void KonkerDevice::startConnection() {
 		this->currentProtocol = newConnection;
 		this->currentProtocol->connect();
 
-		// update the ESP update client with this new connection 
+		// update the ESP update client with this new connection
 
 		update.setProtocol(newConnection);
 	}
@@ -196,9 +190,8 @@ void KonkerDevice::stopConnection() {
 			this->currentProtocol->disconnect();
 		}
 	}
-
-
 }
+
 int KonkerDevice::checkConnection() {
 		if (this->currentProtocol != nullptr) {
 			return this->currentProtocol->checkConnection();
@@ -211,4 +204,3 @@ void KonkerDevice::setServer(String host, int port) {
 	this->host = host;
 	this->port = port;
 }
-
