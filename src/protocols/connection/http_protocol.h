@@ -1,13 +1,16 @@
 #ifndef __HTTP_PROTOCOL_H__
 #define __HTTP_PROTOCOL_H__
 
-#include "../globals.h"
+#include "globals.h"
 #include "connection_protocol.h"
 #include <ESP8266HTTPClient.h>
+#include <WiFiClient.h>
 
-class HTTPProtocol: public ConnectionProtocol {
+class HTTPProtocol: public ConnectionProtocol
+{
   private:
-    HTTPClient client;
+    HTTPClient http_client;
+    WiFiClient wifi_client;
 
     long failedComm = 0;
 
@@ -31,7 +34,7 @@ class HTTPProtocol: public ConnectionProtocol {
 
     int connect();
     int disconnect();
-    bool checkConnection();
+    int checkConnection();
 
 };
 

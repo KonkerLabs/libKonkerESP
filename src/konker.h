@@ -2,25 +2,25 @@
 #ifndef __KONKER_H__
 #define __KONKER_H__
 
+#include <Arduino.h>
+#include <ArduinoLog.h>
+
 #ifndef ESP32
-extern "C" {
-  #include "user_interface.h"
-}
+#include "user_interface.h"
 #endif
 
-#include <Arduino.h>
-
 #ifndef ESP32
-#include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
 #endif
 
-#include "config_wifi.h"
 #include "globals.h"
-#include "./protocols/protocol.h"
-#include "buffer_entry.h"
-#include "./update/firmwareUpdate.h"
+// #include "buffer_entry.h"
+#include "wireless/manage_wifi.h"
+#include "protocols/all_protocols.h"
+// #include "./update/firmwareUpdate.h"
+
+#define _STATUS_LED 2
 
 // debug levels
 /*
@@ -33,127 +33,114 @@ extern "C" {
 // 6 - ALL	All levels including custom levels.
 */
 
-#define MAX_NUM_WIFI_CRED   3
-
-// define WIFI credentials and manipulation
-//
-struct WifiCredentials
-{
-    String savedSSID;
-    String savedPSK;
-};
-
 // Konker ESP CLASS
 
-class KonkerDevice {
+class KonkerDevice
+{
+private:
+  int wifi_connection_errors = 0;
+  WifiManager deviceWifi;
 
-  private:
+  ConnectionType defaultConnectionType;
+  ConnectionType fallbackConnectionType;
 
-    WifiCredentials wifiCredentials[MAX_NUM_WIFI_CRED];
-    int numWifiCredentials = 0;
+#ifndef ESP32
+  int resetPin = D5;
+#else
+  int resetPin=13;
+#endif
 
-    int wifi_connection_errors = 0;
+  bool _encripted=true;
+  // WiFiServer httpServer(80);// create object
+#ifndef ESP32
+  ESP8266WebServer webServer;
+#else
+  WebServer webServer;
+#endif
 
-    ConnectionType defaultConnectionType;
-    ConnectionType fallbackConnectionType;
+  // ESPHTTPKonkerUpdate update;
 
-    #ifndef ESP32
-    int resetPin = D5;
-    #else
-    int resetPin=13;
-    #endif
+  // identificacao do device
+  String deviceID;
+  String chipID; // = deviceID + ESP.getChipId
 
-    String wifiFile;
+  String NAME = DEFAULT_NAME;
 
-    bool _encripted=true;
-    // WiFiServer httpServer(80);// create object
-    #ifndef ESP32
-    ESP8266WebServer webServer;
-    #else
-    WebServer webServer;
-    #endif
+  // fila de envio do device
+  // BufferEntry sendBuffer[BUFFER_SIZE];
+  // BufferEntry receiveBuffer[BUFFER_SIZE];
 
-    ESPHTTPKonkerUpdate update;
+  // flag when the device checked for a device update
+  unsigned long _last_time_update_check=0;
 
-    // identificacao do device
-    String ChipId;
-    String id;
+  String _health_channel = "_health";
 
-    String NAME = DEFAULT_NAME;
+  Protocol* currentProtocol;
 
-    // fila de envio do device
-    BufferEntry sendBuffer[BUFFER_SIZE];
-    BufferEntry receiveBuffer[BUFFER_SIZE];
+  String host;
+  int port;
 
-    // flag when the device checked for a device update
-    unsigned long _last_time_update_check=0;
+  String userid;
+  String password;
 
-    String _health_channel = "_health";
+  // void flushBuffer();
+  // void formatFileSystem();
+  void setChipID(String deviceID);
 
-    void flushBuffer();
+public:
+  KonkerDevice();
+  ~KonkerDevice();
 
-    void formatFileSystem();
+  // configuration methods
 
-    Protocol* currentProtocol;
+  void setServer(String host, int port);
+  void setPlatformCredentials(String userid, String password);
+  void setPlatformCredentials(String deviceID, String userid, String password);
 
-    String host;
-    int port;
+  // WiFi operations
+  void addWifi(String ssid, String password);
+  void clearWifi(String ssid);
+  bool connectWifi();
+  bool checkWifiConnection();
+  int getNumWifiCredentials();
 
-    String userid;
-    String password;
+  // void setUniqueID(String id);
+  // String getUniqueID();
+  //
+  // void saveConfiguration();
+  //
+  // // operation methods
+  //
+  void setDefaultConnectionType(ConnectionType c);
+  void setFallbackConnectionType(ConnectionType c);
+  ConnectionType getDefaultConnectionType();
+  ConnectionType getFallbackConnectionType();
+  void startConnection();
+  void stopConnection();
+  int checkPlatformConnection();
 
-  public:
+  void resetALL();
 
-    KonkerDevice();
-    ~KonkerDevice();
+  void loop();
 
-    // configuration methods
+  // communication interface
 
-    void setServer(String host, int port);
-    void setPlatformCredentials(String userid, String password);
-
-    void addWifi(String ssid, String password);
-    void clearWifi(String ssid);
-    int getNumWifiCredentials();
-
-    void setUniqueID(String id);
-    String getUniqueID();
-
-    void setDefaultConnectionType(ConnectionType c);
-    void setFallbackConnectionType(ConnectionType c);
-    ConnectionType getDefaultConnectionType();
-    ConnectionType getFallbackConnectionType();
-
-    void saveConfiguration();
-
-    // operation methods
-
-    void startConnection();
-    void stopConnection();
-    int checkConnection();
-
-    void resetALL();
-
-    void loop();
-
-    // communication interface
-
-    /* returns 1 if send is OK or <= 0 if error ocurred when sending data to the server */
-    void send(String payload);
-    void send(BufferEntry *data);
-
-    /* returns 1 if a message exists and is copied to the buffer or 0 if nothing exists */
-    int receive(String *buffer);
-
-    HTTPClient* getAPIClient();
-
-    // internal interface
-    // heart beat to the server to send status information for the device
-    void healthUpdate(String healthChannel);
-    // check if is there any update / reconfiguration for this device on the platform
-    void checkForUpdates();
-
-    void setName(const char * newName);
+  /* returns 1 if send is OK or <= 0 if error ocurred when sending data to the server */
+  // void send(String payload);
+  // void send(BufferEntry *data);
+  //
+  // /* returns 1 if a message exists and is copied to the buffer or 0 if nothing exists */
+  // int receive(String *buffer);
+  //
+  // HTTPClient* getAPIClient();
+  //
+  // // internal interface
+  // // heart beat to the server to send status information for the device
+  // void healthUpdate(String healthChannel);
+  // // check if is there any update / reconfiguration for this device on the platform
+  // void checkForUpdates();
+  //
+  // void setName(const char * newName);
 };
 
 //

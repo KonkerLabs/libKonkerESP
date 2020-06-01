@@ -1,63 +1,29 @@
 #include "konker.h"
 
-#include "./protocols/all_protocols.h"
-
 #define MAX_NAME_SIZE    10
-
-ConfigWifi::ConfigWifi() {
-    for (int x = 0; x < 4; x++) this->ip[x] = 0;
-    for (int x = 0; x < 4; x++) this->gateway[x] = 0;
-    for (int x = 0; x < 4; x++) this->subnet[x] = 0;
-}
-
-void ConfigWifi::setIP (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet) {
-  this->ip[0] = first_octet;
-  this->ip[1] = second_octet;
-  this->ip[2] = third_octet;
-  this->ip[3] = fourth_octet;
-  this->i=1;
-}
-
-void ConfigWifi::setGateway (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet) {
-  this->gateway[0] = first_octet;
-  this->gateway[1] = second_octet;
-  this->gateway[2] = third_octet;
-  this->gateway[3] = fourth_octet;
-  this->g=1;
-}
-
-void ConfigWifi::setSubnet (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet) {
-  this->subnet[0] = first_octet;
-  this->subnet[1] = second_octet;
-  this->subnet[2] = third_octet;
-  this->subnet[3] = fourth_octet;
-  this->s=1;
-}
-
-bool ConfigWifi::isConfigured() {
-  return this->i && this->g && this->s;
-}
 
 // ---------------------------------------------------------------------------//
 
-KonkerDevice::KonkerDevice() : wifiFile("/wifi.json"), webServer(80), update()
+KonkerDevice::KonkerDevice() : deviceWifi(), webServer(80)//, update()
 {
-  if (DEBUG_LEVEL>0 && !Serial){
+  if (DEBUG_LEVEL>0 && !Serial)
+  {
     Serial.begin(115200);
     while (!Serial) delay(100);
   }
-  WiFi.persistent(false);
-  WiFi.disconnect();
-  delay(10);
-  WiFi.setAutoConnect(false);
-  WiFi.setSleepMode(WIFI_NONE_SLEEP);
-  WiFi.mode(WIFI_STA);
-  delay(10);
-  WiFi.setAutoReconnect(true);
-  if (DEBUG_LEVEL>0){
-    Serial.println("BUILD: " + (String)BUILD_ID);
-  }
-  update.setFWchannel(this->userid);
+
+  // Third parameter is showLevel
+  Log.begin(DEBUG_LEVEL, &Serial, true);
+
+  Log.trace("BUILD: %s", BUILD_ID);
+
+  // this->defaultConnectionType = ConnectionType::MQTT;
+
+  // Turn LED on when booting device
+  pinMode(_STATUS_LED, OUTPUT);
+	digitalWrite(_STATUS_LED, LOW);
+
+  //update.setFWchannel(this->userid);
 
   delay(1000);
 }
@@ -65,86 +31,96 @@ KonkerDevice::KonkerDevice() : wifiFile("/wifi.json"), webServer(80), update()
 
 KonkerDevice::~KonkerDevice()
 {
-
 }
 
-void KonkerDevice::formatFileSystem()
-{
-    return;
-}
+// void KonkerDevice::formatFileSystem()
+// {
+//   return;
+// }
 
 void KonkerDevice::resetALL()
 {
-    WiFi.mode(WIFI_OFF);
-    delay(100);
+  deviceWifi.disconnectClientWifi();
 
-    formatFileSystem();
-    if (DEBUG_LEVEL>0){
-      Serial.println(F("Full reset done! FileSystem formated!"));
-      Serial.println(F("You must remove this device from Konker plataform if registred, and redo factory configuration."));
-    }
+  // formatFileSystem();
+  Log.trace("Full reset done! FileSystem formated!");
+  Log.trace("You must remove this device from Konker plataform if registred, and redo factory configuration.");
 
-
-    delay(5000);
-    #ifndef ESP32
-    ESP.reset();
-    #else
-    ESP.restart();,
-    #endif
-    delay(1000);
+  delay(5000);
+#ifndef ESP32
+  ESP.reset();
+#else
+  ESP.restart();,
+#endif
+  delay(1000);
 }
 
-void KonkerDevice::setPlatformCredentials(String userid, String password) {
-	this->userid = userid;
-	this->password = password;
-}
-
-void KonkerDevice::setName(const char * newName)
-{
-  NAME = newName;
-
-  #ifndef ESP32
-  ChipId = NAME + String(ESP.getChipId());
-  #else
-  ChipId = NAME + (uint32_t)ESP.getEfuseMac();
-  #endif
-}
+// void KonkerDevice::setName(const char * newName)
+// {
+//   NAME = newName;
+//
+// #ifndef ESP32
+//   ChipId = NAME + String(ESP.getChipId());
+// #else
+//   ChipId = NAME + (uint32_t)ESP.getEfuseMac();
+// #endif
+// }
 
 void KonkerDevice::addWifi(String ssid, String password)
 {
-
+  deviceWifi.setConfig(ssid, password);
 }
 
 void KonkerDevice::clearWifi(String ssid)
 {
-
+  deviceWifi.removeConfig(ssid);
 }
 
-void KonkerDevice::checkForUpdates() {
-  update.checkForUpdate();
+bool KonkerDevice::connectWifi()
+{
+  int res = deviceWifi.tryConnectClientWifi();
+  if (res)
+  {
+    // Turn LED off
+    digitalWrite(_STATUS_LED, HIGH);
+  }
+  return res;
 }
 
-void KonkerDevice::loop() {
-    #ifdef pubsubMQTT
-    MQTTLoop();
-    #endif
-    checkForUpdates();
-    //healthUpdate(_health_channel);
+bool KonkerDevice::checkWifiConnection()
+{
+  return deviceWifi.checkConnectionStatus();
+}
+
+// void KonkerDevice::checkForUpdates()
+// {
+//   update.checkForUpdate();
+// }
+
+void KonkerDevice::setDefaultConnectionType(ConnectionType c)
+{
+  this->defaultConnectionType = c;
+}
+
+void KonkerDevice::setFallbackConnectionType(ConnectionType c)
+{
+  this->fallbackConnectionType = c;
 }
 
 // handle connection to the server used to send and receive data for this device
-void KonkerDevice::startConnection() {
-
-	if (this->currentProtocol != nullptr) {
+void KonkerDevice::startConnection()
+{
+	if (this->currentProtocol != nullptr)
+  {
 		stopConnection();
-		delete this->currentProtocol;
 		this->currentProtocol = nullptr;
 	}
 
 	Protocol* newConnection;
 	bool connectionOriented = true;
 
-	switch (defaultConnectionType) {
+	switch (this->defaultConnectionType)
+  {
 		case ConnectionType::HTTP:
 			newConnection = new HTTPProtocol();
 			break;
@@ -162,6 +138,7 @@ void KonkerDevice::startConnection() {
 			break;
 		case ConnectionType::UDP:
 			// newConnection = new UDPProtocol();
+      newConnection = new HTTPProtocol();
 			connectionOriented = false;
 			break;
 		default:
@@ -169,9 +146,10 @@ void KonkerDevice::startConnection() {
 			connectionOriented = false;
 	}
 
-
-	if (newConnection != nullptr) {
-		if (connectionOriented) {
+	if (newConnection != nullptr)
+  {
+		if (connectionOriented)
+    {
 			newConnection->setConnection(this->host, this->port);
 			newConnection->setCredentials(this->userid.c_str(), this->password.c_str());
 		}
@@ -179,28 +157,66 @@ void KonkerDevice::startConnection() {
 		this->currentProtocol->connect();
 
 		// update the ESP update client with this new connection
-
-		update.setProtocol(newConnection);
+		// update.setProtocol(newConnection);
 	}
 }
 
-void KonkerDevice::stopConnection() {
-	if (this->currentProtocol != nullptr) {
-		if (this->currentProtocol->checkConnection()) {
+void KonkerDevice::stopConnection()
+{
+	if (this->currentProtocol != nullptr)
+  {
+		if (this->currentProtocol->checkConnection())
+    {
 			this->currentProtocol->disconnect();
 		}
 	}
 }
 
-int KonkerDevice::checkConnection() {
-		if (this->currentProtocol != nullptr) {
-			return this->currentProtocol->checkConnection();
-		}
-		return NOT_CONNECTED;
-
+int KonkerDevice::checkPlatformConnection()
+{
+	if (this->currentProtocol != nullptr)
+  {
+		return this->currentProtocol->checkConnection();
+	}
+	return NOT_CONNECTED;
 }
 
-void KonkerDevice::setServer(String host, int port) {
+void KonkerDevice::loop()
+{
+#ifdef pubsubMQTT
+  MQTTLoop();
+#endif
+  // checkForUpdates();
+  //healthUpdate(_health_channel);
+}
+
+void KonkerDevice::setServer(String host, int port)
+{
 	this->host = host;
 	this->port = port;
+}
+
+void KonkerDevice::setChipID(String deviceID)
+{
+#ifndef ESP32
+  this->chipID = deviceID + ESP.getChipId();
+#else
+  this->chipID = deviceID + ESP.getEfuseMac();
+#endif
+}
+
+void KonkerDevice::setPlatformCredentials(String userid, String password)
+{
+  this->deviceID = DEFAULT_NAME;
+  setChipID(deviceID);
+	this->userid = userid;
+	this->password = password;
+}
+
+void KonkerDevice::setPlatformCredentials(String deviceID, String userid, String password)
+{
+  this->deviceID = deviceID;
+  setChipID(deviceID);
+	this->userid = userid;
+	this->password = password;
 }

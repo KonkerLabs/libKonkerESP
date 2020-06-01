@@ -1,36 +1,38 @@
 #include "http_protocol.h"
 
-#include <iostream>
-
-
 #define SUB_PREFIX "sub"
 #define PUB_PREFIX "pub"
 
-HTTPProtocol::HTTPProtocol() : client() {
+HTTPProtocol::HTTPProtocol() : http_client()
+{
 }
 
-HTTPProtocol::~HTTPProtocol() {
+HTTPProtocol::~HTTPProtocol()
+{
   this->disconnect();
 }
 
 void HTTPProtocol::getClient(HTTPClient* http)
 {
-    http = &this->client;
+  http = &this->http_client;
 }
 
-int HTTPProtocol::connect() {
-  return this->client.begin("http://"+this->host+":"+this->port);
+int HTTPProtocol::connect()
+{
+  return this->http_client.begin(wifi_client, "http://"+this->host+":"+this->port);
 }
 
-int HTTPProtocol::disconnect() {
-  if (this->client.connected()) {
-    this->client.end();
+int HTTPProtocol::disconnect()
+{
+  if (this->http_client.connected())
+  {
+    this->http_client.end();
   }
   return DISCONNECTED;
-
 }
-bool HTTPProtocol::checkConnection() {
-  return this->client.connected();
+int HTTPProtocol::checkConnection()
+{
+  return this->http_client.connected();
 }
 
 void HTTPProtocol::buildHTTPSUBTopic(char const channel[], char *topic){
@@ -83,32 +85,32 @@ int HTTPProtocol::send(const char *channel, String payload) {
   }
   _last_time_http_request = millis();
 
-  client.addHeader("Content-Type", "application/json");
-  client.addHeader("Accept", "application/json");
-  client.setAuthorization(userid, password);
+  http_client.addHeader("Content-Type", "application/json");
+  http_client.addHeader("Accept", "application/json");
+  http_client.setAuthorization(userid, password);
 
   char buffer[100];
 
   buildHTTPPUBTopic(channel,buffer);
 
-  client.setTimeout(10000);
+  http_client.setTimeout(10000);
 
-  std::cout << "(B) POST TO DATA" << std::endl;
+  // std::cout << "(B) POST TO DATA" << std::endl;
 
-  int httpCode=client.POST(payload);
-  std::cout << "(E) POST TO DATA" << std::endl;
+  int httpCode=http_client.POST(payload);
+  // std::cout << "(E) POST TO DATA" << std::endl;
 
   if (httpCode >= 0 && httpCode < 300) {
-    std::cout << "success " << httpCode << std::endl;
+    // std::cout << "success " << httpCode << std::endl;
     return 1;
   } else {
-    std::cout << "failed " << httpCode << std::endl;
+    // std::cout << "failed " << httpCode << std::endl;
     failedComm=1;
     return 0;
   }
-
 }
 
-int HTTPProtocol::receive(String *payload) {
-    return 0;
+int HTTPProtocol::receive(String *payload)
+{
+  return 0;
 }

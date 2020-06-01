@@ -5,8 +5,26 @@
 #define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (ESPHTTPKonkerUpdate::* updateSucessCallBack_t)(const char[16])
 
 #define DEFAULT_NAME    "S000"
-#define BUFFER_SIZE      1000
-#define DEBUG_LEVEL      0
+#define BUFFER_SIZE      100
+
+enum class ConnectionType
+{
+  HTTP, MQTT, AMQP, TCP, UDP, HTTPS, MQTTS
+};
+
+// debug levels
+/*
+* 0 - LOG_LEVEL_SILENT     no output
+* 1 - LOG_LEVEL_FATAL      fatal errors
+* 2 - LOG_LEVEL_ERROR      all errors
+* 3 - LOG_LEVEL_WARNING    errors, and warnings
+* 4 - LOG_LEVEL_NOTICE     errors, warnings and notices
+* 5 - LOG_LEVEL_TRACE      errors, warnings, notices & traces
+* 6 - LOG_LEVEL_VERBOSE    all
+
+Obs: To fully remove all logging code, uncomment #define DISABLE_LOGGING in ArduinoLog.h, this may significantly reduce your sketch/library size.
+*/
+#define DEBUG_LEVEL      6
 
 #ifndef BUILD_ID
 #define BUILD_ID "DEFAULT_VERSION"
@@ -14,7 +32,7 @@
 
 // connection status
 #define NOT_CONNECTED 0
-#define CONNECTED 1
-#define DISCONNECTED 2
+#define CONNECTED     1
+#define DISCONNECTED  2
 
 #endif /* __GLOBALS_H__ */
