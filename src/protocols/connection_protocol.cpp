@@ -19,6 +19,11 @@ ConnectionProtocol::~ConnectionProtocol()
   }
 }
 
+void ConnectionProtocol::protocolLoop()
+{
+  delay(1000);
+}
+
 void ConnectionProtocol::unimplemented(String method)
 {
   Serial.println(method + " NOT IMPLEMENTED");

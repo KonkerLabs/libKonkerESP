@@ -8,6 +8,11 @@ void BaseProtocol::init()
 {
 }
 
+void BaseProtocol::protocolLoop()
+{
+  delay(1000);
+}
+
 int BaseProtocol::send(String channel, String payload)
 {
   return 0;
@@ -57,5 +62,5 @@ int BaseProtocol::disconnect()
 
 int BaseProtocol::checkConnection()
 {
-  return 0;
+  return UNKNOWN;
 }

@@ -1,6 +1,9 @@
 #ifndef __GLOBALS_H__
 #define __GLOBALS_H__
 
+#include <ArduinoLog.h>
+#include <ArduinoJson.h>
+
 //#define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (*succes_update_callback)(char[16])
 #define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (ESPHTTPKonkerUpdate::* updateSucessCallBack_t)(const char[16])
 
@@ -34,5 +37,6 @@ Obs: To fully remove all logging code, uncomment #define DISABLE_LOGGING in Ardu
 #define NOT_CONNECTED 0
 #define CONNECTED     1
 #define DISCONNECTED  2
+#define UNKNOWN       3
 
 #endif /* __GLOBALS_H__ */

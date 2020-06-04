@@ -55,17 +55,6 @@ void KonkerDevice::resetALL()
   delay(1000);
 }
 
-// void KonkerDevice::setName(const char * newName)
-// {
-//   NAME = newName;
-//
-// #ifndef ESP32
-//   ChipId = NAME + String(ESP.getChipId());
-// #else
-//   ChipId = NAME + (uint32_t)ESP.getEfuseMac();
-// #endif
-// }
-
 void KonkerDevice::addWifi(String ssid, String password)
 {
   deviceWifi.setConfig(ssid, password);
@@ -83,6 +72,7 @@ bool KonkerDevice::connectWifi()
   {
     // Turn LED off
     digitalWrite(_STATUS_LED, HIGH);
+    Log.trace("Device connected to WiFi");
   }
   return res;
 }
@@ -183,11 +173,10 @@ int KonkerDevice::checkPlatformConnection()
 
 void KonkerDevice::loop()
 {
-#ifdef pubsubMQTT
-  MQTTLoop();
-#endif
+  this->currentProtocol->protocolLoop();
   // checkForUpdates();
   //healthUpdate(_health_channel);
+  delay(1000);
 }
 
 void KonkerDevice::setServer(String host, int port)
@@ -205,10 +194,21 @@ void KonkerDevice::setChipID(String deviceID)
 #endif
 }
 
+void KonkerDevice::setUniqueID(String id)
+{
+  this->deviceID = id;
+  setChipID(this->deviceID);
+}
+
+String KonkerDevice::getUniqueID()
+{
+  return this->deviceID;
+}
+
 void KonkerDevice::setPlatformCredentials(String userid, String password)
 {
   this->deviceID = DEFAULT_NAME;
-  setChipID(deviceID);
+  setChipID(this->deviceID);
 	this->userid = userid;
 	this->password = password;
 }
@@ -216,7 +216,20 @@ void KonkerDevice::setPlatformCredentials(String userid, String password)
 void KonkerDevice::setPlatformCredentials(String deviceID, String userid, String password)
 {
   this->deviceID = deviceID;
-  setChipID(deviceID);
+  setChipID(this->deviceID);
 	this->userid = userid;
 	this->password = password;
+}
+
+int KonkerDevice::sendData(String channel, String payload)
+{
+  int res;
+
+  res = this->currentProtocol->send(channel.c_str(), payload);
+  if(res)
+  {
+    Log.trace("Payload sent to platform\n");
+  }
+
+  return res;
 }

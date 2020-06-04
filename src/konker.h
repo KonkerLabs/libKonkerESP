@@ -3,7 +3,6 @@
 #define __KONKER_H__
 
 #include <Arduino.h>
-#include <ArduinoLog.h>
 
 #ifndef ESP32
 #include "user_interface.h"
@@ -64,7 +63,7 @@ private:
   String deviceID;
   String chipID; // = deviceID + ESP.getChipId
 
-  String NAME = DEFAULT_NAME;
+  String NAME = DEFAULT_NAME; // pra que?
 
   // fila de envio do device
   // BufferEntry sendBuffer[BUFFER_SIZE];
@@ -91,8 +90,7 @@ public:
   KonkerDevice();
   ~KonkerDevice();
 
-  // configuration methods
-
+  // configuration functions
   void setServer(String host, int port);
   void setPlatformCredentials(String userid, String password);
   void setPlatformCredentials(String deviceID, String userid, String password);
@@ -104,13 +102,12 @@ public:
   bool checkWifiConnection();
   int getNumWifiCredentials();
 
-  // void setUniqueID(String id);
-  // String getUniqueID();
+  void setUniqueID(String id);
+  String getUniqueID();
   //
   // void saveConfiguration();
-  //
-  // // operation methods
-  //
+
+  // Platform connection functions
   void setDefaultConnectionType(ConnectionType c);
   void setFallbackConnectionType(ConnectionType c);
   ConnectionType getDefaultConnectionType();
@@ -126,7 +123,7 @@ public:
   // communication interface
 
   /* returns 1 if send is OK or <= 0 if error ocurred when sending data to the server */
-  // void send(String payload);
+  int sendData(String channel, String payload);
   // void send(BufferEntry *data);
   //
   // /* returns 1 if a message exists and is copied to the buffer or 0 if nothing exists */
@@ -144,7 +141,7 @@ public:
 };
 
 //
-// simple usage
+// sample usage
 //
 
 

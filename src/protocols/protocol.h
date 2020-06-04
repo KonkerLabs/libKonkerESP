@@ -21,6 +21,8 @@ public:
   virtual int connect();
   virtual int disconnect(); //return connection status from globals.h
   virtual int checkConnection(); //return integer meaning depends on protocol library
+
+  virtual void protocolLoop();
 };
 
 #endif

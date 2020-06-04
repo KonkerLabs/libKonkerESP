@@ -2,6 +2,7 @@
 #define _BASE_PROTOCOL_H
 
 #include "protocol.h"
+#include "globals.h"
 
 class BaseProtocol: public Protocol
 {
@@ -27,6 +28,8 @@ public:
   int connect();
   int disconnect();
   int checkConnection();
+
+  void protocolLoop();
 };
 
 #endif

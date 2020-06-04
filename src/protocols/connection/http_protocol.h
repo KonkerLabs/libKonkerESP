@@ -1,41 +1,42 @@
 #ifndef __HTTP_PROTOCOL_H__
 #define __HTTP_PROTOCOL_H__
 
-#include "globals.h"
 #include "connection_protocol.h"
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 
 class HTTPProtocol: public ConnectionProtocol
 {
-  private:
-    HTTPClient http_client;
-    WiFiClient wifi_client;
+private:
+  HTTPClient http_client;
+  WiFiClient wifi_client;
 
-    long failedComm = 0;
+  long failedComm = 0;
 
-    unsigned long _last_time_http_request = 0;
-    unsigned long _millis_delay_per_http_request = 5000;
+  unsigned long _last_time_http_request = 0;
+  unsigned long _millis_delay_per_http_request = 5000;
 
-  protected:
+  String registry = "";
+protected:
 
-    void buildHTTPSUBTopic(char const channel[], char *topic);
-    void buildHTTPPUBTopic(char const channel[], char *topic);
+  void buildHTTPSUBTopic(char const channel[], char *topic);
+  void buildHTTPPUBTopic(char const channel[], char *topic);
 
-  public:
+public:
 
-    HTTPProtocol();
-    ~HTTPProtocol();
+  HTTPProtocol();
+  ~HTTPProtocol();
 
-    void getClient(HTTPClient* http);
+  void getClient(HTTPClient* http);
 
-    int send(const char * channel, String payload);
-    int receive(String *payload);
+  int send(const char * channel, String payload);
+  int receive(String *payload);
 
-    int connect();
-    int disconnect();
-    int checkConnection();
+  int connect();
+  int disconnect();
+  int checkConnection();
 
+  void setRegistry(String reg);
 };
 
 #endif

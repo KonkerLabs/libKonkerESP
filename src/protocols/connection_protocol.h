@@ -20,6 +20,8 @@ public:
   int connect();
   int disconnect();
   int checkConnection();
+
+  void protocolLoop();
 };
 
 #endif
