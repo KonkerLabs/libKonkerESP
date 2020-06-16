@@ -14,7 +14,7 @@
 #endif
 
 #include "globals.h"
-// #include "buffer_entry.h"
+#include "buffer_entry.h"
 #include "wireless/manage_wifi.h"
 #include "protocols/all_protocols.h"
 // #include "./update/firmwareUpdate.h"
@@ -66,8 +66,8 @@ private:
   String NAME = DEFAULT_NAME; // pra que?
 
   // fila de envio do device
-  // BufferEntry sendBuffer[BUFFER_SIZE];
-  // BufferEntry receiveBuffer[BUFFER_SIZE];
+  BufferEntry sendBuffer;
+  BufferEntry receiveBuffer;
 
   // flag when the device checked for a device update
   unsigned long _last_time_update_check=0;
@@ -125,7 +125,8 @@ public:
   /* returns 1 if send is OK or <= 0 if error ocurred when sending data to the server */
   int sendData(String channel, String payload);
   // void send(BufferEntry *data);
-  //
+  int storeData(String channel, String payload);
+  BufferElement recoverData();
   // /* returns 1 if a message exists and is copied to the buffer or 0 if nothing exists */
   // int receive(String *buffer);
   //

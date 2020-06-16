@@ -8,7 +8,7 @@
 #define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (ESPHTTPKonkerUpdate::* updateSucessCallBack_t)(const char[16])
 
 #define DEFAULT_NAME    "S000"
-#define BUFFER_SIZE      100
+#define BUFFER_SIZE      10
 
 enum class ConnectionType
 {

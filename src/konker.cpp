@@ -72,7 +72,8 @@ bool KonkerDevice::connectWifi()
   {
     // Turn LED off
     digitalWrite(_STATUS_LED, HIGH);
-    Log.trace("Device connected to WiFi");
+    Log.trace("Device connected to WiFi\n");
+    Log.trace("Local IP: %s\n", deviceWifi.getLocalIP().toString().c_str());
   }
   return res;
 }
@@ -90,6 +91,7 @@ bool KonkerDevice::checkWifiConnection()
 void KonkerDevice::setDefaultConnectionType(ConnectionType c)
 {
   this->defaultConnectionType = c;
+  sendBuffer.setConnectionType(this->defaultConnectionType);
 }
 
 void KonkerDevice::setFallbackConnectionType(ConnectionType c)
@@ -219,6 +221,20 @@ void KonkerDevice::setPlatformCredentials(String deviceID, String userid, String
   setChipID(this->deviceID);
 	this->userid = userid;
 	this->password = password;
+}
+
+int KonkerDevice::storeData(String channel, String payload)
+{
+  Log.trace("Storing data in buffer\n");
+  sendBuffer.bufferStatus();
+  return sendBuffer.collectData(channel, payload);
+}
+
+BufferElement KonkerDevice::recoverData()
+{
+  Log.trace("Rocovering data from buffer\n");
+  sendBuffer.bufferStatus();
+  return sendBuffer.consumeData();
 }
 
 int KonkerDevice::sendData(String channel, String payload)

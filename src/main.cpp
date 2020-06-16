@@ -19,6 +19,7 @@ KonkerDevice device;
 bool connected;
 char bufferJson[256];
 char * mensagem;
+BufferElement data;
 
 int count = 0;
 long lasttimeSend=0;
@@ -60,19 +61,31 @@ void loop()
   count = count + 1;
   // put your main code here, to run repeatedly
   connected = device.checkWifiConnection();
-  Serial.println("WiFi is " + String(connected));
+  // Serial.println("WiFi is " + String(connected));
+
+  if(count % 4 == 0)
+  {
+    mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
+    device.storeData(PUB, mensagem);
+  }
 
   connected = device.checkPlatformConnection();
   if(!connected)
   {
+    Serial.println("Disconnected from platform! Reconnecting...");
     device.startConnection();
   }
-  Serial.println("Connection to platform " + String(connected));
+  // Serial.println("Connection to platform " + String(connected));
 
   if((millis() - lasttimeSend) > 5000) //ms
   {
     mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
     device.sendData(PUB, String(mensagem));
+    data = device.recoverData();
+    Serial.print("Removed from buffer >>> ");
+    Serial.print(data.payload);
+    Serial.print(" | ");
+    Serial.println(data.channel);
     lasttimeSend = millis();
   }
 

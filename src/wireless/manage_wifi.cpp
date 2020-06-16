@@ -1,29 +1,5 @@
 #include "manage_wifi.h"
 
-// Old class from previous FW
-// class WifiManager
-// {
-//     private:
-//     bool i=0;
-//     bool g=0;
-//     bool s=0;
-//
-//     public:
-//     IPAddress ip;
-//     IPAddress gateway;
-//     IPAddress subnet;
-//
-//     WifiManager();
-//     void setIP (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);
-//     void setGateway (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);
-//     void setSubnet (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);
-//
-//     IPAddress getIP();
-//
-//     bool isConfigured();
-//
-// };
-
 WifiManager::WifiManager()
 {
   WiFi.persistent(false);
@@ -43,8 +19,10 @@ WifiManager::WifiManager(String wifiFile) : WifiManager()
   this->wifiFile = wifiFile;
 }
 
-String getConnectMessage(int status_code) {
-	switch(status_code) {
+String getConnectMessage(int status_code)
+{
+	switch(status_code)
+  {
 		case 255: return "WL_NO_SHIELD"; break;
 		case 0: return "WL_IDLE_STATUS"; break;
 		case 1: return "WL_NO_SSID_AVAIL"; break;
@@ -66,10 +44,7 @@ bool WifiManager::tryConnect(String ssid, String password)
 	WiFi.mode(WIFI_STA);
 	delay(500);
 	//check if we have ssid and pass and force those, if not, try with last saved values
-  if (DEBUG_LEVEL>0)
-  {
-	  Serial.println("[WiFi] WiFi.begin("+ String(ssid) + ", " + String(password) + ")");
-  }
+  Log.notice("[WiFi] WiFi.begin(%s, %s)\n", ssid.c_str(), password.c_str());
 	WiFi.begin(ssid, password);
 
   // unsigned long wifiStartTime=millis();
@@ -88,21 +63,20 @@ bool WifiManager::tryConnect(String ssid, String password)
     if (DEBUG_LEVEL>0) Serial.print(".");
     counter -= 1;
   }
+  if (DEBUG_LEVEL>0) Serial.print("\n");
 
   int connRes = WiFi.status();
-  if (DEBUG_LEVEL>0)
-  {
-    Serial.println("\n[WiFi] Connection Status = " + (String)connRes + " " +  getConnectMessage(connRes));
-  }
+  Log.notice("[WiFi] Connection Status = %d %s\n", connRes, getConnectMessage(connRes).c_str());
+
   return (connRes == WL_CONNECTED);
 }
 
 bool WifiManager::tryConnectSSID(String ssid, String password, int retries)
 {
   bool connRes = false;
+  Log.notice("[WiFi] Will try to connect %d times\n", retries);
   if (DEBUG_LEVEL>0)
   {
-    Serial.println("[WiFi] Will try to connect " + String(retries) + " times");
     Serial.print(">>>>>> DEVICE MAC ADDRESS = ");
   	Serial.println(WiFi.macAddress());
   }
@@ -124,10 +98,7 @@ void WifiManager::setConfig(String ssid, String password)
     index = this->numWifiCredentials + 1;
   }
 
-  if (DEBUG_LEVEL>0)
-  {
-    Serial.println("[WiFi] Setting new WiFi credentials at index " + String(index));
-  }
+  Log.notice("[WiFi] Setting new WiFi credentials at index %d\n", index);
 
   this->wifiCredentials[index].SSID = ssid;
   this->wifiCredentials[index].PASSWD = password;
@@ -174,11 +145,8 @@ bool WifiManager::tryConnectClientWifi()
 
   for (int i=0; i < this->numWifiCredentials; i++)
   {
-    if (DEBUG_LEVEL>0)
-    {
-      Serial.print("[WiFi] Trying to connect to SSID: ");
-      Serial.println(this->wifiCredentials[i].SSID);
-    }
+    Log.notice("[WiFi] Trying to connect to SSID: %s\n", this->wifiCredentials[i].SSID.c_str());
+
     conn = this->tryConnectSSID(this->wifiCredentials[i].SSID, this->wifiCredentials[i].PASSWD, 2);
   }
 
@@ -206,11 +174,11 @@ IPAddress WifiManager::getLocalIP()
   IPAddress ip;
 
   ip = WiFi.localIP();
-  if(DEBUG_LEVEL>0)
-  {
-    Serial.print("Local IP address is: ");
-    Serial.println(ip);
-  }
+  // if(DEBUG_LEVEL>0)
+  // {
+  //   Serial.print("Local IP address is: ");
+  //   Serial.println(ip);
+  // }
 
   return ip;
 }
