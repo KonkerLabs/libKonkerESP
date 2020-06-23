@@ -34,6 +34,7 @@ void BufferEntry::setConnectionType(ConnectionType type)
 
 void BufferEntry::incrementPosition(int * position)
 {
+  Log.trace("[Buffer] Incrementing: %d\n", *position);
   if(*position == BUFFER_SIZE - 1)
   {
     *position = 0;
@@ -41,6 +42,18 @@ void BufferEntry::incrementPosition(int * position)
   else
   {
     *position += 1;
+  }
+}
+
+void BufferEntry::decrementPosition(int * position)
+{
+  if(*position == 0)
+  {
+    *position = BUFFER_SIZE - 1;
+  }
+  else
+  {
+    *position -= 1;
   }
 }
 
@@ -52,6 +65,7 @@ int BufferEntry::collectData(String channel, String payload)
   el.type = 1;
   strcpy(el.payload, payload.c_str());
   el.U = 0;
+  el.retries = 0;
   el.protocol = (uint8_t)this->connectionType;
   strcpy(el.channel, channel.c_str());
 
@@ -74,18 +88,6 @@ int BufferEntry::collectData(String channel, String payload)
   }
 
   return ret;
-}
-
-void BufferEntry::removeData(int position)
-{
-  if(this->currentPosition == 0)
-  {
-    this->currentPosition = BUFFER_SIZE - 1;
-  }
-  else
-  {
-    this->currentPosition -= 1;
-  }
 }
 
 BufferElement BufferEntry::consumeData()
@@ -120,6 +122,50 @@ BufferElement BufferEntry::consumeData()
   return el;
 }
 
+int BufferEntry::getData(BufferElement *data)
+{
+  memset(data, 0, sizeof(BufferElement));
+
+  if(this->empty)
+  {
+    Log.warning("[Buffer] Empty buffer! Returning null.\n");
+    return -1;
+  }
+  else
+  {
+    *data = dataBuffer[this->firstPosition];
+
+    Log.trace("[Buffer] Getting data from buffer: %s @ %d\n", toString(*data).c_str(), this->firstPosition);
+    // removeData(this->firstPosition);
+  }
+
+  return this->firstPosition;
+}
+
+void BufferEntry::removeData(int position)
+{
+  if(this->firstPosition == position)
+  {
+    // case only one element left in buffer
+    if (this->firstPosition + 1 == this->currentPosition)
+    {
+      this->firstPosition = 0;
+      this->currentPosition = 0;
+      this->empty = true;
+      Log.trace("[Buffer] Is empty\n");
+    }
+    else
+    {
+      incrementPosition(&this->firstPosition);
+    }
+  }
+  else
+  {
+    // its not possible to remove element from middle of buffer at this time
+    Log.error("[Buffer] Operation not allowed\n");
+  }
+}
+
 void BufferEntry::clearDataBuffer()
 {
   Log.notice("[Buffer] Removing all data from buffer!\n");
@@ -130,8 +176,30 @@ void BufferEntry::clearDataBuffer()
 
 void BufferEntry::bufferStatus()
 {
+  Log.trace("------------------\n");
   Log.trace("[Buffer] First position = %d\n", this->firstPosition);
   Log.trace("[Buffer] Current position = %d\n", this->currentPosition);
+  Log.trace("[Buffer] Empty = %d\n", this->empty);
+  Log.trace("------------------\n");
+}
+
+bool BufferEntry::isEmpty()
+{
+  return this->empty;
+}
+
+void BufferEntry::incrementRetries(int position)
+{
+  if(dataBuffer[position].retries == this->maxRetries)
+  {
+    Log.warning("[Buffer] Maximum number of retries to send data exceeded\n");
+    Log.warning("[Buffer] Removing data from buffer\n");
+    removeData(position);
+  }
+  else
+  {
+    dataBuffer[position].retries++;
+  }
 }
 
 String BufferEntry::toString(BufferElement element)

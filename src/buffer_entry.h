@@ -4,6 +4,8 @@
 #include "globals.h"
 #include "protocol.h"
 
+#define DEFAULT_MAX_RETRIES 10
+
 // Type; {Payload}; U; Protocol; Channel
 // Total bytes: 143 (144 when aligned)
 typedef struct buffer_entry
@@ -12,6 +14,7 @@ typedef struct buffer_entry
   char payload[120];
   uint8_t U;
   uint8_t protocol;
+  uint8_t retries;
   char channel[20];
 } BufferElement;
 
@@ -26,8 +29,10 @@ private:
   int currentPosition = 0;
   bool empty = true;
 
+  int maxRetries = DEFAULT_MAX_RETRIES;
+
   void incrementPosition(int * position);
-  void removeData(int position);
+  void decrementPosition(int * position);
 
   String toString(BufferElement element);
 public:
@@ -39,10 +44,18 @@ public:
 
   // add data in currentPosition
   int collectData(String channel, String payload);
-  // get data from firstPosition
+  // get and remove data from firstPosition
   BufferElement consumeData();
+  // get data from firstPosition, returns the position and fills data with it
+  // returns -1 if buffer is empty
+  int getData(BufferElement *data);
+  // remove data from position if it's equals to firstPosition
+  void removeData(int position);
+
+  void incrementRetries(int position);
 
   void bufferStatus();
+  bool isEmpty();
   void clearDataBuffer();
 };
 

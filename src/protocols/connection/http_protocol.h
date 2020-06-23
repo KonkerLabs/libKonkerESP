@@ -5,6 +5,9 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 
+#define SUB_PREFIX "sub"
+#define PUB_PREFIX "pub"
+
 class HTTPProtocol: public ConnectionProtocol
 {
 private:
@@ -32,9 +35,9 @@ public:
   int send(const char * channel, String payload);
   int receive(String *payload);
 
-  int connect();
-  int disconnect();
-  int checkConnection();
+  int connect() override;
+  int disconnect() override;
+  int checkConnection() override;
 
   void setRegistry(String reg);
 };

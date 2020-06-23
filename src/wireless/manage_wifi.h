@@ -52,6 +52,8 @@ public:
 
   int getNumberOfWifiCredentials();
   IPAddress getLocalIP();
+  int getWifiStrenght();
+  String getWifiSSID();
 
   // IPAddress getIP();
   // bool isConfigured();

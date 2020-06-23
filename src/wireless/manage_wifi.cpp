@@ -174,13 +174,19 @@ IPAddress WifiManager::getLocalIP()
   IPAddress ip;
 
   ip = WiFi.localIP();
-  // if(DEBUG_LEVEL>0)
-  // {
-  //   Serial.print("Local IP address is: ");
-  //   Serial.println(ip);
-  // }
+  // Log.trace("Local IP address: %s\n", ip.toString().c_str());
 
   return ip;
+}
+
+int WifiManager::getWifiStrenght()
+{
+  return WiFi.RSSI();
+}
+
+String WifiManager::getWifiSSID()
+{
+  return WiFi.SSID();
 }
 
 // bool WifiManager::isConfigured()

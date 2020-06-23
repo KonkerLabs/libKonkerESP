@@ -124,9 +124,11 @@ public:
 
   /* returns 1 if send is OK or <= 0 if error ocurred when sending data to the server */
   int sendData(String channel, String payload);
-  // void send(BufferEntry *data);
+  int sendData();
   int storeData(String channel, String payload);
   BufferElement recoverData();
+
+  // int testSendHTTP();
   // /* returns 1 if a message exists and is copied to the buffer or 0 if nothing exists */
   // int receive(String *buffer);
   //

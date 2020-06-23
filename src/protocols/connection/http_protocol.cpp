@@ -1,15 +1,16 @@
 #include "http_protocol.h"
 
-#define SUB_PREFIX "sub"
-#define PUB_PREFIX "pub"
-
 HTTPProtocol::HTTPProtocol() : http_client()
 {
+  // Log.trace("[HTTP] Creating HTTP object\n");
 }
 
 HTTPProtocol::~HTTPProtocol()
 {
-  this->disconnect();
+  if (this->http_client.connected())
+  {
+    this->http_client.end();
+  }
 }
 
 void HTTPProtocol::getClient(HTTPClient* http)
@@ -35,7 +36,8 @@ int HTTPProtocol::checkConnection()
   return this->http_client.connected();
 }
 
-void HTTPProtocol::buildHTTPSUBTopic(char const channel[], char *topic){
+void HTTPProtocol::buildHTTPSUBTopic(char const channel[], char *topic)
+{
   char bffPort[6];
 //  itoa (_rootPort,bffPort,10);
   itoa(port, bffPort, 10);
@@ -53,16 +55,17 @@ void HTTPProtocol::buildHTTPSUBTopic(char const channel[], char *topic){
 
 int HTTPProtocol::send(const char *channel, String payload)
 {
-  //throtle this call ???
-  if ((millis()-_last_time_http_request) < _millis_delay_per_http_request)
-  {
-    delay((millis()-_last_time_http_request));
-  }
-  _last_time_http_request = millis();
+  // TODO move this throtle to helth later
+  //throtle this call
+  // if ((millis()-_last_time_http_request) < _millis_delay_per_http_request)
+  // {
+  //   delay((millis()-_last_time_http_request));
+  // }
+  // _last_time_http_request = millis();
 
-  http_client.addHeader("Content-Type", "application/json");
-  http_client.addHeader("Accept", "application/json");
-  http_client.setAuthorization(this->userid, this->password);
+  this->http_client.addHeader("Content-Type", "application/json");
+  this->http_client.addHeader("Accept", "application/json");
+  this->http_client.setAuthorization(this->userid, this->password);
 
   char buffer[100];
 
@@ -71,13 +74,16 @@ int HTTPProtocol::send(const char *channel, String payload)
                       "/" + channel;
   strcpy(buffer, bufferStr.c_str());
 
-  http_client.setTimeout(10000);
-  http_client.begin(this->wifi_client, bufferStr);
+  Log.trace("[HTTP] Publishing to %s\n", buffer);
+  Log.trace("[HTTP] Body %s\n", payload.c_str());
 
-  Log.notice("[HTTP] (B) POST TO DATA");
+  this->http_client.setTimeout(10000);
+  this->http_client.begin(this->wifi_client, bufferStr);
 
-  int httpCode = http_client.POST(payload);
-  Log.notice("[HTTP] (E) POST TO DATA");
+  Log.notice("[HTTP] (B) POST TO DATA\n");
+
+  int httpCode = this->http_client.POST(payload);
+  Log.notice("[HTTP] (E) POST TO DATA\n");
 
   if (httpCode >= 0 && httpCode < 300)
   {
@@ -87,7 +93,7 @@ int HTTPProtocol::send(const char *channel, String payload)
   else
   {
     Log.notice("[HTTP] Failed. Code = %d\n", httpCode);
-    failedComm=1;
+    failedComm = 1;
     return 0;
   }
 }

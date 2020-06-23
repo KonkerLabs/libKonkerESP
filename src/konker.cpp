@@ -239,7 +239,7 @@ BufferElement KonkerDevice::recoverData()
 
 int KonkerDevice::sendData(String channel, String payload)
 {
-  int res;
+  int res = 0;
 
   res = this->currentProtocol->send(channel.c_str(), payload);
   if(res)
@@ -249,3 +249,65 @@ int KonkerDevice::sendData(String channel, String payload)
 
   return res;
 }
+
+int KonkerDevice::sendData()
+{
+  int res = 0;
+  int dataPosition;
+  BufferElement data;
+
+  if(sendBuffer.isEmpty())
+  {
+    Log.trace("Empty buffer, nothing to send\n");
+    return 0;
+  }
+
+  dataPosition = sendBuffer.getData(&data);
+  if(dataPosition >= 0)
+  {
+    res = this->currentProtocol->send(data.channel, String(data.payload));
+    if(res)
+    {
+      Log.trace("Payload sent to platform\n");
+      sendBuffer.removeData(dataPosition);
+    }
+    else
+    {
+      Log.warning("Could not send payload to platform, try again later\n");
+      sendBuffer.incrementRetries(dataPosition);
+    }
+  }
+
+  return res;
+}
+
+// TODO
+// int KonkerDevice::testSendHTTP()
+// {
+//   StaticJsonDocument<512> jsonMSG;
+//   char bufferJson[1024];
+//   HTTPProtocol httpObj;
+//   int conn = 0, res = 0;
+//
+//   String ssid = deviceWifi.getWifiSSID();
+//   String ip = deviceWifi.getLocalIP().toString();
+//   int rssi = deviceWifi.getWifiStrenght();
+//
+//   httpObj.setConnection("data.prod.konkerlabs.net", 80);
+//   httpObj.setCredentials(this->userid.c_str(), this->password.c_str());
+//
+//   conn = httpObj.connect();
+//   if (conn)
+//   {
+//     jsonMSG["ssid"] = ssid;
+//     jsonMSG["ip"] = ip;
+//     jsonMSG["rssi"] = String(rssi);
+//
+//     serializeJson(jsonMSG, bufferJson);
+//
+//     Log.trace("[Health] Sending message: %s\n", bufferJson);
+//     res = httpObj.send(this->_health_channel.c_str(), String(bufferJson));
+//   }
+//
+//   return res;
+// }
