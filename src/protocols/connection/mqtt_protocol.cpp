@@ -33,6 +33,7 @@ void callback(char* topic, byte* payload, unsigned int length)
 int MQTTProtocol::connect()
 {
 	int connRes = 0;
+	const char * host = this->getHost().c_str();
 
 	if(mqttClient.connected())
 	{
@@ -44,17 +45,19 @@ int MQTTProtocol::connect()
 		Log.trace("[MQTT] Going to connect to MQTT broker\n");
   }
 
-	Log.trace("[MQTT] URI: %s Port: %d\n", this->host.c_str(), this->port);
+	Log.trace("[MQTT] URI: %s Port: %d\n", host, this->getPort());
 
-  mqttClient.setServer(this->host.c_str(), this->port);
+  mqttClient.setServer(host, this->getPort());
   mqttClient.setCallback(callback);
 
-	Log.trace("[MQTT] USER: %s PASSWD: %s\n", this->userid, this->password);
+	Log.trace("[MQTT] USER: %s PASSWD: %s\n", this->getUser().c_str(), this->getPassword().c_str());
 
 	for(int i=0; i<5; i++)
   {
 		Log.trace("[MQTT] Connection attempts left %d\n", 5 - i);
-    connRes = mqttClient.connect(this->userid, this->userid, this->password);
+    connRes = mqttClient.connect(this->getUser().c_str(),
+																	this->getUser().c_str(),
+																	this->getPassword().c_str());
     if(connRes) break;
     delay(1500);
   }
@@ -92,7 +95,7 @@ int MQTTProtocol::send(const char * channel, String payload)
 {
 	int pubCode = -1;
 	char topic[32];
-	String topicStr = this->prefix + "/" + this->userid + "/pub/" + channel;
+	String topicStr = this->prefix + "/" + this->getUser() + "/pub/" + channel;
 
   strcpy(topic, topicStr.c_str());
 	Log.notice("[MQTT] Publishing to: %s | Message: %s\n", topic, payload.c_str());

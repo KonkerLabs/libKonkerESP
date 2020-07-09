@@ -8,24 +8,24 @@
 #endif
 #include "globals.h"
 
-#define MAX_NUM_WIFI_CRED   3
+#define MAX_NUM_WIFI_CRED       3
+#define WIFI_CRED_ARRAY_SIZE    16
 
 // struct is used to store credentials in device memory
 struct wifi_credentials
 {
-  String SSID;
-  String PASSWD;
+  char SSID[WIFI_CRED_ARRAY_SIZE];
+  char PASSWD[WIFI_CRED_ARRAY_SIZE];
 };
-typedef struct wifi_credentials WifiCredentials;
 
 class WifiManager
 {
 private:
-  WifiCredentials wifiCredentials[MAX_NUM_WIFI_CRED];
+  wifi_credentials wifiCredentials[MAX_NUM_WIFI_CRED];
   int numWifiCredentials = 0;
-  bool i=0;
-  bool g=0;
-  bool s=0;
+  // bool i=0;
+  // bool g=0;
+  // bool s=0;
 
   // void setIP (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);
   // void setGateway (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);

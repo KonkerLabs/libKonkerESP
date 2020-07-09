@@ -16,7 +16,7 @@ public:
   virtual int getPort();
   virtual void getClient(HTTPClient *);
 
-  virtual void setCredentials(const char *userid, const char *password);
+  virtual void setPlatformCredentials(String userid, String password);
 
   virtual int connect();
   virtual int disconnect(); //return connection status from globals.h

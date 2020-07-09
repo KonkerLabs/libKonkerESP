@@ -91,8 +91,10 @@ bool WifiManager::tryConnectSSID(String ssid, String password, int retries)
 
 void WifiManager::setConfig(String ssid, String password)
 {
-  int index = 0;
+  int index = 0, size;
 
+  // if numWifiCredentials == 0 or numWifiCredentials == MAX_NUM_WIFI_CRED
+  //   new credential is stored at position 0 (may overwrite)
   if(this->numWifiCredentials > 0 &&  this->numWifiCredentials < MAX_NUM_WIFI_CRED)
   {
     index = this->numWifiCredentials + 1;
@@ -100,10 +102,17 @@ void WifiManager::setConfig(String ssid, String password)
 
   Log.notice("[WiFi] Setting new WiFi credentials at index %d\n", index);
 
-  this->wifiCredentials[index].SSID = ssid;
-  this->wifiCredentials[index].PASSWD = password;
+  size = ssid.length();
+  strncpy(wifiCredentials[index].SSID, ssid.c_str(), size);
+  this->wifiCredentials[index].SSID[size] = '\0';
+  size = password.length();
+  strncpy(wifiCredentials[index].PASSWD, password.c_str(), size);
+  this->wifiCredentials[index].PASSWD[size] = '\0';
 
-  this->numWifiCredentials += 1;
+  if(this->numWifiCredentials < MAX_NUM_WIFI_CRED)
+  {
+    this->numWifiCredentials += 1;
+  }
 }
 
 void WifiManager::setConfig(String ssid0, String password0, String ssid1, String password1)
@@ -121,18 +130,24 @@ void WifiManager::setConfig(String ssid0, String password0, String ssid1, String
 
 void WifiManager::removeConfig(String ssid)
 {
-  WifiCredentials temp[MAX_NUM_WIFI_CRED];
+  wifi_credentials temp[MAX_NUM_WIFI_CRED];
   int numTemp = 0;
 
-  for(int i=0; i<this->numWifiCredentials; i++)
+  for(int i=0; i < this->numWifiCredentials; i++)
   {
-    if(this->wifiCredentials[i].SSID == ssid)
+    if(strncmp(this->wifiCredentials[i].SSID, ssid.c_str(), ssid.length()) == 0)
     {
       continue;
     }
-    temp[numTemp].SSID = this->wifiCredentials[i].SSID;
-    temp[numTemp].PASSWD = this->wifiCredentials[i].PASSWD;
+    strncpy(temp[numTemp].SSID, this->wifiCredentials[i].SSID, WIFI_CRED_ARRAY_SIZE);
+    strncpy(temp[numTemp].PASSWD, this->wifiCredentials[i].PASSWD, WIFI_CRED_ARRAY_SIZE);
     numTemp++;
+  }
+
+  if(numTemp == MAX_NUM_WIFI_CRED)
+  {
+    Log.trace("[WiFi] \"%s\" ssid not found in current credentials\n", ssid.c_str());
+    return;
   }
 
   memcpy(this->wifiCredentials, temp, sizeof(this->wifiCredentials));
@@ -145,9 +160,9 @@ bool WifiManager::tryConnectClientWifi()
 
   for (int i=0; i < this->numWifiCredentials; i++)
   {
-    Log.notice("[WiFi] Trying to connect to SSID: %s\n", this->wifiCredentials[i].SSID.c_str());
+    Log.notice("[WiFi] Trying to connect to SSID: %s\n", this->wifiCredentials[i].SSID);
 
-    conn = this->tryConnectSSID(this->wifiCredentials[i].SSID, this->wifiCredentials[i].PASSWD, 2);
+    conn = this->tryConnectSSID(String(this->wifiCredentials[i].SSID), String(this->wifiCredentials[i].PASSWD), 2);
   }
 
   return conn;

@@ -1,4 +1,3 @@
-
 #ifndef __KONKER_H__
 #define __KONKER_H__
 
@@ -16,6 +15,7 @@
 #include "globals.h"
 #include "buffer_entry.h"
 #include "wireless/manage_wifi.h"
+#include "platform/manage_platform.h"
 #include "protocols/all_protocols.h"
 // #include "./update/firmwareUpdate.h"
 
@@ -75,12 +75,6 @@ private:
   String _health_channel = "_health";
 
   Protocol* currentProtocol;
-
-  String host;
-  int port;
-
-  String userid;
-  String password;
 
   // void flushBuffer();
   // void formatFileSystem();
@@ -142,22 +136,4 @@ public:
   //
   // void setName(const char * newName);
 };
-
-//
-// sample usage
-//
-
-
-// declare a KonkerDevice() object in your sketch
-// in setup()
-//    ... initialize / setup konker device with platform and wifi credentials
-//    ... if desired, define the default and fallback protocol for the device
-//
-// in loop()
-//    .. call device.loop() method
-//    .. when you want to send data ... call device.send(payload)
-//    .. when you need to receive a data, call device.receive() to get a payload if it exists
-//
-//
-
-#endif
+#endif /* __KONKER_H__ */

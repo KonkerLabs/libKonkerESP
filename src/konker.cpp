@@ -75,6 +75,10 @@ bool KonkerDevice::connectWifi()
     Log.trace("Device connected to WiFi\n");
     Log.trace("Local IP: %s\n", deviceWifi.getLocalIP().toString().c_str());
   }
+  else
+  {
+    this->wifi_connection_errors += 1;
+  }
   return res;
 }
 
@@ -140,11 +144,11 @@ void KonkerDevice::startConnection()
 
 	if (newConnection != nullptr)
   {
-		if (connectionOriented)
-    {
-			newConnection->setConnection(this->host, this->port);
-			newConnection->setCredentials(this->userid.c_str(), this->password.c_str());
-		}
+		// if (connectionOriented)
+    // {
+		// 	newConnection->setConnection(this->host, this->port);
+		// 	newConnection->setCredentials(this->userid.c_str(), this->password.c_str());
+		// }
 		this->currentProtocol = newConnection;
 		this->currentProtocol->connect();
 
@@ -183,8 +187,7 @@ void KonkerDevice::loop()
 
 void KonkerDevice::setServer(String host, int port)
 {
-	this->host = host;
-	this->port = port;
+	this->currentProtocol->setConnection(host, port);
 }
 
 void KonkerDevice::setChipID(String deviceID)
@@ -211,16 +214,14 @@ void KonkerDevice::setPlatformCredentials(String userid, String password)
 {
   this->deviceID = DEFAULT_NAME;
   setChipID(this->deviceID);
-	this->userid = userid;
-	this->password = password;
+	this->currentProtocol->setPlatformCredentials(userid, password);
 }
 
 void KonkerDevice::setPlatformCredentials(String deviceID, String userid, String password)
 {
   this->deviceID = deviceID;
   setChipID(this->deviceID);
-	this->userid = userid;
-	this->password = password;
+	this->currentProtocol->setPlatformCredentials(userid, password);
 }
 
 int KonkerDevice::storeData(String channel, String payload)

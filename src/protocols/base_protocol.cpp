@@ -25,18 +25,17 @@ int BaseProtocol::receive(String *payload)
 
 void BaseProtocol::setConnection(String host, int port)
 {
-  this->host = host;
-  this->port = port;
+  platformManager.setServer(host, port);
 }
 
 String BaseProtocol::getHost()
 {
-  return this->host;
+  return platformManager.getHost();
 }
 
 int BaseProtocol::getPort()
 {
-  return this->port;
+  return platformManager.getPort();
 }
 
 void BaseProtocol::getClient(HTTPClient * http)
@@ -44,10 +43,19 @@ void BaseProtocol::getClient(HTTPClient * http)
   http = nullptr;
 }
 
-void BaseProtocol::setCredentials(const char *userid, const char *password)
+void BaseProtocol::setPlatformCredentials(String userid, String password)
 {
-  this->userid = userid;
-  this->password = password;
+  platformManager.setPlatformCredentials(userid, password);
+}
+
+String BaseProtocol::getUser()
+{
+  return platformManager.getUser();
+}
+
+String BaseProtocol::getPassword()
+{
+  return platformManager.getPassword();
 }
 
 int BaseProtocol::connect()

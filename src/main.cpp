@@ -90,28 +90,28 @@ void loop()
       Serial.println("NOPE");
     }
 
-    ok = device.testSendHTTP();
-    if (ok)
-    {
-      Serial.println("Send via HTTP working!");
-    }
-    else
-    {
-      Serial.println("Did not send via HTTP :(");
-    }
+    // ok = device.testSendHTTP();
+    // if (ok)
+    // {
+    //   Serial.println("Send via HTTP working!");
+    // }
+    // else
+    // {
+    //   Serial.println("Did not send via HTTP :(");
+    // }
   }
 
-  // if((millis() - lasttimeSend) > 5000) //ms
-  // {
-  //   mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
-  //   device.sendData(PUB, String(mensagem));
-  //   data = device.recoverData();
-  //   Serial.print("Removed from buffer >>> ");
-  //   Serial.print(data.payload);
-  //   Serial.print(" | ");
-  //   Serial.println(data.channel);
-  //   lasttimeSend = millis();
-  // }
+  if((millis() - lasttimeSend) > 5000) //ms
+  {
+    mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
+    device.sendData(PUB, String(mensagem));
+    data = device.recoverData();
+    Serial.print("Removed from buffer >>> ");
+    Serial.print(data.payload);
+    Serial.print(" | ");
+    Serial.println(data.channel);
+    lasttimeSend = millis();
+  }
 
   device.loop();
 }
