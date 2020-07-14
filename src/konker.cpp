@@ -17,7 +17,7 @@ KonkerDevice::KonkerDevice() : deviceWifi(), webServer(80)//, update()
 
   Log.trace("BUILD: %s", BUILD_ID);
 
-  // this->defaultConnectionType = ConnectionType::MQTT;
+  this->defaultConnectionType = ConnectionType::MQTT;
 
   // Turn LED on when booting device
   pinMode(_STATUS_LED, OUTPUT);
@@ -96,24 +96,9 @@ void KonkerDevice::setDefaultConnectionType(ConnectionType c)
 {
   this->defaultConnectionType = c;
   sendBuffer.setConnectionType(this->defaultConnectionType);
-}
 
-void KonkerDevice::setFallbackConnectionType(ConnectionType c)
-{
-  this->fallbackConnectionType = c;
-}
-
-// handle connection to the server used to send and receive data for this device
-void KonkerDevice::startConnection()
-{
-	if (this->currentProtocol != nullptr)
-  {
-		stopConnection();
-		this->currentProtocol = nullptr;
-	}
-
-	Protocol* newConnection;
-	bool connectionOriented = true;
+  Protocol* newConnection;
+	// bool connectionOriented = true;
 
 	switch (this->defaultConnectionType)
   {
@@ -135,21 +120,40 @@ void KonkerDevice::startConnection()
 		case ConnectionType::UDP:
 			// newConnection = new UDPProtocol();
       newConnection = new HTTPProtocol();
-			connectionOriented = false;
+			// connectionOriented = false;
 			break;
 		default:
 			newConnection = nullptr;
-			connectionOriented = false;
+			// connectionOriented = false;
 	}
 
-	if (newConnection != nullptr)
+  if (newConnection != nullptr)
+  {
+    this->currentProtocol = newConnection;
+  }
+}
+
+void KonkerDevice::setFallbackConnectionType(ConnectionType c)
+{
+  this->fallbackConnectionType = c;
+}
+
+// handle connection to the server used to send and receive data for this device
+void KonkerDevice::startConnection()
+{
+	if (this->currentProtocol != nullptr)
+  {
+		stopConnection();
+	}
+
+	if (this->currentProtocol != nullptr)
   {
 		// if (connectionOriented)
     // {
 		// 	newConnection->setConnection(this->host, this->port);
 		// 	newConnection->setCredentials(this->userid.c_str(), this->password.c_str());
 		// }
-		this->currentProtocol = newConnection;
+
 		this->currentProtocol->connect();
 
 		// update the ESP update client with this new connection
@@ -185,9 +189,24 @@ void KonkerDevice::loop()
   delay(1000);
 }
 
+bool KonkerDevice::checkProtocol()
+{
+  if (this->currentProtocol == nullptr)
+  {
+    Log.error("Protocol not set! Please call KonkerDevice::setDefaultConnectionType first!");
+    // restart here?
+    return false;
+  }
+
+  return true;
+}
+
 void KonkerDevice::setServer(String host, int port)
 {
-	this->currentProtocol->setConnection(host, port);
+  if (checkProtocol())
+  {
+    this->currentProtocol->setConnection(host, port);
+  }
 }
 
 void KonkerDevice::setChipID(String deviceID)
@@ -214,14 +233,21 @@ void KonkerDevice::setPlatformCredentials(String userid, String password)
 {
   this->deviceID = DEFAULT_NAME;
   setChipID(this->deviceID);
-	this->currentProtocol->setPlatformCredentials(userid, password);
+
+  if (checkProtocol())
+  {
+    this->currentProtocol->setPlatformCredentials(userid, password);
+  }
 }
 
 void KonkerDevice::setPlatformCredentials(String deviceID, String userid, String password)
 {
   this->deviceID = deviceID;
   setChipID(this->deviceID);
-	this->currentProtocol->setPlatformCredentials(userid, password);
+  if (checkProtocol())
+  {
+    this->currentProtocol->setPlatformCredentials(userid, password);
+  }
 }
 
 int KonkerDevice::storeData(String channel, String payload)

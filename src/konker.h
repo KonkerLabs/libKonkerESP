@@ -79,6 +79,8 @@ private:
   // void flushBuffer();
   // void formatFileSystem();
   void setChipID(String deviceID);
+  // returns true if currentProtocol is set (aka, not null)
+  bool checkProtocol();
 
 public:
   KonkerDevice();

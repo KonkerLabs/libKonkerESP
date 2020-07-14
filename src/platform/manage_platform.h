@@ -38,6 +38,7 @@ public:
   void setPlatformCredentials(String user, String password);
   String getUser();
   String getPassword();
+  // TODO
   int storePlatformCredentials();
   int restorePlatofrmCredentials();
 };

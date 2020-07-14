@@ -2,7 +2,7 @@
 #define _BASE_PROTOCOL_H
 
 #include "protocol.h"
-#include "../platform/manage_platform.h"
+#include "manage_platform.h"
 #include "globals.h"
 
 class BaseProtocol: public Protocol

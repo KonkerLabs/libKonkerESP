@@ -4,14 +4,14 @@ const char ssid[20] = "dlink-C21E-114";
 const char pwd[20] = "bobesponja";
 
 // Dados do servidor
-String server_ip = "mqtt.demo.konkerlabs.net";
-int mqtt_port = 1883;
+String server_ip = "mqtt.prod.konkerlabs.net"; //"192.168.0.123";
+int mqtt_port = 1883; //32768;
 // int http_port = 8082;
 // int fw_port = 8081;
 
 String DEV_ID = "node10";
-String USER = "pgdmna95n2o2";
-String PWD = "HnWDYsNGdlcb";
+String USER = "pgdmna95n2o2"; //"t97pvjblbeas";
+String PWD = "HnWDYsNGdlcb"; //"YJ2GskQvqU8S";
 
 String PUB = "temp";
 
@@ -43,12 +43,13 @@ char *jsonMQTTmsgDATA(const char *device_id, const char *metric, long value)
 void setup()
 {
   // put your setup code here, to run once:
-  // Serial.begin(115200);
   Serial.println("\nStarting setup!");
   device.addWifi(ssid, pwd);
+  device.setDefaultConnectionType(ConnectionType::MQTT);
+  // Serial.print("Server: ");
+  // Serial.println(server_ip);
   device.setServer(server_ip, mqtt_port);
   device.setPlatformCredentials(DEV_ID, USER, PWD);
-  device.setDefaultConnectionType(ConnectionType::MQTT);
 
   device.connectWifi();
   // start platform connection

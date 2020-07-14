@@ -33,7 +33,17 @@ void callback(char* topic, byte* payload, unsigned int length)
 int MQTTProtocol::connect()
 {
 	int connRes = 0;
-	const char * host = this->getHost().c_str();
+	char user[PLAT_CRED_ARRAY_SIZE];
+	char pwd[PLAT_CRED_ARRAY_SIZE];
+	char host[PLAT_ADDR_ARRAY_SIZE];
+
+	// string returned by c_str() does NOT works with mqttClient for some reason
+	strncpy(user, this->getUser().c_str(), this->getUser().length());
+	user[this->getUser().length()] = '\0';
+	strncpy(pwd, this->getPassword().c_str(), this->getPassword().length());
+	pwd[this->getPassword().length()] = '\0';
+	strncpy(host, this->getHost().c_str(), this->getHost().length());
+	host[this->getHost().length()] = '\0';
 
 	if(mqttClient.connected())
 	{
@@ -50,14 +60,15 @@ int MQTTProtocol::connect()
   mqttClient.setServer(host, this->getPort());
   mqttClient.setCallback(callback);
 
-	Log.trace("[MQTT] USER: %s PASSWD: %s\n", this->getUser().c_str(), this->getPassword().c_str());
+	Log.trace("[MQTT] USER: %s PASSWD: %s\n", user, pwd);
 
 	for(int i=0; i<5; i++)
   {
 		Log.trace("[MQTT] Connection attempts left %d\n", 5 - i);
-    connRes = mqttClient.connect(this->getUser().c_str(),
-																	this->getUser().c_str(),
-																	this->getPassword().c_str());
+		connRes = mqttClient.connect(user, user, pwd);
+    // connRes = mqttClient.connect(this->getUser().c_str(),
+		// 														 this->getUser().c_str(),
+		// 														 this->getPassword().c_str());
     if(connRes) break;
     delay(1500);
   }
