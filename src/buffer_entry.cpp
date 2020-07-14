@@ -1,12 +1,11 @@
 #include "buffer_entry.h"
 
-// Type; {Payload}; U; Protocol; Channel
-// Total bytes: 143 (144 when aligned)
+// Type; {Payload}; Protocol; Channel
+// Total bytes: 142 (144 when aligned)
 // typedef struct buffer_entry
 // {
 //   uint8_t type;
 //   char payload[120];
-//   uint8_t U;
 //   uint8_t protocol;
 //   char channel[20];
 // } BufferElement;
@@ -64,7 +63,6 @@ int BufferEntry::collectData(String channel, String payload)
 
   el.type = 1;
   strcpy(el.payload, payload.c_str());
-  el.U = 0;
   el.retries = 0;
   el.protocol = (uint8_t)this->connectionType;
   strcpy(el.channel, channel.c_str());
@@ -174,7 +172,7 @@ void BufferEntry::clearDataBuffer()
   this->empty = true;
 }
 
-void BufferEntry::bufferStatus()
+void BufferEntry::printBufferStatus()
 {
   Log.trace("------------------\n");
   Log.trace("[Buffer] First position = %d\n", this->firstPosition);
@@ -204,7 +202,7 @@ void BufferEntry::incrementRetries(int position)
 
 String BufferEntry::toString(BufferElement element)
 {
-  String ret = "T:" + String(element.type) + ";P:" + String(element.payload) + ";U:" +  element.U + ";L:" + element.protocol + ";C:" + element.channel;
+  String ret = "T:" + String(element.type) + ";P:" + String(element.payload) + ";L:" + element.protocol + ";C:" + element.channel;
 
   return ret;
 }

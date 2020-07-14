@@ -6,13 +6,12 @@
 
 #define DEFAULT_MAX_RETRIES 10
 
-// Type; {Payload}; U; Protocol; Channel
-// Total bytes: 143 (144 when aligned)
+// Type; {Payload}; Protocol; Channel
+// Total bytes: 142 (144 when aligned)
 typedef struct buffer_entry
 {
   uint8_t type;
   char payload[120];
-  uint8_t U;
   uint8_t protocol;
   uint8_t retries;
   char channel[20];
@@ -54,7 +53,7 @@ public:
 
   void incrementRetries(int position);
 
-  void bufferStatus();
+  void printBufferStatus();
   bool isEmpty();
   void clearDataBuffer();
 };
