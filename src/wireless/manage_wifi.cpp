@@ -127,6 +127,8 @@ void WifiManager::removeConfig(String ssid)
   wifi_credentials temp[MAX_NUM_WIFI_CRED];
   int numTemp = 0;
 
+  for (int i=0; i<MAX_NUM_WIFI_CRED; i++) temp[i].enabled = 0x0000u;
+
   // copy credentials that do NOT match ssid to temp
   for(int i=0; i < this->numWifiCredentials; i++)
   {
@@ -146,6 +148,11 @@ void WifiManager::removeConfig(String ssid)
     return;
   }
 
+  if(numTemp == 0)
+  {
+    Log.trace("[WiFi] No WiFi credentials left, please set it before connecting\n");
+  }
+
   memcpy(this->wifiCredentials, temp, sizeof(this->wifiCredentials));
   this->numWifiCredentials = numTemp;
 }
@@ -153,6 +160,17 @@ void WifiManager::removeConfig(String ssid)
 bool WifiManager::tryConnectClientWifi()
 {
   bool conn = false;
+
+  if(this->numWifiCredentials == 0)
+  {
+    Log.trace("[WiFi] Credentials are missing!\n");
+    Log.trace("[WiFi] Trying to restore from EEPROM\n");
+    if(!restoreWifiCredentials())
+    {
+      Log.warning("[WiFi] Credentials not found! Aborting\n");
+      return conn;
+    }
+  }
 
   for (int i=0; i < this->numWifiCredentials; i++)
   {

@@ -47,20 +47,15 @@ void setup()
   Serial.println("====== Saving credentials ======");
   device.addWifi(ssid, pwd);
   device.setDefaultConnectionType(ConnectionType::MQTT);
-  // Serial.print("Server: ");
-  // Serial.println(server_ip);
   device.setServer(server_ip, mqtt_port);
-  device.setPlatformCredentials(DEV_ID, USER, PWD);
+  // device.setPlatformCredentials(DEV_ID, USER, PWD);
 
   Serial.println("====== Connecting ======");
   device.connectWifi();
   // start platform connection
   device.startConnection();
 
-  connected = device.saveAllCredentials();
-  Serial.println(">>>>>>>>> Saved: " + String(connected));
-  connected = device.restoreAllCredentials();
-  Serial.println(">>>>>>>>> Restored: " + String(connected));
+  device.saveAllCredentials();
   Serial.println("====== Setup finished ======");
 
   lasttimeSend = millis();

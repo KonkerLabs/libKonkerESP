@@ -66,6 +66,8 @@ void PlatformManager::setPlatformCredentials(String user, String password)
   platformCredential.enabled = ENABLED_PATTERN;
 
   Log.trace("[PLAT] Setting %s<>%s as platform credential\n", platformCredential.user, platformCredential.passwd);
+
+  this->credentialSet = true;
 }
 
 String PlatformManager::getUser()
@@ -76,6 +78,11 @@ String PlatformManager::getUser()
 String PlatformManager::getPassword()
 {
   return String(platformCredential.passwd);
+}
+
+bool PlatformManager::isCredentialSet()
+{
+  return this->credentialSet;
 }
 
 int PlatformManager::savePlatformCredentials()
@@ -117,10 +124,12 @@ int PlatformManager::restorePlatformCredentials()
       this->platformCredential.enabled = ENABLED_PATTERN;
       strcpy(platformCredential.user, temp_cred.user);
       strcpy(platformCredential.passwd, temp_cred.passwd);
+      this->credentialSet = true;
     }
   }
   else
   {
+    this->credentialSet = false;
     Log.warning("[PLAT] Could not restore credentials from memory!\n");
   }
 

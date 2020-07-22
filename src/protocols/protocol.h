@@ -18,6 +18,7 @@ public:
 
   virtual void setPlatformCredentials(String userid, String password);
 
+  virtual bool isCredentialSet();
   virtual int savePlatformCredentials();
   virtual int restorePlatformCredentials();
 

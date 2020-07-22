@@ -23,6 +23,7 @@ public:
   String getUser();
   String getPassword();
 
+  bool isCredentialSet();
   int savePlatformCredentials();
   int restorePlatformCredentials();
 

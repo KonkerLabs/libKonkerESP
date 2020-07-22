@@ -23,6 +23,7 @@ EEPROMManager::~EEPROMManager()
 
 void EEPROMManager::begin()
 {
+  // maybe recover credentials here, dunno how
   // recoverWifiCredentials();
   // recoverPlatformCredentials();
 }
@@ -126,6 +127,7 @@ int EEPROMManager::recoverWifiCredentials(uint8_t * retBuffer)
 {
   int ret = 0;
 
+  Log.trace("[FS] Restoring credentials from EEPROM\n");
   ret = read(retBuffer, WIFI_CRED_SIZE_BYTES * MAX_NUM_WIFI_CRED, WIFI_CRED_INIT_ADDR);
 
   return ret;
@@ -135,6 +137,7 @@ int EEPROMManager::recoverPlatformCredentials(uint8_t * retBuffer)
 {
   int ret = 0;
 
+  Log.trace("[FS] Restoring credentials from EEPROM\n");
   ret = read(retBuffer, PLAT_CRED_SIZE_BYTES, PLAT_CRED_INIT_ADDR);
 
   return ret;

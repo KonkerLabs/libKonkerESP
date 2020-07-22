@@ -20,6 +20,17 @@ void HTTPProtocol::getClient(HTTPClient* http)
 
 int HTTPProtocol::connect()
 {
+  if (!this->isCredentialSet())
+	{
+    Log.trace("[HTTP] Platform credentials are missing!\n");
+    Log.trace("[HTTP] Trying to restore from EEPROM\n");
+		if(!this->restorePlatformCredentials())
+		{
+			Log.warning("[HTTP] Credentials not found! Aborting\n");
+			return 0;
+		}
+	}
+
   return this->http_client.begin(wifi_client, "http://"+this->getHost()+":"+this->getPort());
 }
 

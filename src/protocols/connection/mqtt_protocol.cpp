@@ -37,6 +37,17 @@ int MQTTProtocol::connect()
 	char pwd[PLAT_CRED_ARRAY_SIZE];
 	char host[PLAT_ADDR_ARRAY_SIZE];
 
+	if (!this->isCredentialSet())
+	{
+		Log.trace("[MQTT] Platform credentials are missing!\n");
+		Log.trace("[MQTT] Trying to restore from EEPROM\n");
+		if(!this->restorePlatformCredentials())
+		{
+			Log.warning("[MQTT] Credentials not found! Aborting\n");
+			return 0;
+		}
+	}
+
 	// string returned by c_str() does NOT works with mqttClient for some reason
 	strncpy(user, this->getUser().c_str(), this->getUser().length());
 	user[this->getUser().length()] = '\0';

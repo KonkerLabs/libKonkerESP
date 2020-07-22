@@ -68,6 +68,11 @@ String BaseProtocol::getPassword()
   return platformManager.getPassword();
 }
 
+bool BaseProtocol::isCredentialSet()
+{
+  return platformManager.isCredentialSet();
+}
+
 int BaseProtocol::connect()
 {
   return 0;
