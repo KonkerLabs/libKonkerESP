@@ -50,8 +50,7 @@ private:
   int resetPin = 13;
 #endif
 
-  bool _encripted = false;
-  // WiFiServer httpServer(80);// create object
+  // bool _encripted = false;
 #ifndef ESP32
   ESP8266WebServer webServer;
 #else
@@ -72,8 +71,6 @@ private:
 
   // flag when the device checked for a device update
   unsigned long _last_time_update_check=0;
-
-  String _health_channel = "_health";
 
   Protocol* currentProtocol;
 
@@ -138,8 +135,6 @@ public:
   // HTTPClient* getAPIClient();
   //
   // // internal interface
-  // // heart beat to the server to send status information for the device
-  // void healthUpdate(String healthChannel);
   // // check if is there any update / reconfiguration for this device on the platform
   // void checkForUpdates();
 };

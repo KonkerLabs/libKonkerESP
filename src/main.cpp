@@ -48,7 +48,7 @@ void setup()
   device.addWifi(ssid, pwd);
   device.setDefaultConnectionType(ConnectionType::MQTT);
   device.setServer(server_ip, mqtt_port);
-  // device.setPlatformCredentials(DEV_ID, USER, PWD);
+  device.setPlatformCredentials(DEV_ID, USER, PWD);
 
   Serial.println("====== Connecting ======");
   device.connectWifi();
@@ -64,7 +64,6 @@ void setup()
 void loop()
 {
   count = count + 1;
-  // put your main code here, to run repeatedly
   connected = device.checkWifiConnection();
   // Serial.println("WiFi is " + String(connected));
 
@@ -105,17 +104,17 @@ void loop()
     // }
   }
 
-  if((millis() - lasttimeSend) > 5000) //ms
-  {
-    mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
-    device.sendData(PUB, String(mensagem));
-    data = device.recoverData();
-    Serial.print("Removed from buffer >>> ");
-    Serial.print(data.payload);
-    Serial.print(" | ");
-    Serial.println(data.channel);
-    lasttimeSend = millis();
-  }
+  // if((millis() - lasttimeSend) > 5000) //ms
+  // {
+  //   mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
+  //   device.sendData(PUB, String(mensagem));
+  //   data = device.recoverData();
+  //   Serial.print("Removed from buffer >>> ");
+  //   Serial.print(data.payload);
+  //   Serial.print(" | ");
+  //   Serial.println(data.channel);
+  //   lasttimeSend = millis();
+  // }
 
   device.loop();
 }
