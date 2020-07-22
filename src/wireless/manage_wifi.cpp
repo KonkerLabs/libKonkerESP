@@ -10,13 +10,6 @@ WifiManager::WifiManager()
   WiFi.mode(WIFI_STA);
   delay(10);
   WiFi.setAutoReconnect(true);
-
-  this->wifiFile = "wifi.json";
-}
-
-WifiManager::WifiManager(String wifiFile) : WifiManager()
-{
-  this->wifiFile = wifiFile;
 }
 
 String getConnectMessage(int status_code)
@@ -108,6 +101,7 @@ void WifiManager::setConfig(String ssid, String password)
   size = password.length();
   strncpy(wifiCredentials[index].PASSWD, password.c_str(), size);
   this->wifiCredentials[index].PASSWD[size] = '\0';
+  this->wifiCredentials[index].enabled = ENABLED_PATTERN;
 
   if(this->numWifiCredentials < MAX_NUM_WIFI_CRED)
   {
@@ -133,12 +127,14 @@ void WifiManager::removeConfig(String ssid)
   wifi_credentials temp[MAX_NUM_WIFI_CRED];
   int numTemp = 0;
 
+  // copy credentials that do NOT match ssid to temp
   for(int i=0; i < this->numWifiCredentials; i++)
   {
     if(strncmp(this->wifiCredentials[i].SSID, ssid.c_str(), ssid.length()) == 0)
     {
       continue;
     }
+    temp[numTemp].enabled = this->wifiCredentials[i].enabled;
     strncpy(temp[numTemp].SSID, this->wifiCredentials[i].SSID, WIFI_CRED_ARRAY_SIZE);
     strncpy(temp[numTemp].PASSWD, this->wifiCredentials[i].PASSWD, WIFI_CRED_ARRAY_SIZE);
     numTemp++;
@@ -202,6 +198,61 @@ int WifiManager::getWifiStrenght()
 String WifiManager::getWifiSSID()
 {
   return WiFi.SSID();
+}
+
+int WifiManager::saveWifiCredentials()
+{
+  uint8_t buffer[MAX_NUM_WIFI_CRED * sizeof(wifi_credentials)];
+
+  memset(buffer, 0, sizeof(buffer));
+  Log.trace("[WiFi] Saving WiFi credentials to EEPROM\n");
+
+  for (int i=0; i< this->numWifiCredentials; i++)
+  {
+    Log.trace("[WiFi] Saving %s<>%s @ %d\n", this->wifiCredentials[i].SSID, this->wifiCredentials[i].PASSWD, i * sizeof(wifi_credentials));
+    memcpy(&buffer[i * sizeof(wifi_credentials)], &this->wifiCredentials[i], sizeof(wifi_credentials));
+    // Log.trace("[WiFi] Buffer[%d] {%X} | cred={%X}\n>", i, buffer, &this->wifiCredentials[i]);
+    // for (unsigned int i=0; i< sizeof(buffer); i++)
+    // {
+    //   Serial.print(" 0x");
+    //   Serial.print(buffer[i], HEX);
+    // }
+    // Serial.println(" <");
+  }
+
+  return deviceEEPROM.storeWifiCredentials(buffer);
+}
+
+int WifiManager::restoreWifiCredentials()
+{
+  uint8_t retBuffer[MAX_NUM_WIFI_CRED * sizeof(wifi_credentials)];
+  wifi_credentials temp_cred;
+  int ret, numWifiTemp = 0;
+
+  memset(retBuffer, 0, sizeof(retBuffer));
+  ret = deviceEEPROM.recoverWifiCredentials(retBuffer);
+
+  if (ret)
+  {
+    for (int i=0; i< MAX_NUM_WIFI_CRED; i++)
+    {
+      memcpy(&temp_cred, &retBuffer[i * sizeof(wifi_credentials)], sizeof(wifi_credentials));
+
+      if(temp_cred.enabled == ENABLED_PATTERN)
+      {
+        Log.trace("[WiFi] Restored credentials: %s<>%s\n", temp_cred.SSID, temp_cred.PASSWD);
+        setConfig(String(temp_cred.SSID), String(temp_cred.PASSWD));
+        numWifiTemp++;
+      }
+    }
+    this->numWifiCredentials = numWifiTemp;
+  }
+  else
+  {
+    Log.warning("[WiFi] Could not restore WiFi credentials from memory!\n");
+  }
+
+  return ret;
 }
 
 // bool WifiManager::isConfigured()

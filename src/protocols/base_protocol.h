@@ -8,12 +8,6 @@
 class BaseProtocol: public Protocol
 {
 protected:
-  // String host;
-  // int port;
-  // // credentials used by the connection
-  // const char* userid;
-  // const char* password;
-
   PlatformManager platformManager;
 
 public:
@@ -28,6 +22,9 @@ public:
   void setPlatformCredentials(String userid, String password);
   String getUser();
   String getPassword();
+
+  int savePlatformCredentials();
+  int restorePlatformCredentials();
 
   void getClient(HTTPClient *); // [MJ] Change this to use void*
 

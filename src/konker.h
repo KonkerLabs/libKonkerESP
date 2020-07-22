@@ -17,6 +17,7 @@
 #include "wireless/manage_wifi.h"
 #include "platform/manage_platform.h"
 #include "protocols/all_protocols.h"
+#include "file_system/manage_eeprom.h"
 // #include "./update/firmwareUpdate.h"
 
 #define _STATUS_LED 2
@@ -46,10 +47,10 @@ private:
 #ifndef ESP32
   int resetPin = D5;
 #else
-  int resetPin=13;
+  int resetPin = 13;
 #endif
 
-  bool _encripted=true;
+  bool _encripted = false;
   // WiFiServer httpServer(80);// create object
 #ifndef ESP32
   ESP8266WebServer webServer;
@@ -81,6 +82,10 @@ private:
   void setChipID(String deviceID);
   // returns true if currentProtocol is set (aka, not null)
   bool checkProtocol();
+  bool saveWifiCredentials();
+  bool restoreWifiCredentials();
+  bool savePlatformCredentials();
+  bool restorePlatformCredentials();
 
 public:
   KonkerDevice();
@@ -98,10 +103,9 @@ public:
   bool checkWifiConnection();
   int getNumWifiCredentials();
 
+  // Unique ID operations
   void setUniqueID(String id);
   String getUniqueID();
-  //
-  // void saveConfiguration();
 
   // Platform connection functions
   void setDefaultConnectionType(ConnectionType c);
@@ -112,6 +116,9 @@ public:
   void stopConnection();
   int checkPlatformConnection();
 
+  // Credentials operations
+  bool saveAllCredentials();
+  bool restoreAllCredentials();
   void resetALL();
 
   void loop();
@@ -135,7 +142,5 @@ public:
   // void healthUpdate(String healthChannel);
   // // check if is there any update / reconfiguration for this device on the platform
   // void checkForUpdates();
-  //
-  // void setName(const char * newName);
 };
 #endif /* __KONKER_H__ */

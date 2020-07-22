@@ -18,9 +18,12 @@ public:
 
   virtual void setPlatformCredentials(String userid, String password);
 
+  virtual int savePlatformCredentials();
+  virtual int restorePlatformCredentials();
+
   virtual int connect();
   virtual int disconnect(); //return connection status from globals.h
-  virtual int checkConnection(); //return integer meaning depends on protocol library
+  virtual int checkConnection(); //returning integer meaning depends on protocol library
 
   virtual void protocolLoop();
 };

@@ -48,6 +48,16 @@ void BaseProtocol::setPlatformCredentials(String userid, String password)
   platformManager.setPlatformCredentials(userid, password);
 }
 
+int BaseProtocol::savePlatformCredentials()
+{
+  return platformManager.savePlatformCredentials();
+}
+
+int BaseProtocol::restorePlatformCredentials()
+{
+  return platformManager.restorePlatformCredentials();
+}
+
 String BaseProtocol::getUser()
 {
   return platformManager.getUser();

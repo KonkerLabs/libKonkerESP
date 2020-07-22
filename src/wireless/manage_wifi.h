@@ -6,14 +6,19 @@
 #else
 #include <WiFi.h>
 #endif
+//note: WiFi comes from {ESP8266WiFi,Wifi}.h
 #include "globals.h"
+#include "manage_eeprom.h"
+//note: deviceEEPROM comes from manage_eeprom.h
 
 #define MAX_NUM_WIFI_CRED       3
 #define WIFI_CRED_ARRAY_SIZE    16
 
 // struct is used to store credentials in device memory
+// 34 bytes
 struct wifi_credentials
 {
+  uint16_t enabled;
   char SSID[WIFI_CRED_ARRAY_SIZE];
   char PASSWD[WIFI_CRED_ARRAY_SIZE];
 };
@@ -23,24 +28,12 @@ class WifiManager
 private:
   wifi_credentials wifiCredentials[MAX_NUM_WIFI_CRED];
   int numWifiCredentials = 0;
-  // bool i=0;
-  // bool g=0;
-  // bool s=0;
 
-  // void setIP (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);
-  // void setGateway (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);
-  // void setSubnet (uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);
   bool tryConnect(String ssid, String password);
   bool tryConnectSSID(String ssid, String password, int retries);
 
 public:
-  // IPAddress ip;
-  // IPAddress gateway;
-  // IPAddress subnet;
-  String wifiFile;
-
   WifiManager();
-  WifiManager(String wifiFile);
   void setConfig(String ssid, String password);
   void setConfig(String ssid0, String password0, String ssid1, String password1);
   void setConfig(String ssid0, String password0, String ssid1, String password1, String ssid2, String password2);
@@ -55,12 +48,11 @@ public:
   int getWifiStrenght();
   String getWifiSSID();
 
-  // IPAddress getIP();
-  // bool isConfigured();
+  int saveWifiCredentials();
+  // overwrites existing credentials (if any)
+  int restoreWifiCredentials();
 
-//TODO gravar credenciais do Wifi em arquivo no FS
-
-//TODO AP mode
+  //TODO AP mode
 };
 
 #endif

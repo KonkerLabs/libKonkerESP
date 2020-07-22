@@ -183,7 +183,14 @@ int KonkerDevice::checkPlatformConnection()
 
 void KonkerDevice::loop()
 {
-  this->currentProtocol->protocolLoop();
+  if (this->currentProtocol == nullptr)
+  {
+    Log.error("Protocol not set! Please call KonkerDevice::setDefaultConnectionType at setup!");
+  }
+  else
+  {
+    this->currentProtocol->protocolLoop();
+  }
   // checkForUpdates();
   //healthUpdate(_health_channel);
   delay(1000);
@@ -250,17 +257,81 @@ void KonkerDevice::setPlatformCredentials(String deviceID, String userid, String
   }
 }
 
+bool KonkerDevice::savePlatformCredentials()
+{
+  if(checkProtocol())
+  {
+    return this->currentProtocol->savePlatformCredentials();
+  }
+
+  return false;
+}
+
+bool KonkerDevice::saveWifiCredentials()
+{
+  return this->deviceWifi.saveWifiCredentials();
+}
+
+bool KonkerDevice::saveAllCredentials()
+{
+  bool ret = true;
+
+  Log.trace("Saving credentials to memory\n");
+
+  ret = ret & saveWifiCredentials();
+  ret = ret & savePlatformCredentials();
+
+  if (!ret)
+  {
+    Log.warning("Could not store credentials in memory!\n");
+  }
+
+  return ret;
+}
+
+bool KonkerDevice::restorePlatformCredentials()
+{
+  if(checkProtocol())
+  {
+    return this->currentProtocol->restorePlatformCredentials();
+  }
+
+  return false;
+}
+
+bool KonkerDevice::restoreWifiCredentials()
+{
+  return this->deviceWifi.restoreWifiCredentials();
+}
+
+bool KonkerDevice::restoreAllCredentials()
+{
+  bool ret = true;
+
+  Log.trace("Restoring credentials from memory\n");
+
+  ret = ret & restoreWifiCredentials();
+  ret = ret & restorePlatformCredentials();
+
+  if (!ret)
+  {
+    Log.warning("Could not restore credentials from memory!\n");
+  }
+
+  return ret;
+}
+
 int KonkerDevice::storeData(String channel, String payload)
 {
   Log.trace("Storing data in buffer\n");
-  sendBuffer.bufferStatus();
+  // sendBuffer.printBufferStatus();
   return sendBuffer.collectData(channel, payload);
 }
 
 BufferElement KonkerDevice::recoverData()
 {
   Log.trace("Rocovering data from buffer\n");
-  sendBuffer.bufferStatus();
+  // sendBuffer.printBufferStatus();
   return sendBuffer.consumeData();
 }
 
