@@ -2,6 +2,7 @@
 
 BaseProtocol::BaseProtocol()
 {
+  this->connectionOriented = false;
 }
 
 void BaseProtocol::init()
@@ -36,6 +37,11 @@ String BaseProtocol::getHost()
 int BaseProtocol::getPort()
 {
   return platformManager.getPort();
+}
+
+int BaseProtocol::getNumConnFail()
+{
+  return this->numConnFail;
 }
 
 void BaseProtocol::getClient(HTTPClient * http)
@@ -86,4 +92,9 @@ int BaseProtocol::disconnect()
 int BaseProtocol::checkConnection()
 {
   return UNKNOWN;
+}
+
+bool BaseProtocol::isConnectionOriented()
+{
+  return connectionOriented;
 }

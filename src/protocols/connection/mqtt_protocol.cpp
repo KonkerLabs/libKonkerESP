@@ -3,6 +3,7 @@
 MQTTProtocol::MQTTProtocol() : ConnectionProtocol()
 {
 	mqttClient.setClient(espClient);
+	this->connectionOriented = true;
 }
 
 void MQTTProtocol::protocolLoop()
@@ -44,6 +45,7 @@ int MQTTProtocol::connect()
 		if(!this->restorePlatformCredentials())
 		{
 			Log.warning("[MQTT] Credentials not found! Aborting\n");
+			this->numConnFail++;
 			return 0;
 		}
 	}
@@ -96,8 +98,9 @@ int MQTTProtocol::connect()
 	{
     Log.trace("[MQTT] Failed to connect to MQTT broker.\n");
     Log.trace("[MQTT] State = %d\n\n", mqttClient.state());
-    // appendToFile(healthFile,(char*)"1", _mqttFailureAdress);
+    this->numConnFail++;
     delay(3000);
+		// TODO create reset function that saves relevant info before
 #ifndef ESP32
     ESP.reset();
 #else
@@ -127,20 +130,17 @@ int MQTTProtocol::send(const char * channel, String payload)
 	if (pubCode != 1)
 	{
 		Log.notice("[MQTT] Failed. Code = %d\n", pubCode);
-    // failedComm=1;
-    // appendToFile(healthFile,(char*)"1", _mqttFailureAdress);
+    this->numConnFail++;
     delay(3000);
 #ifndef ESP32
     ESP.reset();
 #else
     ESP.restart();
 #endif
-    // return 0;
   }
 	else
 	{
 		Log.notice("[MQTT] Sucess. Code = %d\n", pubCode);
-    // return 1;
   }
 
 	return pubCode;

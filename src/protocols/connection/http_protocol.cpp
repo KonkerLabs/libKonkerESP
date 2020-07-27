@@ -3,6 +3,7 @@
 HTTPProtocol::HTTPProtocol() : http_client()
 {
   // Log.trace("[HTTP] Creating HTTP object\n");
+  this->connectionOriented = true;
 }
 
 HTTPProtocol::~HTTPProtocol()
@@ -20,6 +21,8 @@ void HTTPProtocol::getClient(HTTPClient* http)
 
 int HTTPProtocol::connect()
 {
+  bool conn = 0;
+
   if (!this->isCredentialSet())
 	{
     Log.trace("[HTTP] Platform credentials are missing!\n");
@@ -27,11 +30,16 @@ int HTTPProtocol::connect()
 		if(!this->restorePlatformCredentials())
 		{
 			Log.warning("[HTTP] Credentials not found! Aborting\n");
+      this->numConnFail++;
 			return 0;
 		}
 	}
 
-  return this->http_client.begin(wifi_client, "http://"+this->getHost()+":"+this->getPort());
+  conn = this->http_client.begin(wifi_client, "http://"+this->getHost()+":"+this->getPort());
+
+  if(!conn) this->numConnFail++;
+
+  return conn;
 }
 
 int HTTPProtocol::disconnect()

@@ -28,9 +28,12 @@ class WifiManager
 private:
   wifi_credentials wifiCredentials[MAX_NUM_WIFI_CRED];
   int numWifiCredentials = 0;
+  int numConnFail = 0;
 
   bool tryConnect(String ssid, String password);
   bool tryConnectSSID(String ssid, String password, int retries);
+
+  friend class HealthMonitor;
 
 public:
   WifiManager();
@@ -47,6 +50,7 @@ public:
   IPAddress getLocalIP();
   int getWifiStrenght();
   String getWifiSSID();
+  String getMacAddress();
 
   int saveWifiCredentials();
   // overwrites existing credentials (if any)
@@ -55,4 +59,4 @@ public:
   //TODO AP mode
 };
 
-#endif
+#endif /* __CONFIG_WIFI_H__ */

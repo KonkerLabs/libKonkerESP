@@ -168,6 +168,7 @@ bool WifiManager::tryConnectClientWifi()
     if(!restoreWifiCredentials())
     {
       Log.warning("[WiFi] Credentials not found! Aborting\n");
+      this->numConnFail++;
       return conn;
     }
   }
@@ -178,6 +179,8 @@ bool WifiManager::tryConnectClientWifi()
 
     conn = this->tryConnectSSID(String(this->wifiCredentials[i].SSID), String(this->wifiCredentials[i].PASSWD), 2);
   }
+
+  if(!conn) this->numConnFail++;
 
   return conn;
 }
@@ -216,6 +219,17 @@ int WifiManager::getWifiStrenght()
 String WifiManager::getWifiSSID()
 {
   return WiFi.SSID();
+}
+
+String WifiManager::getMacAddress()
+{
+  byte mac[6];
+  char macString[20];
+  WiFi.macAddress(mac);
+  //  char macString[20];
+  sprintf(macString, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4],mac[5]);
+
+  return String(macString);
 }
 
 int WifiManager::saveWifiCredentials()

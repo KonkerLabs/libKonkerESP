@@ -4,7 +4,7 @@
 
 // ---------------------------------------------------------------------------//
 
-KonkerDevice::KonkerDevice() : deviceWifi(), webServer(80)//, update()
+KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), webServer(80)//, update()
 {
   if (DEBUG_LEVEL>0 && !Serial)
   {
@@ -98,7 +98,6 @@ void KonkerDevice::setDefaultConnectionType(ConnectionType c)
   sendBuffer.setConnectionType(this->defaultConnectionType);
 
   Protocol* newConnection;
-	// bool connectionOriented = true;
 
 	switch (this->defaultConnectionType)
   {
@@ -120,11 +119,9 @@ void KonkerDevice::setDefaultConnectionType(ConnectionType c)
 		case ConnectionType::UDP:
 			// newConnection = new UDPProtocol();
       newConnection = new HTTPProtocol();
-			// connectionOriented = false;
 			break;
 		default:
 			newConnection = nullptr;
-			// connectionOriented = false;
 	}
 
   if (newConnection != nullptr)
@@ -141,18 +138,14 @@ void KonkerDevice::setFallbackConnectionType(ConnectionType c)
 // handle connection to the server used to send and receive data for this device
 void KonkerDevice::startConnection()
 {
-	if (this->currentProtocol != nullptr)
-  {
-		stopConnection();
-	}
+  stopConnection();
 
-	if (this->currentProtocol != nullptr)
+	if (checkProtocol())
   {
-		// if (connectionOriented)
-    // {
-		// 	newConnection->setConnection(this->host, this->port);
-		// 	newConnection->setCredentials(this->userid.c_str(), this->password.c_str());
-		// }
+		if (this->currentProtocol->isConnectionOriented())
+    {
+			deviceMonitor.setProtocol(this->currentProtocol);
+		}
 
 		this->currentProtocol->connect();
 
@@ -192,7 +185,7 @@ void KonkerDevice::loop()
     this->currentProtocol->protocolLoop();
   }
   // checkForUpdates();
-  //healthUpdate(_health_channel);
+  deviceMonitor.healthUpdate();
   delay(1000);
 }
 

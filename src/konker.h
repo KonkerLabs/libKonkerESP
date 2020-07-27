@@ -18,7 +18,8 @@
 #include "platform/manage_platform.h"
 #include "protocols/all_protocols.h"
 #include "file_system/manage_eeprom.h"
-// #include "./update/firmwareUpdate.h"
+#include "health/health_monitor.h"
+// #include "update/firmwareUpdate.h"
 
 #define _STATUS_LED 2
 
@@ -40,6 +41,7 @@ class KonkerDevice
 private:
   int wifi_connection_errors = 0;
   WifiManager deviceWifi;
+  HealthMonitor deviceMonitor;
 
   ConnectionType defaultConnectionType;
   ConnectionType fallbackConnectionType;

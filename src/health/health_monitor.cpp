@@ -1,8 +1,45 @@
 #include "health_monitor.h"
 
-HealthMonitor::HealthMonitor()
+HealthMonitor::HealthMonitor() : health_channel{'_', 'h', 'e', 'a', 'l', 't', 'h'}
 {
+}
 
+HealthMonitor::HealthMonitor(WifiManager * deviceWifi) : HealthMonitor()
+{
+  this->pDeviceWifi = deviceWifi;
+}
+
+HealthMonitor::~HealthMonitor()
+{
+  this->healthInfo.erase(this->healthInfo.begin(), this->healthInfo.end());
+}
+
+void HealthMonitor::setProtocol(Protocol *protocol)
+{
+  this->currentProtocol = protocol;
+}
+
+void HealthMonitor::collectHealthInfo()
+{
+  char ipBuffer[20];
+  char intBuffer[5];
+
+  this->healthInfo["build"] = std::string(PIO_SRC_REV);
+
+  this->healthInfo["ssid"] = std::string(pDeviceWifi->getWifiSSID().c_str());
+  sprintf(intBuffer, "%d", pDeviceWifi->getWifiStrenght());
+  this->healthInfo["rssi"] = std::string(intBuffer);
+  IPAddress ipBytes = pDeviceWifi->getLocalIP();
+  sprintf(ipBuffer, "%d.%d.%d.%d", ipBytes[0], ipBytes[1], ipBytes[2], ipBytes[3]);
+  this->healthInfo["ip"] = std::string(ipBuffer);
+  this->healthInfo["mac"] = std::string(pDeviceWifi->getMacAddress().c_str());
+
+  sprintf(intBuffer, "%d", pDeviceWifi->numConnFail);
+  this->healthInfo["nfail"] = std::string(intBuffer);
+  sprintf(intBuffer, "%d", currentProtocol->getNumConnFail());
+  this->healthInfo["pfail"] = std::string(intBuffer);
+
+  Log.trace("[HMON] Information collected\n");
 }
 
 void HealthMonitor::healthUpdate()
@@ -16,52 +53,22 @@ void HealthMonitor::healthUpdate()
 
   this->last_time_health_send = millis();
 
-	StaticJsonDocument<512> jsonMSG;
-	// JsonObject jsonMSG = jsonBuffer.as<JsonObject>();
+	char * payload;
 
 	delay(10);
+  Log.trace("[HMON] Collecting health information for device\n");
+  collectHealthInfo();
 
-  char content[3];
-  // readFile(healthFile,content,0,3);
-  int nf = content[_netFailureAdress] - '0';
-  int mf = content[_mqttFailureAdress] - '0';
-  int hf = content[_httpFailureAdress] - '0';
+  payload = jsonHelper.createMessage(&healthInfo);
+  Log.trace("[HMON] Publishing on channel: %s\n", this->health_channel);
+  Log.trace("[HON] Message: %s\n", payload);
 
-//{"p":0}
-  jsonMSG["build"] = (String)PIO_SRC_REV;
-  jsonMSG["wifi"]=(String)WiFi.SSID();
-  jsonMSG["rssi"]=(String)WiFi.RSSI();
+  currentProtocol->send(this->health_channel, String(payload));
 
-  char macAddr[20];
-  jsonMSG["MAC"]= getMacAddress(macAddr);
-
-  char buffer [16];
-  unsigned char bytes[4];
-  bytes[0] = (WiFi.localIP() >> 0) & 0xFF;
-  bytes[1] = (WiFi.localIP() >> 8) & 0xFF;
-  bytes[2] = (WiFi.localIP() >> 16) & 0xFF;
-  bytes[3] = (WiFi.localIP() >> 24) & 0xFF;
-  sprintf(buffer, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
-
-  jsonMSG["ip"]=(String)buffer;
-  jsonMSG["nfail"] = nf;
-  jsonMSG["mfail"] = mf;
-  jsonMSG["hfail"] = hf;
-
-  //jsonMSG.printTo(bufferJ, sizeof(bufferJ));
-  serializeJson(jsonMSG, bufferJ);
-  char mensagemjson[1024];
-  strcpy(mensagemjson,bufferJ);
-  Serial.println("Publishing on channel:" + (String)health_channel);
-  Serial.print("Health message: ");
-  Serial.println(mensagemjson);
-
-  pubHttp(health_channel, mensagemjson);
-
-  if(nf==0 && mf==0 && hf==0)
-  {
-    return;
-  }
+  // if(nf==0 && mf==0 && hf==0)
+  // {
+  //   return;
+  // }
   //clear error flags
   // saveFile(healthFile,(char*)"000");
 }

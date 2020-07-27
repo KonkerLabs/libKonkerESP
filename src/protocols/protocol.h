@@ -14,19 +14,20 @@ public:
   virtual void setConnection(String host, int port);
   virtual String getHost();
   virtual int getPort();
+  virtual int getNumConnFail();
   virtual void getClient(HTTPClient *);
 
   virtual void setPlatformCredentials(String userid, String password);
-
   virtual bool isCredentialSet();
   virtual int savePlatformCredentials();
   virtual int restorePlatformCredentials();
 
   virtual int connect();
   virtual int disconnect(); //return connection status from globals.h
-  virtual int checkConnection(); //returning integer meaning depends on protocol library
+  virtual int checkConnection(); //returning integer meaning depends on protocol library TODO
+  virtual bool isConnectionOriented();
 
   virtual void protocolLoop();
 };
 
-#endif
+#endif /* __PROTOCOL_H__ */
