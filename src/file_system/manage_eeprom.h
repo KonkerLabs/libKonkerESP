@@ -13,8 +13,10 @@ Sketch    OTA update   File system   >EEPROM<  WiFi config (SDK)
 #define MAX_NUM_WIFI_CRED     3
 #define WIFI_CRED_INIT_ADDR   0
 #define WIFI_CRED_SIZE_BYTES  34    //total size = 34 bytes x 3
-#define PLAT_CRED_INIT_ADDR   1024
+#define PLAT_CRED_INIT_ADDR   512
 #define PLAT_CRED_SIZE_BYTES  50
+#define HLTH_INFO_INIT_ADDR   1024
+#define HLTH_INFO_SIZE_BYTES  6
 
 #define ENABLED_PATTERN       0xABCDu
 
@@ -49,6 +51,9 @@ public:
 
   int storePlatformCredentials(uint8_t * platBuffer);
   int recoverPlatformCredentials(uint8_t * retBuffer);
+
+  int storeHealthInfo(uint8_t * infoBuffer);
+  int recoverHealthInfo(uint8_t * retBuffer);
 };
 
 extern EEPROMManager deviceEEPROM;

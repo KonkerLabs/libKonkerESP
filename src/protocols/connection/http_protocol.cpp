@@ -21,7 +21,7 @@ void HTTPProtocol::getClient(HTTPClient* http)
 
 int HTTPProtocol::connect()
 {
-  bool conn = 0;
+  bool conn = false;
 
   if (!this->isCredentialSet())
 	{
@@ -31,15 +31,19 @@ int HTTPProtocol::connect()
 		{
 			Log.warning("[HTTP] Credentials not found! Aborting\n");
       this->numConnFail++;
-			return 0;
+			return NOT_CONNECTED;
 		}
 	}
 
   conn = this->http_client.begin(wifi_client, "http://"+this->getHost()+":"+this->getPort());
 
-  if(!conn) this->numConnFail++;
+  if(!conn)
+  {
+    this->numConnFail++;
+    return NOT_CONNECTED;
+  }
 
-  return conn;
+  return CONNECTED;
 }
 
 int HTTPProtocol::disconnect()
@@ -50,42 +54,25 @@ int HTTPProtocol::disconnect()
   }
   return DISCONNECTED;
 }
+
 int HTTPProtocol::checkConnection()
 {
   return this->http_client.connected();
 }
 
-void HTTPProtocol::buildHTTPSUBTopic(char const channel[], char *topic)
-{
-  char bffPort[6];
-// //  itoa (_rootPort,bffPort,10);
-//   itoa(port, bffPort, 10);
-//   strcpy (topic,"http://");
-//   strcat (topic,host.c_str());
-//   strcat (topic,":");
-//   strcat (topic,bffPort);
-//   strcat (topic,"/");
-//   strcat (topic,SUB_PREFIX);
-//   strcat(topic,"/");
-//   strcat (topic,this->userid);
-//   strcat(topic,"/");
-//   strcat (topic,channel);
-}
-
 int HTTPProtocol::send(const char *channel, String payload)
 {
-  // TODO move this throtle to helth later
-  //throtle this call
-  // if ((millis()-_last_time_http_request) < _millis_delay_per_http_request)
-  // {
-  //   delay((millis()-_last_time_http_request));
-  // }
-  // _last_time_http_request = millis();
-  const char * user = this->getUser().c_str();
-  const char * passwd = this->getPassword().c_str();
+  char user[PLAT_ADDR_ARRAY_SIZE];
+  char passwd[PLAT_ADDR_ARRAY_SIZE];
+
+  strncpy(user, this->getUser().c_str(), this->getUser().length());
+	user[this->getUser().length()] = '\0';
+	strncpy(passwd, this->getPassword().c_str(), this->getPassword().length());
+	passwd[this->getPassword().length()] = '\0';
 
   this->http_client.addHeader("Content-Type", "application/json");
   this->http_client.addHeader("Accept", "application/json");
+  Log.trace("[HTTP] Authorization: %s<>%s\n", user, passwd);
   this->http_client.setAuthorization(user, passwd);
 
   char buffer[100];
@@ -109,13 +96,15 @@ int HTTPProtocol::send(const char *channel, String payload)
   if (httpCode >= 0 && httpCode < 300)
   {
     Log.notice("[HTTP] Success. Code = %d\n", httpCode);
-    return 1;
+    return CONNECTED;
   }
   else
   {
     Log.notice("[HTTP] Failed. Code = %d\n", httpCode);
-    failedComm = 1;
-    return 0;
+    this->numConnFail++;
+    if(httpCode < 0)
+      return DISCONNECTED;
+    return NOT_CONNECTED;
   }
 }
 

@@ -24,11 +24,14 @@ public:
   String getHost();
   int getPort();
   int getNumConnFail();
+  void setNumConnFail(uint16_t count);
+  void increaseConnFail();
+
   void setPlatformCredentials(String userid, String password);
+  bool isCredentialSet();
   String getUser();
   String getPassword();
 
-  bool isCredentialSet();
   int savePlatformCredentials();
   int restorePlatformCredentials();
 
@@ -39,7 +42,7 @@ public:
   int checkConnection();
   bool isConnectionOriented();
 
-  void protocolLoop();
+  bool protocolLoop();
 };
 
 #endif /* _BASE_PROTOCOL_H */

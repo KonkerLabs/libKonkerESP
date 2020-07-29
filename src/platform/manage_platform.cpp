@@ -5,6 +5,11 @@ PlatformManager::PlatformManager()
   // Log.trace("[PLAT] Initializing\n");
 }
 
+PlatformManager::~PlatformManager()
+{
+  // Log.trace("[PLAT] Initializing\n");
+}
+
 void PlatformManager::setServer(String host, int port)
 {
   int size;

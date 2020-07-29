@@ -97,6 +97,11 @@ int EEPROMManager::storePlatformCredentials(uint8_t * platBuffer)
   return write(platBuffer, PLAT_CRED_SIZE_BYTES, PLAT_CRED_INIT_ADDR);
 }
 
+int EEPROMManager::storeHealthInfo(uint8_t * infoBuffer)
+{
+  return write(infoBuffer, HLTH_INFO_SIZE_BYTES, HLTH_INFO_INIT_ADDR);
+}
+
 int EEPROMManager::read(uint8_t * retBuffer, unsigned int size, unsigned int initAddr)
 {
   unsigned int endAddr = size + initAddr;
@@ -139,6 +144,16 @@ int EEPROMManager::recoverPlatformCredentials(uint8_t * retBuffer)
 
   Log.trace("[FS] Restoring credentials from EEPROM\n");
   ret = read(retBuffer, PLAT_CRED_SIZE_BYTES, PLAT_CRED_INIT_ADDR);
+
+  return ret;
+}
+
+int EEPROMManager::recoverHealthInfo(uint8_t * retBuffer)
+{
+  int ret = 0;
+
+  Log.trace("[FS] Restoring health information from EEPROM\n");
+  ret = read(retBuffer, HLTH_INFO_SIZE_BYTES, HLTH_INFO_INIT_ADDR);
 
   return ret;
 }

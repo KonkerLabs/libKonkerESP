@@ -19,6 +19,8 @@ KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), w
 
   this->defaultConnectionType = ConnectionType::MQTT;
 
+  deviceMonitor.restoreHealthInfo();
+
   // Turn LED on when booting device
   pinMode(_STATUS_LED, OUTPUT);
 	digitalWrite(_STATUS_LED, LOW);
@@ -33,11 +35,20 @@ KonkerDevice::~KonkerDevice()
 {
 }
 
-// void KonkerDevice::formatFileSystem()
-// {
-//   return;
-// }
+void KonkerDevice::restartDevice()
+{
+  // save stuff to memory
+  deviceMonitor.saveHealthInfo();
 
+  delay(3000);
+#ifndef ESP32
+  ESP.reset();
+#else
+  ESP.restart();,
+#endif
+}
+
+// TODO what is this
 void KonkerDevice::resetALL()
 {
   deviceWifi.disconnectClientWifi();
@@ -47,12 +58,7 @@ void KonkerDevice::resetALL()
   Log.trace("You must remove this device from Konker plataform if registred, and redo factory configuration.");
 
   delay(5000);
-#ifndef ESP32
-  ESP.reset();
-#else
-  ESP.restart();,
-#endif
-  delay(1000);
+  restartDevice();
 }
 
 void KonkerDevice::addWifi(String ssid, String password)
@@ -136,7 +142,7 @@ void KonkerDevice::setFallbackConnectionType(ConnectionType c)
 }
 
 // handle connection to the server used to send and receive data for this device
-void KonkerDevice::startConnection()
+void KonkerDevice::startConnection(bool afterReconnect)
 {
   stopConnection();
 
@@ -148,6 +154,11 @@ void KonkerDevice::startConnection()
 		}
 
 		this->currentProtocol->connect();
+
+    if(afterReconnect)
+    {
+      this->currentProtocol->increaseConnFail();
+    }
 
 		// update the ESP update client with this new connection
 		// update.setProtocol(newConnection);
@@ -174,6 +185,12 @@ int KonkerDevice::checkPlatformConnection()
 	return NOT_CONNECTED;
 }
 
+void KonkerDevice::loopDuration(unsigned int duration)
+{
+  this->avgLoopDuration = this->avgLoopDuration + ((duration - this->avgLoopDuration)/this->loopCount);
+  this->loopCount++;
+}
+
 void KonkerDevice::loop()
 {
   if (this->currentProtocol == nullptr)
@@ -182,10 +199,16 @@ void KonkerDevice::loop()
   }
   else
   {
-    this->currentProtocol->protocolLoop();
+    if(this->currentProtocol->protocolLoop())
+    {
+      Log.trace("\n\n!!!!! Restart here !!!!!!\n\n");
+      restartDevice();
+    }
   }
   // checkForUpdates();
-  deviceMonitor.healthUpdate();
+  deviceMonitor.healthUpdate(this->avgLoopDuration);
+  this->avgLoopDuration = 0;
+  this->loopCount = 1;
   delay(1000);
 }
 
@@ -333,7 +356,7 @@ int KonkerDevice::sendData(String channel, String payload)
   int res = 0;
 
   res = this->currentProtocol->send(channel.c_str(), payload);
-  if(res)
+  if(res == CONNECTED)
   {
     Log.trace("Payload sent to platform\n");
   }

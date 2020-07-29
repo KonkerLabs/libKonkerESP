@@ -14,16 +14,10 @@ private:
   HTTPClient http_client;
   WiFiClient wifi_client;
 
-  long failedComm = 0;
-
   unsigned long _last_time_http_request = 0;
   unsigned long _millis_delay_per_http_request = 5000;
 
   String registry = "";
-protected:
-
-  void buildHTTPSUBTopic(char const channel[], char *topic);
-  void buildHTTPPUBTopic(char const channel[], char *topic);
 
 public:
 

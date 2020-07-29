@@ -1,4 +1,5 @@
 #include "konker.h"
+ADC_MODE(ADC_VCC);
 
 const char ssid[20] = "dlink-C21E-114";
 const char pwd[20] = "bobesponja";
@@ -42,7 +43,6 @@ char *jsonMQTTmsgDATA(const char *device_id, const char *metric, long value)
 
 void setup()
 {
-  // put your setup code here, to run once:
   Serial.println("\nStarting setup!");
   Serial.println("====== Saving credentials ======");
   device.addWifi(ssid, pwd);
@@ -53,7 +53,7 @@ void setup()
   Serial.println("====== Connecting ======");
   device.connectWifi();
   // start platform connection
-  device.startConnection();
+  device.startConnection(false);
 
   device.saveAllCredentials();
   Serial.println("====== Setup finished ======");
@@ -63,6 +63,7 @@ void setup()
 
 void loop()
 {
+  unsigned int loop_duration = micros();
   count = count + 1;
   connected = device.checkWifiConnection();
   // Serial.println("WiFi is " + String(connected));
@@ -77,7 +78,7 @@ void loop()
   if(!connected)
   {
     Serial.println("Disconnected from platform! Reconnecting...");
-    device.startConnection();
+    device.startConnection(true);
   }
   // Serial.println("Connection to platform " + String(connected));
 
@@ -117,4 +118,5 @@ void loop()
   // }
 
   device.loop();
+  device.loopDuration(micros() - loop_duration);
 }

@@ -9,9 +9,12 @@ void BaseProtocol::init()
 {
 }
 
-void BaseProtocol::protocolLoop()
+bool BaseProtocol::protocolLoop()
 {
-  delay(1000);
+  delay(1000); //1s
+  if(this->numConnFail > MAX_CONN_FAIL)
+    return true;
+  return false;
 }
 
 int BaseProtocol::send(String channel, String payload)
@@ -42,6 +45,16 @@ int BaseProtocol::getPort()
 int BaseProtocol::getNumConnFail()
 {
   return this->numConnFail;
+}
+
+void BaseProtocol::setNumConnFail(uint16_t count)
+{
+  this->numConnFail = count;
+}
+
+void BaseProtocol::increaseConnFail()
+{
+  this->numConnFail++;
 }
 
 void BaseProtocol::getClient(HTTPClient * http)

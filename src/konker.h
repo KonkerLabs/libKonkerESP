@@ -9,7 +9,7 @@
 
 #ifndef ESP32
 #include <ESP8266WebServer.h>
-#include <ESP8266HTTPClient.h>
+// #include <ESP8266HTTPClient.h>
 #endif
 
 #include "globals.h"
@@ -73,6 +73,8 @@ private:
 
   // flag when the device checked for a device update
   unsigned long _last_time_update_check=0;
+  unsigned int avgLoopDuration = 0;
+  unsigned int loopCount = 1;
 
   Protocol* currentProtocol;
 
@@ -89,6 +91,8 @@ private:
 public:
   KonkerDevice();
   ~KonkerDevice();
+
+  void restartDevice();
 
   // configuration functions
   void setServer(String host, int port);
@@ -111,7 +115,7 @@ public:
   void setFallbackConnectionType(ConnectionType c);
   ConnectionType getDefaultConnectionType();
   ConnectionType getFallbackConnectionType();
-  void startConnection();
+  void startConnection(bool afterReconnect);
   void stopConnection();
   int checkPlatformConnection();
 
@@ -120,6 +124,7 @@ public:
   bool restoreAllCredentials();
   void resetALL();
 
+  void loopDuration(unsigned int duration); //measured in useconds
   void loop();
 
   // communication interface

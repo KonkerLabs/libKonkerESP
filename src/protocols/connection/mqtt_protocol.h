@@ -20,7 +20,7 @@ public:
 
 	int send(const char * channel, String payload);
 
-	void protocolLoop() override;
+	bool protocolLoop() override;
 
 	void setPrefix(String p);
 };

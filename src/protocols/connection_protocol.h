@@ -21,7 +21,7 @@ public:
   int disconnect();
   int checkConnection();
 
-  void protocolLoop();
+  bool protocolLoop();
 };
 
 #endif

@@ -6,9 +6,10 @@ MQTTProtocol::MQTTProtocol() : ConnectionProtocol()
 	this->connectionOriented = true;
 }
 
-void MQTTProtocol::protocolLoop()
+bool MQTTProtocol::protocolLoop()
 {
 	mqttClient.loop();
+	return BaseProtocol::protocolLoop();
 }
 
 int MQTTProtocol::checkConnection()
@@ -61,7 +62,7 @@ int MQTTProtocol::connect()
 	if(mqttClient.connected())
 	{
 		Log.trace("[MQTT] Already connected to MQTT broker\n");
-    return 1;
+    return CONNECTED;
   }
 	else
 	{
@@ -92,21 +93,15 @@ int MQTTProtocol::connect()
 	if (connRes == 1)
 	{
     Log.trace("[MQTT] Connected to MQTT broker\n\n");
-    return 1;
+    return CONNECTED;
   }
 	else
 	{
     Log.trace("[MQTT] Failed to connect to MQTT broker.\n");
     Log.trace("[MQTT] State = %d\n\n", mqttClient.state());
     this->numConnFail++;
-    delay(3000);
-		// TODO create reset function that saves relevant info before
-#ifndef ESP32
-    ESP.reset();
-#else
-    ESP.restart();
-#endif
-    return 0;
+
+    return NOT_CONNECTED;
   }
 }
 
@@ -127,20 +122,16 @@ int MQTTProtocol::send(const char * channel, String payload)
 
 	pubCode = mqttClient.publish(topic, payload.c_str(), payload.length());
 
-	if (pubCode != 1)
+	if (pubCode)
 	{
-		Log.notice("[MQTT] Failed. Code = %d\n", pubCode);
-    this->numConnFail++;
-    delay(3000);
-#ifndef ESP32
-    ESP.reset();
-#else
-    ESP.restart();
-#endif
+		Log.notice("[MQTT] Sucess. Code = %d\n", pubCode);
   }
 	else
 	{
-		Log.notice("[MQTT] Sucess. Code = %d\n", pubCode);
+		Log.notice("[MQTT] Failed. Code = %d\n", pubCode);
+		this->numConnFail++;
+		if(mqttClient.state() < 0)
+			return DISCONNECTED;
   }
 
 	return pubCode;

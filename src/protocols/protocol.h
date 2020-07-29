@@ -15,10 +15,14 @@ public:
   virtual String getHost();
   virtual int getPort();
   virtual int getNumConnFail();
+  virtual void setNumConnFail(uint16_t count);
+  virtual void increaseConnFail();
   virtual void getClient(HTTPClient *);
 
   virtual void setPlatformCredentials(String userid, String password);
   virtual bool isCredentialSet();
+  virtual String getUser();
+  virtual String getPassword();
   virtual int savePlatformCredentials();
   virtual int restorePlatformCredentials();
 
@@ -27,7 +31,7 @@ public:
   virtual int checkConnection(); //returning integer meaning depends on protocol library TODO
   virtual bool isConnectionOriented();
 
-  virtual void protocolLoop();
+  virtual bool protocolLoop();
 };
 
 #endif /* __PROTOCOL_H__ */

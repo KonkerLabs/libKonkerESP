@@ -19,9 +19,9 @@ ConnectionProtocol::~ConnectionProtocol()
   }
 }
 
-void ConnectionProtocol::protocolLoop()
+bool ConnectionProtocol::protocolLoop()
 {
-  delay(1000);
+  return true;
 }
 
 void ConnectionProtocol::unimplemented(String method)

@@ -243,13 +243,6 @@ int WifiManager::saveWifiCredentials()
   {
     Log.trace("[WiFi] Saving %s<>%s @ %d\n", this->wifiCredentials[i].SSID, this->wifiCredentials[i].PASSWD, i * sizeof(wifi_credentials));
     memcpy(&buffer[i * sizeof(wifi_credentials)], &this->wifiCredentials[i], sizeof(wifi_credentials));
-    // Log.trace("[WiFi] Buffer[%d] {%X} | cred={%X}\n>", i, buffer, &this->wifiCredentials[i]);
-    // for (unsigned int i=0; i< sizeof(buffer); i++)
-    // {
-    //   Serial.print(" 0x");
-    //   Serial.print(buffer[i], HEX);
-    // }
-    // Serial.println(" <");
   }
 
   return deviceEEPROM.storeWifiCredentials(buffer);
@@ -286,8 +279,3 @@ int WifiManager::restoreWifiCredentials()
 
   return ret;
 }
-
-// bool WifiManager::isConfigured()
-// {
-//   return this->i && this->g && this->s;
-// }
