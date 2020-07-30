@@ -28,7 +28,7 @@ void callback(char* topic, byte* payload, unsigned int length)
   Serial.print(topic);
   Serial.print("] ");
 
-	// TODO this
+	// TODO this callSubChannelCallback
   // callSubChannelCallback(topic, payload, length);
 }
 

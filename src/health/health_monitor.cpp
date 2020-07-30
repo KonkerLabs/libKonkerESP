@@ -75,6 +75,19 @@ bool HealthMonitor::restoreHealthInfo()
   return true;
 }
 
+int HealthMonitor::pingPlatform()
+{
+  int ping_ms = 0;
+
+  if(Ping.ping("konkerlabs.com"))
+  {
+    ping_ms = Ping.averageTime();
+    Log.trace("[HMON] Ping = %d", ping_ms);
+  }
+
+  return ping_ms;
+}
+
 void HealthMonitor::collectHealthInfo(unsigned int loopDuration)
 {
   char ipBuffer[20];
@@ -96,6 +109,9 @@ void HealthMonitor::collectHealthInfo(unsigned int loopDuration)
   this->healthInfo["mfail"] = std::string(intBuffer);
   sprintf(intBuffer, "%d", httpObj.getNumConnFail());
   this->healthInfo["hfail"] = std::string(intBuffer);
+
+  sprintf(intBuffer, "%d", pingPlatform());
+  this->healthInfo["ping"] = std::string(intBuffer);  
 
   // sprintf(intBuffer, "%u", ESP.getCpuFreqMHz());
   // this->healthInfo["cpu"] = std::string(intBuffer);

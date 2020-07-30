@@ -35,7 +35,7 @@ public:
   int savePlatformCredentials();
   int restorePlatformCredentials();
 
-  void getClient(HTTPClient *); // [MJ] Change this to use void*
+  void getClient(HTTPClient *); // [TODO] Change this to use void*
 
   int connect();
   int disconnect();

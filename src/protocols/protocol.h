@@ -28,7 +28,7 @@ public:
 
   virtual int connect();
   virtual int disconnect(); //return connection status from globals.h
-  virtual int checkConnection(); //returning integer meaning depends on protocol library TODO
+  virtual int checkConnection(); 
   virtual bool isConnectionOriented();
 
   virtual bool protocolLoop();

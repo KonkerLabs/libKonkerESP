@@ -94,6 +94,10 @@ void loop()
       Serial.println("NOPE");
     }
 
+    // char ts[20];
+    // device.getCurrentTime(ts);
+    // Serial.println("TIME TIME TIME " + String(ts));
+
     // ok = device.testSendHTTP();
     // if (ok)
     // {

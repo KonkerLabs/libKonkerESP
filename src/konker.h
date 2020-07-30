@@ -19,6 +19,7 @@
 #include "protocols/all_protocols.h"
 #include "file_system/manage_eeprom.h"
 #include "health/health_monitor.h"
+#include "helpers/NTP_helper.h"
 // #include "update/firmwareUpdate.h"
 
 #define _STATUS_LED 2
@@ -58,6 +59,8 @@ private:
 #else
   WebServer webServer;
 #endif
+
+  NTPHelper deviceNTP;
 
   // ESPHTTPKonkerUpdate update;
 
@@ -128,6 +131,7 @@ public:
   void loop();
 
   // communication interface
+  void getCurrentTime(char * timestamp);
 
   /* returns 1 if send is OK or <= 0 if error ocurred when sending data to the server */
   int sendData(String channel, String payload);

@@ -1,8 +1,9 @@
 #ifndef __HEALTH_H__
 #define __HEALTH_H__
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
+#include "../lib/ESP8266Ping/src/ESP8266Ping.h"
 #include "globals.h"
 #include "protocol.h"
 #include "connection/http_protocol.h"
@@ -43,6 +44,7 @@ private:
 
   unsigned long last_time_health_send = 0;
 
+  int pingPlatform();
   void collectHealthInfo(unsigned int loopDuration);
 
 public:

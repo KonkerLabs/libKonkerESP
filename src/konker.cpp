@@ -20,6 +20,7 @@ KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), w
   this->defaultConnectionType = ConnectionType::MQTT;
 
   deviceMonitor.restoreHealthInfo();
+  deviceNTP.startNTP();
 
   // Turn LED on when booting device
   pinMode(_STATUS_LED, OUTPUT);
@@ -33,6 +34,7 @@ KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), w
 
 KonkerDevice::~KonkerDevice()
 {
+  deviceMonitor.saveHealthInfo();
 }
 
 void KonkerDevice::restartDevice()
@@ -193,6 +195,7 @@ void KonkerDevice::loopDuration(unsigned int duration)
 
 void KonkerDevice::loop()
 {
+  deviceNTP.updateNTP();
   if (this->currentProtocol == nullptr)
   {
     Log.error("Protocol not set! Please call KonkerDevice::setDefaultConnectionType at setup!");
@@ -210,6 +213,11 @@ void KonkerDevice::loop()
   this->avgLoopDuration = 0;
   this->loopCount = 1;
   delay(1000);
+}
+
+void KonkerDevice::getCurrentTime(char *timestamp)
+{
+  deviceNTP.getTimeNTP(timestamp);
 }
 
 bool KonkerDevice::checkProtocol()
@@ -395,7 +403,7 @@ int KonkerDevice::sendData()
   return res;
 }
 
-// TODO
+// TODO maybe get rid of this
 // int KonkerDevice::testSendHTTP()
 // {
 //   StaticJsonDocument<512> jsonMSG;
