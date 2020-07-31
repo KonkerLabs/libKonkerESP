@@ -1,8 +1,7 @@
 #include "health_monitor.h"
 
-HealthMonitor::HealthMonitor() : health_channel{'_', 'h', 'e', 'a', 'l', 't', 'h'}, httpObj()
+HealthMonitor::HealthMonitor() : health_channel{'_', 'h', 'e', 'a', 'l', 't', 'h'}
 {
-  httpObj.setConnection("data.prod.konkerlabs.net", 80);
 }
 
 HealthMonitor::HealthMonitor(WifiManager * deviceWifi) : HealthMonitor()
@@ -15,21 +14,20 @@ HealthMonitor::~HealthMonitor()
   this->healthInfo.erase(this->healthInfo.begin(), this->healthInfo.end());
 }
 
-void HealthMonitor::setProtocol(Protocol *protocol)
+void HealthMonitor::setProtocol(Protocol *protocol, Protocol* httpProtocol)
 {
-  bool conn = false;
-
   this->pCurrentProtocol = protocol;
-  httpObj.setPlatformCredentials(this->pCurrentProtocol->getUser(),
-                                 this->pCurrentProtocol->getPassword());
-  conn = httpObj.connect();
-  if(conn)
+  this->httpObj = static_cast<HTTPProtocol *>(httpProtocol);
+  // httpObj.setPlatformCredentials(this->pCurrentProtocol->getUser(),
+  //                                this->pCurrentProtocol->getPassword());
+  // conn = httpObj.connect();
+  if(this->httpObj->checkConnection())
   {
     Log.trace("[HMON] Connected to health channel\n");
   }
   else
   {
-    Log.trace("[HMON] Could not connect to health channel\n");
+    Log.trace("[HMON] Not connect to health channel\n");
   }
 }
 
@@ -42,7 +40,7 @@ bool HealthMonitor::saveHealthInfo()
 
   info.hfail = pDeviceWifi->numConnFail;
   info.mfail = pCurrentProtocol->getNumConnFail();
-  info.hfail = httpObj.getNumConnFail();
+  info.hfail = this->httpObj->getNumConnFail();
 
   Log.trace("[HMON] Saving health information to EEPROM\n");
   memcpy(buffer, &info, sizeof(info));
@@ -65,7 +63,7 @@ bool HealthMonitor::restoreHealthInfo()
 
     pDeviceWifi->numConnFail = info.hfail;
     pCurrentProtocol->setNumConnFail(info.mfail);
-    httpObj.setNumConnFail(info.hfail);
+    this->httpObj->setNumConnFail(info.hfail);
   }
   else
   {
@@ -107,7 +105,7 @@ void HealthMonitor::collectHealthInfo(unsigned int loopDuration)
   this->healthInfo["nfail"] = std::string(intBuffer);
   sprintf(intBuffer, "%d", pCurrentProtocol->getNumConnFail());
   this->healthInfo["mfail"] = std::string(intBuffer);
-  sprintf(intBuffer, "%d", httpObj.getNumConnFail());
+  sprintf(intBuffer, "%d", this->httpObj->getNumConnFail());
   this->healthInfo["hfail"] = std::string(intBuffer);
 
   sprintf(intBuffer, "%d", pingPlatform());
@@ -144,7 +142,7 @@ void HealthMonitor::healthUpdate(unsigned int loopDuration)
 
   payload = jsonHelper.createMessage(&healthInfo);
 
-  if(httpObj.checkConnection())
+  if(this->httpObj->checkConnection())
   {
     Log.trace("[HMON] Publishing on channel: %s\n", this->health_channel);
     Log.trace("[HMON] Message: %s\n", payload);
@@ -152,9 +150,9 @@ void HealthMonitor::healthUpdate(unsigned int loopDuration)
   else
   {
     Log.notice("[HMON] Lost connection to health channel. Reconnecting\n");
-    httpObj.increaseConnFail();
-    httpObj.connect();
+    this->httpObj->increaseConnFail();
+    this->httpObj->connect();
     // maybe try to reconnect here, or reset
   }
-  httpObj.send(this->health_channel, String(payload));
+  this->httpObj->send(this->health_channel, String(payload));
 }

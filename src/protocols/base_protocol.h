@@ -2,12 +2,13 @@
 #define _BASE_PROTOCOL_H
 
 #include "protocol.h"
-#include "manage_platform.h"
 #include "globals.h"
+#include "manage_platform.h"
 
 class BaseProtocol: public Protocol
 {
 protected:
+  PlatformManager platformManager;
   bool connectionOriented;
   int numConnFail = 0;
 
@@ -28,9 +29,10 @@ public:
   void increaseConnFail();
 
   void setPlatformCredentials(String userid, String password);
-  bool isCredentialSet();
   String getUser();
   String getPassword();
+  bool isCredentialSet();
+  void setCredentialStatus(bool status);
 
   int savePlatformCredentials();
   int restorePlatformCredentials();

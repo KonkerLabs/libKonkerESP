@@ -21,9 +21,10 @@ public:
   virtual void getClient(void *);
 
   virtual void setPlatformCredentials(String userid, String password);
-  virtual bool isCredentialSet();
   virtual String getUser();
   virtual String getPassword();
+  virtual bool isCredentialSet();
+  virtual void setCredentialStatus(bool status);
   virtual int savePlatformCredentials();
   virtual int restorePlatformCredentials();
 

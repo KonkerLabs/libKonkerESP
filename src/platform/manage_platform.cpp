@@ -56,8 +56,8 @@ void PlatformManager::setPlatformCredentials(String user, String password)
     Log.warning("[PLAT] Caution! User size too big!\n");
     size = PLAT_CRED_ARRAY_SIZE;
   }
-  strncpy(platformCredential.user, user.c_str(), size);
-  platformCredential.user[size] = '\0';
+  strncpy(PlatformManager::platformCredential.user, user.c_str(), size);
+  PlatformManager::platformCredential.user[size] = '\0';
 
   size = password.length();
   if(size > PLAT_CRED_ARRAY_SIZE)
@@ -65,29 +65,34 @@ void PlatformManager::setPlatformCredentials(String user, String password)
     Log.warning("[PLAT] Caution! Password size too big!\n");
     size = PLAT_CRED_ARRAY_SIZE;
   }
-  strncpy(platformCredential.passwd, password.c_str(), size);
-  platformCredential.passwd[size] = '\0';
+  strncpy(PlatformManager::platformCredential.passwd, password.c_str(), size);
+  PlatformManager::platformCredential.passwd[size] = '\0';
 
-  platformCredential.enabled = ENABLED_PATTERN;
+  PlatformManager::platformCredential.enabled = ENABLED_PATTERN;
 
-  Log.trace("[PLAT] Setting %s<>%s as platform credential\n", platformCredential.user, platformCredential.passwd);
+  Log.trace("[PLAT] Setting %s<>%s as platform credential\n", PlatformManager::platformCredential.user, PlatformManager::platformCredential.passwd);
 
   this->credentialSet = true;
 }
 
 String PlatformManager::getUser()
 {
-  return String(platformCredential.user);
+  return String(PlatformManager::platformCredential.user);
 }
 
 String PlatformManager::getPassword()
 {
-  return String(platformCredential.passwd);
+  return String(PlatformManager::platformCredential.passwd);
 }
 
 bool PlatformManager::isCredentialSet()
 {
   return this->credentialSet;
+}
+
+void PlatformManager::setCredentialStatus(bool status)
+{
+  this->credentialSet = status;
 }
 
 int PlatformManager::savePlatformCredentials()
@@ -141,4 +146,5 @@ int PlatformManager::restorePlatformCredentials()
   return ret;
 }
 
-PlatformManager platformManager;
+// initialize platformCredential
+struct plat_cred_st_t PlatformManager::platformCredential{0x0000u, '\0', '\0'};

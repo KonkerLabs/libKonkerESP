@@ -3,13 +3,14 @@
 
 #include <string>
 #include <unordered_map>
-#include "../lib/ESP8266Ping/src/ESP8266Ping.h"
+#include "ESP8266Ping.h"
 #include "globals.h"
 #include "protocol.h"
 #include "connection/http_protocol.h"
 #include "manage_wifi.h"
 #include "json_helper.h"
 #include "manage_eeprom.h"
+#include "manage_platform.h"
 
 /*
  * Health information to send:
@@ -37,8 +38,8 @@ private:
   // String healthFile = "health.json";
 
   WifiManager * pDeviceWifi;
-  Protocol* pCurrentProtocol;
-  HTTPProtocol httpObj; //create new object to send health updates
+  Protocol* pCurrentProtocol; //protcol to get health information [TODO] needed?
+  HTTPProtocol* httpObj; //protocol to send health updates
 
   stringmap healthInfo;
 
@@ -52,7 +53,7 @@ public:
   HealthMonitor(WifiManager * deviceWifi);
   ~HealthMonitor();
 
-  void setProtocol(Protocol * protocol);
+  void setProtocol(Protocol * protocol, Protocol* httpProtocol);
 
   bool saveHealthInfo();
   bool restoreHealthInfo();

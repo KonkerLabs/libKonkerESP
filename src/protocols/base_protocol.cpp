@@ -97,6 +97,11 @@ bool BaseProtocol::isCredentialSet()
   return platformManager.isCredentialSet();
 }
 
+void BaseProtocol::setCredentialStatus(bool status)
+{
+  platformManager.setCredentialStatus(status);
+}
+
 int BaseProtocol::connect()
 {
   return 0;

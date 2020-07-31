@@ -4,6 +4,8 @@ HTTPProtocol::HTTPProtocol() : http_client()
 {
   // Log.trace("[HTTP] Creating HTTP object\n");
   this->connectionOriented = true;
+  // maybe set this to false to save battery (no need to keep alive)
+  this->http_client.setReuse(true);
 }
 
 HTTPProtocol::~HTTPProtocol()
@@ -39,10 +41,12 @@ int HTTPProtocol::connect()
 
   if(!conn)
   {
+    Log.trace("[HTTP] Cannot connect to platform\n");
     this->numConnFail++;
     return NOT_CONNECTED;
   }
 
+  Log.trace("[HTTP] Connected to platform\n");
   return CONNECTED;
 }
 
@@ -92,7 +96,7 @@ int HTTPProtocol::send(const char *channel, String payload)
 
   int httpCode = this->http_client.POST(payload);
   Log.notice("[HTTP] (E) POST TO DATA\n");
-  this->http_client.end();
+  // this->http_client.end();
 
   if (httpCode >= 0 && httpCode < 300)
   {
@@ -138,10 +142,10 @@ int HTTPProtocol::request(String * retPayload, String endpoint)
 
   if (httpCode >= 0 && httpCode < 300)
   {
-    Log.trace("[UPDT] request sucess\n\n");
+    Log.trace("[HTTP] Request sucess. Code = %d\n", httpCode);
 
     *retPayload = this->http_client.getString();
-    Log.trace("[UPDT] retPayload = %s\n", retPayload->c_str());
+    Log.trace("[HTTP] retPayload = %s\n", retPayload->c_str());
     // int playloadSize=this->http_client.getSize();
 
     // getCurrentTime(ts, ms);
@@ -149,7 +153,7 @@ int HTTPProtocol::request(String * retPayload, String endpoint)
   }
   else
   {
-    Serial.println("[UPDT] request failed\n\n");
+    Log.trace("[HTTP] Request failed. Code = %d\n", httpCode);
     return 0;
   }
 

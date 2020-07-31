@@ -15,7 +15,7 @@ private:
   WiFiClient wifi_client;
 
   unsigned long _last_time_http_request = 0;
-  unsigned long _millis_delay_per_http_request = 5000;
+  // unsigned long _millis_delay_per_http_request = 5000;
 
   String registry = "";
 

@@ -15,7 +15,7 @@ enum State {RUNNING, UPDATING, REBOOT, UPDATED};
 class ESPHTTPKonkerUpdate: public ESP8266HTTPUpdate
 {
 private:
-  Protocol *_client;
+  Protocol * _httpProtocol;
   String _fwEndpoint;
   String _currentVersion;
   String _newVersion;

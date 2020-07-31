@@ -26,10 +26,11 @@ class PlatformManager
 {
 private:
   plat_addr_st_t platformAddress;
-  plat_cred_st_t platformCredential;
+  static plat_cred_st_t platformCredential;
   bool credentialSet = false;
 
 public:
+
   PlatformManager();
   ~PlatformManager();
 
@@ -42,11 +43,10 @@ public:
   String getPassword();
 
   bool isCredentialSet();
+  void setCredentialStatus(bool status);
   int savePlatformCredentials();
   // overwrites existing credentials (if any)
   int restorePlatformCredentials();
 };
-
-extern PlatformManager platformManager;
 
 #endif /* __PLATFORM_H__ */

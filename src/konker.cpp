@@ -134,6 +134,8 @@ void KonkerDevice::setDefaultConnectionType(ConnectionType c)
   {
     this->currentProtocol = newConnection;
   }
+
+  this->httpProtocol = new HTTPProtocol();
 }
 
 void KonkerDevice::setFallbackConnectionType(ConnectionType c)
@@ -156,12 +158,13 @@ void KonkerDevice::startConnection(bool afterReconnect)
     {
   		if (this->currentProtocol->isConnectionOriented())
       {
-  			deviceMonitor.setProtocol(this->currentProtocol);
+  			deviceMonitor.setProtocol(this->currentProtocol, this->httpProtocol);
         // update the ESP update client with this new connection
-    		deviceUpdate.setProtocol(this->currentProtocol);
+    		deviceUpdate.setProtocol(this->httpProtocol);
   		}
     }
 		this->currentProtocol->connect();
+    this->httpProtocol->connect();
 	}
 }
 
@@ -234,7 +237,7 @@ void KonkerDevice::setServer(String host, int port)
   if (checkProtocol())
   {
     this->currentProtocol->setConnection(host, port);
-    this->httpProtocol->setConnection(host, port);
+    this->httpProtocol->setConnection("data.prod.konkerlabs.net", 80);
   }
 }
 
@@ -266,7 +269,7 @@ void KonkerDevice::setPlatformCredentials(String userid, String password)
   if (checkProtocol())
   {
     this->currentProtocol->setPlatformCredentials(userid, password);
-    this->httpProtocol->setPlatformCredentials(userid, password);
+    this->httpProtocol->setCredentialStatus(true);
   }
 }
 
@@ -277,7 +280,7 @@ void KonkerDevice::setPlatformCredentials(String deviceID, String userid, String
   if (checkProtocol())
   {
     this->currentProtocol->setPlatformCredentials(userid, password);
-    this->httpProtocol->setPlatformCredentials(userid, password);
+    this->httpProtocol->setCredentialStatus(true);
   }
 }
 

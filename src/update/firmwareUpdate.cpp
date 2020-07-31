@@ -10,7 +10,7 @@
  */
 ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(Protocol *client, String currentVersion) : _fwEndpoint("/firmware/")
 {
-  _client = client;
+  _httpProtocol = client;
   _currentVersion = currentVersion;
   _newVersion = "";
   _deviceState = RUNNING;
@@ -19,7 +19,6 @@ ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(Protocol *client, String currentVersion
 
 ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _fwEndpoint("/firmware/")
 {
-  //_client.begin();
   _currentVersion = "";
   _newVersion = "";
   _deviceState = RUNNING;
@@ -36,8 +35,8 @@ ESPHTTPKonkerUpdate::~ESPHTTPKonkerUpdate()
 
 void ESPHTTPKonkerUpdate::setProtocol(Protocol *client)
 {
-  _client = client;
-  _fwEndpoint += _client->getUser();
+  _httpProtocol = client;
+  _fwEndpoint += _httpProtocol->getUser();
 }
 
 void ESPHTTPKonkerUpdate::setFWchannel(String id)
@@ -56,11 +55,11 @@ t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
   void * pHttpVoid;
   t_httpUpdate_return ret = t_httpUpdate_return::HTTP_UPDATE_NO_UPDATES;
 
-  if (_client->checkConnection())
+  if (_httpProtocol->checkConnection())
   {
-    Log.trace("Fetching binary at: %s/binary\n", _fwEndpoint.c_str());
+    Log.trace("[UPDT] Fetching binary at: %s/binary\n", _fwEndpoint.c_str());
     // TODO
-    _client->getClient(pHttpVoid);
+    _httpProtocol->getClient(pHttpVoid);
     pHttp = static_cast<HTTPClient *>(pHttpVoid);
     if(!pHttp)
     {
@@ -70,7 +69,7 @@ t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
 
     ret = this->handleUpdate(*pHttp, _currentVersion, false);
 
-    Log.trace("Return code: %s\n", this->getLastErrorString().c_str());
+    Log.trace("[UPDT] Return code: %s\n", this->getLastErrorString().c_str());
   }
 
   return ret;
@@ -83,7 +82,7 @@ t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
  */
 void ESPHTTPKonkerUpdate::updateSucessCallBack(const char newVersion[16])
 {
-  if(!_client->checkConnection())
+  if(!_httpProtocol->checkConnection())
   {
     Log.trace("[UPDT] Cannot send confirmation\n");
     return;
@@ -96,7 +95,7 @@ void ESPHTTPKonkerUpdate::updateSucessCallBack(const char newVersion[16])
 
   // TODO change to REBOOTING
   String smsg=String("{\"version\": \"" + String(newVersion) + "\",\"status\":\"UPDATED\"}");
-  int retCode = _client->send(_fwEndpoint.c_str(), String(smsg));
+  int retCode = _httpProtocol->send(_fwEndpoint.c_str(), String(smsg));
 
 
   Log.trace("Confirmantion sent: %s; Body: %s; httpCode: %d\n", _fwEndpoint.c_str(), smsg.c_str(), retCode);
@@ -250,15 +249,15 @@ bool ESPHTTPKonkerUpdate::querryPlatform(String recvVersion)
 
   Log.trace("[UPDT] Checking for updates...\n");
 
-  if(!_client->checkConnection())
+  if(!_httpProtocol->checkConnection())
   {
     Log.trace("[UPDT] No connection to platform\n");
     return false;
   }
 
-  int retCode = _client->request(&retPayload, _fwEndpoint);
-
   Log.trace("[UPDT] Checking update at: %s\n", _fwEndpoint.c_str());
+
+  int retCode = _httpProtocol->request(&retPayload, _fwEndpoint);
 
   if(!retCode)
   {
