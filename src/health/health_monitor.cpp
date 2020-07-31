@@ -82,7 +82,7 @@ int HealthMonitor::pingPlatform()
   if(Ping.ping("konkerlabs.com"))
   {
     ping_ms = Ping.averageTime();
-    Log.trace("[HMON] Ping = %d", ping_ms);
+    // Log.trace("[HMON] Ping = %d\n", ping_ms);
   }
 
   return ping_ms;
@@ -111,7 +111,7 @@ void HealthMonitor::collectHealthInfo(unsigned int loopDuration)
   this->healthInfo["hfail"] = std::string(intBuffer);
 
   sprintf(intBuffer, "%d", pingPlatform());
-  this->healthInfo["ping"] = std::string(intBuffer);  
+  this->healthInfo["ping"] = std::string(intBuffer);
 
   // sprintf(intBuffer, "%u", ESP.getCpuFreqMHz());
   // this->healthInfo["cpu"] = std::string(intBuffer);

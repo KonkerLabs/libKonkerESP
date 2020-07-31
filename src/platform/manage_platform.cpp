@@ -140,3 +140,5 @@ int PlatformManager::restorePlatformCredentials()
 
   return ret;
 }
+
+PlatformManager platformManager;

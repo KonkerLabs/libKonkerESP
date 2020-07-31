@@ -20,7 +20,7 @@
 #include "file_system/manage_eeprom.h"
 #include "health/health_monitor.h"
 #include "helpers/NTP_helper.h"
-// #include "update/firmwareUpdate.h"
+#include "update/firmwareUpdate.h"
 
 #define _STATUS_LED 2
 
@@ -62,7 +62,7 @@ private:
 
   NTPHelper deviceNTP;
 
-  // ESPHTTPKonkerUpdate update;
+  ESPHTTPKonkerUpdate deviceUpdate;
 
   // identificacao do device
   String deviceID;
@@ -79,7 +79,8 @@ private:
   unsigned int avgLoopDuration = 0;
   unsigned int loopCount = 1;
 
-  Protocol* currentProtocol;
+  Protocol * currentProtocol;
+  Protocol * httpProtocol;
 
   // void flushBuffer();
   // void formatFileSystem();
@@ -147,6 +148,6 @@ public:
   //
   // // internal interface
   // // check if is there any update / reconfiguration for this device on the platform
-  // void checkForUpdates();
+  // void checkForUpdates(); needed???
 };
 #endif /* __KONKER_H__ */

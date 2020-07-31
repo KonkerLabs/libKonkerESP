@@ -47,4 +47,6 @@ public:
   int restorePlatformCredentials();
 };
 
+extern PlatformManager platformManager;
+
 #endif /* __PLATFORM_H__ */

@@ -14,7 +14,7 @@ HTTPProtocol::~HTTPProtocol()
   }
 }
 
-void HTTPProtocol::getClient(HTTPClient* http)
+void HTTPProtocol::getClient(void * http)
 {
   http = &this->http_client;
 }
@@ -92,6 +92,7 @@ int HTTPProtocol::send(const char *channel, String payload)
 
   int httpCode = this->http_client.POST(payload);
   Log.notice("[HTTP] (E) POST TO DATA\n");
+  this->http_client.end();
 
   if (httpCode >= 0 && httpCode < 300)
   {
@@ -111,4 +112,46 @@ int HTTPProtocol::send(const char *channel, String payload)
 int HTTPProtocol::receive(String *payload)
 {
   return 0;
+}
+
+int HTTPProtocol::request(String * retPayload, String endpoint)
+{
+  int ret = 0;
+  char user[PLAT_ADDR_ARRAY_SIZE];
+  char passwd[PLAT_ADDR_ARRAY_SIZE];
+
+  strncpy(user, this->getUser().c_str(), this->getUser().length());
+	user[this->getUser().length()] = '\0';
+	strncpy(passwd, this->getPassword().c_str(), this->getPassword().length());
+	passwd[this->getPassword().length()] = '\0';
+
+  char buffer[100];
+  String bufferStr = "http://" + this->getHost() + ":"
+                      + String(this->getPort()) + "/" + endpoint;
+  strcpy(buffer, bufferStr.c_str());
+
+  this->http_client.addHeader("Content-Type", "application/json");
+  this->http_client.setTimeout(2000);
+  this->http_client.setAuthorization(user, passwd);
+  this->http_client.begin(this->wifi_client, buffer);  //Specify request destination
+  int httpCode = this->http_client.GET();
+
+  if (httpCode >= 0 && httpCode < 300)
+  {
+    Log.trace("[UPDT] request sucess\n\n");
+
+    *retPayload = this->http_client.getString();
+    Log.trace("[UPDT] retPayload = %s\n", retPayload->c_str());
+    // int playloadSize=this->http_client.getSize();
+
+    // getCurrentTime(ts, ms);
+    return 1;
+  }
+  else
+  {
+    Serial.println("[UPDT] request failed\n\n");
+    return 0;
+  }
+
+  return ret;
 }

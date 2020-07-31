@@ -26,8 +26,6 @@ KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), w
   pinMode(_STATUS_LED, OUTPUT);
 	digitalWrite(_STATUS_LED, LOW);
 
-  //update.setFWchannel(this->userid);
-
   delay(1000);
 }
 
@@ -150,20 +148,20 @@ void KonkerDevice::startConnection(bool afterReconnect)
 
 	if (checkProtocol())
   {
-		if (this->currentProtocol->isConnectionOriented())
-    {
-			deviceMonitor.setProtocol(this->currentProtocol);
-		}
-
-		this->currentProtocol->connect();
-
     if(afterReconnect)
     {
       this->currentProtocol->increaseConnFail();
     }
-
-		// update the ESP update client with this new connection
-		// update.setProtocol(newConnection);
+    else
+    {
+  		if (this->currentProtocol->isConnectionOriented())
+      {
+  			deviceMonitor.setProtocol(this->currentProtocol);
+        // update the ESP update client with this new connection
+    		deviceUpdate.setProtocol(this->currentProtocol);
+  		}
+    }
+		this->currentProtocol->connect();
 	}
 }
 
@@ -208,7 +206,7 @@ void KonkerDevice::loop()
       restartDevice();
     }
   }
-  // checkForUpdates();
+  deviceUpdate.checkForUpdate();
   deviceMonitor.healthUpdate(this->avgLoopDuration);
   this->avgLoopDuration = 0;
   this->loopCount = 1;
@@ -225,7 +223,6 @@ bool KonkerDevice::checkProtocol()
   if (this->currentProtocol == nullptr)
   {
     Log.error("Protocol not set! Please call KonkerDevice::setDefaultConnectionType first!");
-    // restart here?
     return false;
   }
 
@@ -237,6 +234,7 @@ void KonkerDevice::setServer(String host, int port)
   if (checkProtocol())
   {
     this->currentProtocol->setConnection(host, port);
+    this->httpProtocol->setConnection(host, port);
   }
 }
 
@@ -268,6 +266,7 @@ void KonkerDevice::setPlatformCredentials(String userid, String password)
   if (checkProtocol())
   {
     this->currentProtocol->setPlatformCredentials(userid, password);
+    this->httpProtocol->setPlatformCredentials(userid, password);
   }
 }
 
@@ -278,6 +277,7 @@ void KonkerDevice::setPlatformCredentials(String deviceID, String userid, String
   if (checkProtocol())
   {
     this->currentProtocol->setPlatformCredentials(userid, password);
+    this->httpProtocol->setPlatformCredentials(userid, password);
   }
 }
 

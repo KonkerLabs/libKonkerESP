@@ -97,16 +97,6 @@ void loop()
     // char ts[20];
     // device.getCurrentTime(ts);
     // Serial.println("TIME TIME TIME " + String(ts));
-
-    // ok = device.testSendHTTP();
-    // if (ok)
-    // {
-    //   Serial.println("Send via HTTP working!");
-    // }
-    // else
-    // {
-    //   Serial.println("Did not send via HTTP :(");
-    // }
   }
 
   // if((millis() - lasttimeSend) > 5000) //ms

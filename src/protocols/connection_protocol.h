@@ -16,6 +16,7 @@ public:
 
   int send(const char * channel, String payload);
   int receive(String *payload);
+  int request(String *retPayload, String endpoint);
 
   int connect();
   int disconnect();

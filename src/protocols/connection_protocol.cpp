@@ -32,6 +32,7 @@ void ConnectionProtocol::unimplemented(String method)
 
 int ConnectionProtocol::send(const char * channel, String payload) {unimplemented("send"); return 0;}
 int ConnectionProtocol::receive(String *payload) {unimplemented("receive"); return 0;}
+int ConnectionProtocol::request(String *retPayload, String endpoint) {unimplemented("receive"); return 0;}
 int ConnectionProtocol::connect() {unimplemented("connect"); return 0;}
 int ConnectionProtocol::disconnect() {unimplemented("disconnect"); return 0;}
 int ConnectionProtocol::checkConnection() {unimplemented("disconnect"); return 0;}

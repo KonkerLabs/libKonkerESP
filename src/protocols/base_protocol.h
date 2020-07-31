@@ -8,7 +8,6 @@
 class BaseProtocol: public Protocol
 {
 protected:
-  PlatformManager platformManager;
   bool connectionOriented;
   int numConnFail = 0;
 
@@ -19,6 +18,7 @@ public:
   void init();
   int send(String channel, String payload);
   int receive(String *payload);
+  int request(String *retPayload, String endpoint);
 
   void setConnection(String host, int port);
   String getHost();
@@ -35,7 +35,7 @@ public:
   int savePlatformCredentials();
   int restorePlatformCredentials();
 
-  void getClient(HTTPClient *); // [TODO] Change this to use void*
+  void getClient(void *); // [TODO] Change this to use void*
 
   int connect();
   int disconnect();

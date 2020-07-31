@@ -10,6 +10,7 @@ public:
   virtual void init() = 0;
   virtual int send(const char* channel, String payload) = 0;
   virtual int receive(String *payload) = 0;
+  virtual int request(String *retPayload, String endpoint) = 0;
 
   virtual void setConnection(String host, int port);
   virtual String getHost();
@@ -17,7 +18,7 @@ public:
   virtual int getNumConnFail();
   virtual void setNumConnFail(uint16_t count);
   virtual void increaseConnFail();
-  virtual void getClient(HTTPClient *);
+  virtual void getClient(void *);
 
   virtual void setPlatformCredentials(String userid, String password);
   virtual bool isCredentialSet();
@@ -28,7 +29,7 @@ public:
 
   virtual int connect();
   virtual int disconnect(); //return connection status from globals.h
-  virtual int checkConnection(); 
+  virtual int checkConnection();
   virtual bool isConnectionOriented();
 
   virtual bool protocolLoop();

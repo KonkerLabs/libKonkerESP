@@ -24,10 +24,11 @@ public:
   HTTPProtocol();
   ~HTTPProtocol();
 
-  void getClient(HTTPClient* http);
+  void getClient(void * http);
 
   int send(const char * channel, String payload);
   int receive(String *payload);
+  int request(String *retPayload, String endpoint);
 
   int connect() override;
   int disconnect() override;

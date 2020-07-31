@@ -27,6 +27,11 @@ int BaseProtocol::receive(String *payload)
   return 0;
 }
 
+int BaseProtocol::request(String * retPayload, String endpoint)
+{
+  return 0;
+}
+
 void BaseProtocol::setConnection(String host, int port)
 {
   platformManager.setServer(host, port);
@@ -57,7 +62,7 @@ void BaseProtocol::increaseConnFail()
   this->numConnFail++;
 }
 
-void BaseProtocol::getClient(HTTPClient * http)
+void BaseProtocol::getClient(void * http)
 {
   http = nullptr;
 }
