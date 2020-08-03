@@ -15,13 +15,15 @@
 /*
  * Health information to send:
  * - Number of times Protocol failed to send or connect
+ * - Number of times HTTPProtocol failed to send or connect
  * - Number of times failed to connect to Wifi
  * - WiFi SSID, RSSI and local IP
  * - Build number
  * - MAC address
  * - Main loop average duration time (reset when sent to platform)
  * - Memory usage [ESP.getFreeHeap()]
- * - Device voltage [ESP.getVcc()] (?)
+ * - Device voltage [ESP.getVcc()]
+ * - Ping platform (ms)
  */
 
  struct health_conn_st_t

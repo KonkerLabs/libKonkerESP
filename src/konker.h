@@ -13,7 +13,7 @@
 #endif
 
 #include "globals.h"
-#include "buffer_entry.h"
+#include "buffer/buffer_entry.h"
 #include "wireless/manage_wifi.h"
 #include "platform/manage_platform.h"
 #include "protocols/all_protocols.h"
@@ -40,7 +40,6 @@
 class KonkerDevice
 {
 private:
-  int wifi_connection_errors = 0;
   WifiManager deviceWifi;
   HealthMonitor deviceMonitor;
 

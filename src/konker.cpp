@@ -83,7 +83,7 @@ bool KonkerDevice::connectWifi()
   }
   else
   {
-    this->wifi_connection_errors += 1;
+    Log.trace("Failed to connected to WiFi\n");
   }
   return res;
 }
