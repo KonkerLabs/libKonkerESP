@@ -82,6 +82,7 @@ void loop()
   }
   // Serial.println("Connection to platform " + String(connected));
 
+  // TODO mover para device.loop()
   if((connected) && ((millis() - lasttimeSend) > 10000))
   {
     int ok = device.sendData();

@@ -41,4 +41,6 @@ Obs: To fully remove all logging code, uncomment #define DISABLE_LOGGING in Ardu
 #define DISCONNECTED        2
 #define UNKNOWN             3
 
+typedef std::unordered_map<std::string, std::string> stringmap;
+
 #endif /* __GLOBALS_H__ */

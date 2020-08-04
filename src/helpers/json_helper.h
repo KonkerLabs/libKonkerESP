@@ -6,8 +6,6 @@
 #include <ArduinoJson.h>
 #include "globals.h"
 
-typedef std::unordered_map<std::string, std::string> stringmap;
-
 class JsonHelper
 {
 private:
@@ -19,6 +17,7 @@ public:
   ~JsonHelper();
 
   char * createMessage(stringmap * content);
+  stringmap * parseJson(char  * content) {return nullptr;};
 };
 
 extern JsonHelper jsonHelper;

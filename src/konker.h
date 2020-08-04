@@ -74,7 +74,6 @@ private:
   BufferEntry receiveBuffer;
 
   // flag when the device checked for a device update
-  unsigned long _last_time_update_check=0;
   unsigned int avgLoopDuration = 0;
   unsigned int loopCount = 1;
 

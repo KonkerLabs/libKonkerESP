@@ -110,37 +110,6 @@ void ESPHTTPKonkerUpdate::updateSucessCallBack(const char newVersion[16])
 }
 
 /**
- * Check if there is an update
- * @param callback function*
- * @return bool
- */
-bool ESPHTTPKonkerUpdate::checkForUpdate()
-{
-  if (_last_time_update_check != 0)
-  {
-    //throtle this call at maximum 1 per minute
-    if ((millis() - _last_time_update_check) < 6500)
-    {
-      //Serial.println("checkForUpdates maximum calls is 1/minute. Please wait more to call again");
-      return false;
-    }
-  }
-
-  char recvVersion[16];
-  if (this->querryPlatform(recvVersion))
-  {
-    if(String(recvVersion).indexOf(String(_currentVersion))>=0) // || String(recvVersion)=="") [MJ] necessary???
-    {
-      _newVersion = recvVersion;
-    }
-    _last_time_update_check = millis();
-    return true;
-  }
-  _last_time_update_check = millis();
-  return false;
-}
-
-/**
  * Perform update and show the result
  * @param UPDATE_SUCCESS_CALLBACK_SIGNATURE
  * @return none
@@ -162,7 +131,7 @@ void ESPHTTPKonkerUpdate::runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE)
       Log.trace("[UPDT] No update\n\n");
       break;
     case HTTP_UPDATE_OK:
-      // Serial.println("[Update] Not sending confirmation!!! D:D:D:D:");
+      Log.trace("[UPDT] Complete!\n");
       (this->*updateSucessCallBack_t)(_newVersion.c_str());
       ESP.restart();
       break;
@@ -174,7 +143,7 @@ void ESPHTTPKonkerUpdate::runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE)
  * @param none
  * @return none
  */
-void ESPHTTPKonkerUpdate::performUpdate()
+void ESPHTTPKonkerUpdate::performUpdate() //[rpi3] apply_manifest
 {
   this->runUpdate(&ESPHTTPKonkerUpdate::updateSucessCallBack);
 }
@@ -273,7 +242,41 @@ bool ESPHTTPKonkerUpdate::querryPlatform(String recvVersion)
     {
       recvVersion = this->getVersionFromPayload(retPayload);
     }
+    // retCode = this->parseManifest(&retPayload);
   }
 
   return retCode;
+}
+
+/**
+ * Check if there is an update
+ * @param callback function*
+ * @return bool
+ */
+bool ESPHTTPKonkerUpdate::checkForUpdate()
+{
+  if (_last_time_update_check != 0)
+  {
+    //throtle this call at maximum 1 per minute
+    if ((millis() - _last_time_update_check) < 6500)
+    {
+      //Serial.println("checkForUpdates maximum calls is 1/minute. Please wait more to call again");
+      return false;
+    }
+  }
+
+  char recvVersion[16];
+  if (this->querryPlatform(recvVersion)) //[rpi3] get_manifest
+  {
+    _last_time_update_check = millis();
+    if(this->validateUpdate()) //[rpi3] parse_manifet
+    {
+      this->sendStatusMessage();
+      return true;
+    }
+    this->sendExceptionMessage();
+    return false;
+  }
+  _last_time_update_check = millis();
+  return false;
 }
