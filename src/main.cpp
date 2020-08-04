@@ -1,28 +1,117 @@
 #include "konker.h"
+ADC_MODE(ADC_VCC);
 
-const char ssid[10] = "yellow";
-const char pwd[30] = "!yellow2016";
+const char ssid[20] = "dlink-C21E-114";
+const char pwd[20] = "bobesponja";
 
 // Dados do servidor
-char server_ip[50] = "mqtt.demo.konkerlabs.net";
-char mqtt_port[8] = "1883";
-int http_port = 8082;
-int fw_port = 8081;
+String server_ip = "mqtt.prod.konkerlabs.net"; //"192.168.0.123";
+int mqtt_port = 1883; //32768;
+// int http_port = 8082;
+// int fw_port = 8081;
 
-char DEV_ID[10] = "node10";
-char USER[16] = "i722cp5hgil5"; //03local"sqsvldcfdmlg"; //02local:"b2evd357tmgl"; //02web: "j761nvqo5qoq";
-char PWD[16] = "nH4rPzJvmKSN";
+String DEV_ID = "node10";
+String USER = "pgdmna95n2o2"; //"t97pvjblbeas";
+String PWD = "HnWDYsNGdlcb"; //"YJ2GskQvqU8S";
+
+String PUB = "temp";
 
 KonkerDevice device;
+bool connected;
+char bufferJson[256];
+char * mensagem;
+BufferElement data;
 
-void setup() {
-  // put your setup code here, to run once:
-  device.addWifi(ssid, pwd);
-  device.setServer(server_ip, 80);
-  device.setPlatformCredentials(USER, PWD);
+int count = 0;
+long lasttimeSend=0;
+
+char *jsonMQTTmsgDATA(const char *device_id, const char *metric, long value)
+{
+  const int capacity = 1024; // JSON_OBJECT_SIZE(200);
+  StaticJsonDocument<capacity> jsonMSG;
+
+  jsonMSG["deviceId"] = device_id;
+  jsonMSG["metric"] = metric;
+  jsonMSG["value"] = value;
+  serializeJson(jsonMSG, bufferJson);
+
+  Serial.print("Mensagem >> ");
+  Serial.println(bufferJson);
+
+  return bufferJson;
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void setup()
+{
+  Serial.println("\nStarting setup!");
+  Serial.println("====== Saving credentials ======");
+  device.addWifi(ssid, pwd);
+  device.setDefaultConnectionType(ConnectionType::MQTT);
+  device.setServer(server_ip, mqtt_port);
+  device.setPlatformCredentials(DEV_ID, USER, PWD);
+
+  Serial.println("====== Connecting ======");
+  device.connectWifi();
+  // start platform connection
+  device.startConnection(false);
+
+  device.saveAllCredentials();
+  Serial.println("====== Setup finished ======");
+
+  lasttimeSend = millis();
+}
+
+void loop()
+{
+  unsigned int loop_duration = micros();
+  count = count + 1;
+  connected = device.checkWifiConnection();
+  // Serial.println("WiFi is " + String(connected));
+
+  if(count % 4 == 0)
+  {
+    mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
+    device.storeData(PUB, mensagem);
+  }
+
+  connected = device.checkPlatformConnection();
+  if(!connected)
+  {
+    Serial.println("Disconnected from platform! Reconnecting...");
+    device.startConnection(true);
+  }
+  // Serial.println("Connection to platform " + String(connected));
+
+  // TODO mover para device.loop()
+  if((connected) && ((millis() - lasttimeSend) > 10000))
+  {
+    int ok = device.sendData();
+    if (ok)
+    {
+      Serial.println("YAAAAY");
+    }
+    else
+    {
+      Serial.println("NOPE");
+    }
+
+    // char ts[20];
+    // device.getCurrentTime(ts);
+    // Serial.println("TIME TIME TIME " + String(ts));
+  }
+
+  // if((millis() - lasttimeSend) > 5000) //ms
+  // {
+  //   mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
+  //   device.sendData(PUB, String(mensagem));
+  //   data = device.recoverData();
+  //   Serial.print("Removed from buffer >>> ");
+  //   Serial.print(data.payload);
+  //   Serial.print(" | ");
+  //   Serial.println(data.channel);
+  //   lasttimeSend = millis();
+  // }
+
   device.loop();
+  device.loopDuration(micros() - loop_duration);
 }

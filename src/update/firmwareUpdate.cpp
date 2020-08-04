@@ -1,6 +1,6 @@
 /*
-    Firmware update class. Part of Konker FW.
-    @author Maria Júlia Berriel de Sousa
+  Firmware update class. Part of Konker FW.
+  @author Maria Júlia Berriel de Sousa
 */
 
 #include "firmwareUpdate.h"
@@ -10,20 +10,19 @@
  */
 ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(Protocol *client, String currentVersion) : _fwEndpoint("/firmware/")
 {
-    _client = client;
-    _currentVersion = currentVersion;
-    _newVersion = "";
-    _deviceState = RUNNING;
-    _last_time_update_check = 0;
+  _httpProtocol = client;
+  _currentVersion = currentVersion;
+  _newVersion = "";
+  _deviceState = RUNNING;
+  _last_time_update_check = 0;
 }
 
 ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _fwEndpoint("/firmware/")
 {
-    //_client.begin();
-    _currentVersion = "";
-    _newVersion = "";
-    _deviceState = RUNNING;
-    _last_time_update_check = 0;
+  _currentVersion = "";
+  _newVersion = "";
+  _deviceState = RUNNING;
+  _last_time_update_check = 0;
 }
 
 /**
@@ -31,17 +30,18 @@ ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _fwEndpoint("/firmware/")
  */
 ESPHTTPKonkerUpdate::~ESPHTTPKonkerUpdate()
 {
-    _currentVersion = "";
+  _currentVersion = "";
 }
 
 void ESPHTTPKonkerUpdate::setProtocol(Protocol *client)
 {
-    _client = client;
+  _httpProtocol = client;
+  _fwEndpoint += _httpProtocol->getUser();
 }
 
 void ESPHTTPKonkerUpdate::setFWchannel(String id)
 {
-    _fwEndpoint += id;
+  _fwEndpoint += id;
 }
 
 /**
@@ -51,25 +51,28 @@ void ESPHTTPKonkerUpdate::setFWchannel(String id)
  */
 t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
 {
-    HTTPClient *http;
-    t_httpUpdate_return ret = t_httpUpdate_return::HTTP_UPDATE_NO_UPDATES;
+  HTTPClient * pHttp;
+  void * pHttpVoid;
+  t_httpUpdate_return ret = t_httpUpdate_return::HTTP_UPDATE_NO_UPDATES;
 
-    if (_client->checkConnection())
+  if (_httpProtocol->checkConnection())
+  {
+    Log.trace("[UPDT] Fetching binary at: %s/binary\n", _fwEndpoint.c_str());
+    // TODO
+    _httpProtocol->getClient(pHttpVoid);
+    pHttp = static_cast<HTTPClient *>(pHttpVoid);
+    if(!pHttp)
     {
-        Serial.print("Fetching binary at: " + _fwEndpoint + "/binary");
-        _client->getClient(http);
-        if(!http)
-        {
-            http = new HTTPClient;
-        }
-        http->setURL(_fwEndpoint + String("/binary "));
-
-        ret = ESP8266HTTPUpdate::handleUpdate(*http, _currentVersion, false);
-
-        Serial.println("Return code: " + ESP8266HTTPUpdate::getLastErrorString());
+      pHttp = new HTTPClient;
     }
+    pHttp->setURL(_fwEndpoint + String("/binary "));
 
-    return ret;
+    ret = this->handleUpdate(*pHttp, _currentVersion, false);
+
+    Log.trace("[UPDT] Return code: %s\n", this->getLastErrorString().c_str());
+  }
+
+  return ret;
 }
 
 /**
@@ -79,61 +82,31 @@ t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
  */
 void ESPHTTPKonkerUpdate::updateSucessCallBack(const char newVersion[16])
 {
-    if(!_client->checkConnection())
-    {
-        Serial.println("[Update] Cannot send confirmation");
-        return;
-    }
+  if(!_httpProtocol->checkConnection())
+  {
+    Log.trace("[UPDT] Cannot send confirmation\n");
+    return;
+  }
 
-    Serial.println("[Update] Update ok, sending confirmation.");
+  Log.trace("[UPDT] Update ok, sending confirmation\n");
 
-    //_client.addHeader("Content-Type", "application/json");
-    //_client.addHeader("Accept", "application/json");
+  //_client.addHeader("Content-Type", "application/json");
+  //_client.addHeader("Accept", "application/json");
 
-    // TODO change to REBOOTING
-    String smsg=String("{\"version\": \"" + String(newVersion) + "\",\"status\":\"UPDATED\"}");
-    int retCode = _client->send(_fwEndpoint.c_str(), String(smsg));
+  // TODO change to REBOOTING
+  String smsg=String("{\"version\": \"" + String(newVersion) + "\",\"status\":\"UPDATED\"}");
+  int retCode = _httpProtocol->send(_fwEndpoint.c_str(), String(smsg));
 
 
-    Serial.println("Confirmantion sent: " + _fwEndpoint  + "; Body: " + smsg + "; httpcode: " + String(retCode));
+  Log.trace("Confirmantion sent: %s; Body: %s; httpCode: %d\n", _fwEndpoint.c_str(), smsg.c_str(), retCode);
 
-    if (!retCode){
-        Serial.println("[Update callback] Failed");
-    }else{
-        Serial.println("[Update callback] Success");
-    }
-    Serial.println("");
+  if (!retCode){
+    Serial.println("[UPDT callback] Failed\n\n");
+  }else{
+    Serial.println("[UPDT callback] Success\n\n");
+  }
 
-    this->updateVersion(newVersion);
-}
-
-/**
- * Check if there is an update
- * @param callback function*
- * @return bool
- */
-bool ESPHTTPKonkerUpdate::checkForUpdate()
-{
-    if (_last_time_update_check != 0){
-        //throtle this call at maximum 1 per minute
-        if ((millis() - _last_time_update_check) < 6500){
-            //Serial.println("checkForUpdates maximum calls is 1/minute. Please wait more to call again");
-            return false;
-        }
-    }
-
-    char recvVersion[16];
-    if (this->querryPlatform(recvVersion))
-    {
-        if(String(recvVersion).indexOf(String(_currentVersion))>=0 || String(recvVersion)=="") // [MJ] necessary???
-        {
-            _newVersion = recvVersion;
-        }
-        _last_time_update_check = millis();
-        return true;
-    }
-    _last_time_update_check = millis();
-    return false;
+  this->updateVersion(newVersion);
 }
 
 /**
@@ -143,27 +116,26 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
  */
 void ESPHTTPKonkerUpdate::runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE)
 {
-    Serial.println("UPDATING....");
-    _deviceState = UPDATING;
+  Log.trace("UPDATING....\n");
+  _deviceState = UPDATING;
 
-    ESP8266HTTPUpdate::rebootOnUpdate(false);
-    t_httpUpdate_return ret = this->update(_newVersion);
+  ESP8266HTTPUpdate::rebootOnUpdate(false);
+  t_httpUpdate_return ret = this->update(_newVersion);
 
-    switch(ret)
-    {
-        case HTTP_UPDATE_FAILED:
-            Serial.println("[Update] FW update failed.");
-            break;
-        case HTTP_UPDATE_NO_UPDATES:
-            Serial.println("[Update] No update.");
-            break;
-        case HTTP_UPDATE_OK:
-            // Serial.println("[Update] Not sending confirmation!!! D:D:D:D:");
-            (this->*updateSucessCallBack_t)(_newVersion.c_str());
-            ESP.restart();
-            break;
-    }
-    Serial.println("");
+  switch(ret)
+  {
+    case HTTP_UPDATE_FAILED:
+      Log.trace("[UPDT] FW update failed\n\n");
+      break;
+    case HTTP_UPDATE_NO_UPDATES:
+      Log.trace("[UPDT] No update\n\n");
+      break;
+    case HTTP_UPDATE_OK:
+      Log.trace("[UPDT] Complete!\n");
+      (this->*updateSucessCallBack_t)(_newVersion.c_str());
+      ESP.restart();
+      break;
+  }
 }
 
 /**
@@ -171,9 +143,9 @@ void ESPHTTPKonkerUpdate::runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE)
  * @param none
  * @return none
  */
-void ESPHTTPKonkerUpdate::performUpdate()
+void ESPHTTPKonkerUpdate::performUpdate() //[rpi3] apply_manifest
 {
-    this->runUpdate(&ESPHTTPKonkerUpdate::updateSucessCallBack);
+  this->runUpdate(&ESPHTTPKonkerUpdate::updateSucessCallBack);
 }
 
 /**
@@ -183,8 +155,8 @@ void ESPHTTPKonkerUpdate::performUpdate()
  */
 bool ESPHTTPKonkerUpdate::checkFirstBoot()
 {
-    //TODO Code
-    return false;
+  //TODO Code
+  return false;
 }
 
 /**
@@ -194,7 +166,7 @@ bool ESPHTTPKonkerUpdate::checkFirstBoot()
  */
 void ESPHTTPKonkerUpdate::sendUpdateConfirmation(String newVersion)
 {
-    //TODO Code (similar to callback)
+  //TODO Code (similar to callback)
 }
 
 /**
@@ -205,19 +177,19 @@ void ESPHTTPKonkerUpdate::sendUpdateConfirmation(String newVersion)
  */
 String ESPHTTPKonkerUpdate::getVersionFromPayload(String strPayload)
 {
-    char version[16];
-    //TODO fix
-    //if(parse_JSON_item(strPayload, "version", version))
-    if(true)
-    {
-        Serial.println("New version = " + String(version));
-        return String(version);
-    }
-    else
-    {
-        Serial.println("Failed to parse version");
-        return "";
-    }
+  char version[16];
+  //TODO fix
+  //if(parse_JSON_item(strPayload, "version", version))
+  if(true)
+  {
+    Log.trace("[UPDT] New version = %s\n", version);
+    return String(version);
+  }
+  else
+  {
+    Log.trace("[UPDT] Failed to parse version\n");
+    return "";
+  }
 }
 
 /**
@@ -227,12 +199,12 @@ String ESPHTTPKonkerUpdate::getVersionFromPayload(String strPayload)
  */
 void ESPHTTPKonkerUpdate::updateVersion(String newVersion)
 {
-    if(newVersion != "")
-    {
-        _currentVersion = newVersion;
-    }
-    // TODO save new version to memory
-    // TODO update first boot flag in memory
+  if(newVersion != "")
+  {
+    _currentVersion = newVersion;
+  }
+  // TODO save new version to memory
+  // TODO update first boot flag in memory
 }
 
 /**
@@ -242,38 +214,69 @@ void ESPHTTPKonkerUpdate::updateVersion(String newVersion)
  */
 bool ESPHTTPKonkerUpdate::querryPlatform(String recvVersion)
 {
-    String retPayload;
+  String retPayload;
 
-    Serial.println("Checking for updates...");
+  Log.trace("[UPDT] Checking for updates...\n");
 
-    if(!_client->checkConnection())
+  if(!_httpProtocol->checkConnection())
+  {
+    Log.trace("[UPDT] No connection to platform\n");
+    return false;
+  }
+
+  Log.trace("[UPDT] Checking update at: %s\n", _fwEndpoint.c_str());
+
+  int retCode = _httpProtocol->request(&retPayload, _fwEndpoint);
+
+  if(!retCode)
+  {
+    Log.trace("[UPDT] No new FW version\n");
+    recvVersion = ""; // [MJ] Se update falha, string da versão preenchida com vazio
+  }
+  else
+  {
+    Log.trace("[UPDT] New version exist\n\n");
+
+    Log.trace("[UPDT] trPayload=%s", retPayload.c_str());
+    if (retPayload != "[]")
     {
-        Serial.println("No connection to platform");
-        return false;
+      recvVersion = this->getVersionFromPayload(retPayload);
     }
-    // _client.addHeader("Content-Type", "application/json");
-    // _client.setTimeout(2000);
-    int retCode = _client->receive(&retPayload);
+    // retCode = this->parseManifest(&retPayload);
+  }
 
-    Serial.println("Checking update at: " + _fwEndpoint);
+  return retCode;
+}
 
-    if(!retCode)
+/**
+ * Check if there is an update
+ * @param callback function*
+ * @return bool
+ */
+bool ESPHTTPKonkerUpdate::checkForUpdate()
+{
+  if (_last_time_update_check != 0)
+  {
+    //throtle this call at maximum 1 per minute
+    if ((millis() - _last_time_update_check) < 6500)
     {
-        Serial.println("[Update] No new FW version");
-        Serial.println("");
-        recvVersion = ""; // [MJ] Se update falha, string da versão preenchida com vazio
+      //Serial.println("checkForUpdates maximum calls is 1/minute. Please wait more to call again");
+      return false;
     }
-    else
+  }
+
+  char recvVersion[16];
+  if (this->querryPlatform(recvVersion)) //[rpi3] get_manifest
+  {
+    _last_time_update_check = millis();
+    if(this->validateUpdate()) //[rpi3] parse_manifet
     {
-        Serial.println("[Update] New version exist");
-        Serial.println("");
-
-        Serial.println("strPayload=" + retPayload);
-        if (retPayload != "[]")
-        {
-            recvVersion = this->getVersionFromPayload(retPayload);
-        }
+      this->sendStatusMessage();
+      return true;
     }
-
-    return retCode;
+    this->sendExceptionMessage();
+    return false;
+  }
+  _last_time_update_check = millis();
+  return false;
 }

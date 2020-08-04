@@ -5,5 +5,10 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+<<<<<<< HEAD
 .clang_complete
 .gcc-flags.json
+=======
+.gcc-flags.json
+.clang_complete
+>>>>>>> mj_newlib

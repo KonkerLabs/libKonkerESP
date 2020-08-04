@@ -3,8 +3,17 @@
 
 #include "base_protocol.h"
 
-class ConnectionLessProtocol: public BaseProtocol {
+class ConnectionLessProtocol: public BaseProtocol
+{
+protected:
+  void unimplemented(String method);
 
+public:
+  ConnectionLessProtocol();
+  
+  void init();
+  int send(String channel, String payload);
+  int receive(String *payload);
 };
 
 #endif

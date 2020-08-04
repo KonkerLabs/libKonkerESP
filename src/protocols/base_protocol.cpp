@@ -1,30 +1,123 @@
 #include "base_protocol.h"
 
-void BaseProtocol::init() {
+BaseProtocol::BaseProtocol()
+{
+  this->connectionOriented = false;
 }
 
-int BaseProtocol::send(String channel, String payload) {
-    return 0;
+void BaseProtocol::init()
+{
 }
 
-int BaseProtocol::receive(String *payload) {
-    return 0;
+bool BaseProtocol::protocolLoop()
+{
+  delay(1000); //1s
+  if(this->numConnFail > MAX_CONN_FAIL)
+    return true;
+  return false;
 }
 
-void BaseProtocol::setConnection(String host, int port) {
-  this->host = host;
-  this->port = port;
+int BaseProtocol::send(String channel, String payload)
+{
+  return 0;
 }
 
-String BaseProtocol::getHost() {
-  return this->host;
+int BaseProtocol::receive(String *payload)
+{
+  return 0;
 }
 
-int BaseProtocol::getPort() {
-  return this->port;
+int BaseProtocol::request(String * retPayload, String endpoint)
+{
+  return 0;
 }
 
-void BaseProtocol::setCredentials(const char *userid, const char *password) {
-  this->userid = userid;
-  this->password = password;
+void BaseProtocol::setConnection(String host, int port)
+{
+  platformManager.setServer(host, port);
+}
+
+String BaseProtocol::getHost()
+{
+  return platformManager.getHost();
+}
+
+int BaseProtocol::getPort()
+{
+  return platformManager.getPort();
+}
+
+int BaseProtocol::getNumConnFail()
+{
+  return this->numConnFail;
+}
+
+void BaseProtocol::setNumConnFail(uint16_t count)
+{
+  this->numConnFail = count;
+}
+
+void BaseProtocol::increaseConnFail()
+{
+  this->numConnFail++;
+}
+
+void BaseProtocol::getClient(void * http)
+{
+  http = nullptr;
+}
+
+void BaseProtocol::setPlatformCredentials(String userid, String password)
+{
+  platformManager.setPlatformCredentials(userid, password);
+}
+
+int BaseProtocol::savePlatformCredentials()
+{
+  return platformManager.savePlatformCredentials();
+}
+
+int BaseProtocol::restorePlatformCredentials()
+{
+  return platformManager.restorePlatformCredentials();
+}
+
+String BaseProtocol::getUser()
+{
+  return platformManager.getUser();
+}
+
+String BaseProtocol::getPassword()
+{
+  return platformManager.getPassword();
+}
+
+bool BaseProtocol::isCredentialSet()
+{
+  return platformManager.isCredentialSet();
+}
+
+void BaseProtocol::setCredentialStatus(bool status)
+{
+  platformManager.setCredentialStatus(status);
+}
+
+int BaseProtocol::connect()
+{
+  return 0;
+}
+
+int BaseProtocol::disconnect()
+{
+  return 0;
+}
+
+int BaseProtocol::checkConnection()
+{
+  return UNKNOWN;
+}
+
+bool BaseProtocol::isConnectionOriented()
+{
+  return connectionOriented;
 }

@@ -1,26 +1,28 @@
-
 #ifndef __KONKER_H__
 #define __KONKER_H__
-
-#ifndef ESP32
-extern "C" {
-  #include "user_interface.h"
-}
-#endif
 
 #include <Arduino.h>
 
 #ifndef ESP32
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266HTTPClient.h>
+#include "user_interface.h"
 #endif
 
-#include "config_wifi.h"
+#ifndef ESP32
+#include <ESP8266WebServer.h>
+// #include <ESP8266HTTPClient.h>
+#endif
+
 #include "globals.h"
-#include "./protocols/protocol.h"
-#include "buffer_entry.h"
-#include "./update/firmwareUpdate.h"
+#include "buffer/buffer_entry.h"
+#include "wireless/manage_wifi.h"
+#include "platform/manage_platform.h"
+#include "protocols/all_protocols.h"
+#include "file_system/manage_eeprom.h"
+#include "health/health_monitor.h"
+#include "helpers/NTP_helper.h"
+#include "update/firmwareUpdate.h"
+
+#define _STATUS_LED 2
 
 // debug levels
 /*
@@ -33,144 +35,117 @@ extern "C" {
 // 6 - ALL	All levels including custom levels.
 */
 
-#define MAX_NUM_WIFI_CRED   3
-
-// define WIFI credentials and manipulation
-//
-struct WifiCredentials
-{
-    String savedSSID;
-    String savedPSK;
-};
-
 // Konker ESP CLASS
 
-class KonkerDevice {
+class KonkerDevice
+{
+private:
+  WifiManager deviceWifi;
+  HealthMonitor deviceMonitor;
 
-  private:
+  ConnectionType defaultConnectionType;
+  ConnectionType fallbackConnectionType;
 
-    WifiCredentials wifiCredentials[MAX_NUM_WIFI_CRED];
-    int numWifiCredentials = 0;
-
-    int wifi_connection_errors = 0;
-
-    ConnectionType defaultConnectionType;
-    ConnectionType fallbackConnectionType;
-
-    #ifndef ESP32
-    int resetPin = D5;
-    #else
-    int resetPin=13;
-    #endif
-
-    String wifiFile;
-
-    bool _encripted=true;
-    // WiFiServer httpServer(80);// create object
-    #ifndef ESP32
-    ESP8266WebServer webServer;
-    #else
-    WebServer webServer;
-    #endif
-
-    ESPHTTPKonkerUpdate update;
-
-    // identificacao do device
-    String ChipId;
-    String id;
-
-    String NAME = DEFAULT_NAME;
-
-    // fila de envio do device
-    BufferEntry sendBuffer[BUFFER_SIZE];
-    BufferEntry receiveBuffer[BUFFER_SIZE];
-
-    // flag when the device checked for a device update
-    unsigned long _last_time_update_check=0;
-
-    String _health_channel = "_health";
-
-    void flushBuffer();
-
-    void formatFileSystem();
-
-    Protocol* currentProtocol;
-
-    String host;
-    int port;
-
-    String userid;
-    String password;
-
-  public:
-
-    KonkerDevice();
-    ~KonkerDevice();
-
-    // configuration methods
-
-    void setServer(String host, int port);
-    void setPlatformCredentials(String userid, String password);
-
-    void addWifi(String ssid, String password);
-    void clearWifi(String ssid);
-    int getNumWifiCredentials();
-
-    void setUniqueID(String id);
-    String getUniqueID();
-
-    void setDefaultConnectionType(ConnectionType c);
-    void setFallbackConnectionType(ConnectionType c);
-    ConnectionType getDefaultConnectionType();
-    ConnectionType getFallbackConnectionType();
-
-    void saveConfiguration();
-
-    // operation methods
-
-    void startConnection();
-    void stopConnection();
-    int checkConnection();
-
-    void resetALL();
-
-    void loop();
-
-    // communication interface
-
-    /* returns 1 if send is OK or <= 0 if error ocurred when sending data to the server */
-    void send(String payload);
-    void send(BufferEntry *data);
-
-    /* returns 1 if a message exists and is copied to the buffer or 0 if nothing exists */
-    int receive(String *buffer);
-
-    HTTPClient* getAPIClient();
-
-    // internal interface
-    // heart beat to the server to send status information for the device
-    void healthUpdate(String healthChannel);
-    // check if is there any update / reconfiguration for this device on the platform
-    void checkForUpdates();
-
-    void setName(const char * newName);
-};
-
-//
-// simple usage
-//
-
-
-// declare a KonkerDevice() object in your sketch
-// in setup()
-//    ... initialize / setup konker device with platform and wifi credentials
-//    ... if desired, define the default and fallback protocol for the device
-//
-// in loop()
-//    .. call device.loop() method
-//    .. when you want to send data ... call device.send(payload)
-//    .. when you need to receive a data, call device.receive() to get a payload if it exists
-//
-//
-
+#ifndef ESP32
+  int resetPin = D5;
+#else
+  int resetPin = 13;
 #endif
+
+  // bool _encripted = false;
+#ifndef ESP32
+  ESP8266WebServer webServer;
+#else
+  WebServer webServer;
+#endif
+
+  NTPHelper deviceNTP;
+
+  ESPHTTPKonkerUpdate deviceUpdate;
+
+  // identificacao do device
+  String deviceID;
+  String chipID; // = deviceID + ESP.getChipId
+
+  String NAME = DEFAULT_NAME; // pra que?
+
+  // fila de envio do device
+  BufferEntry sendBuffer;
+  BufferEntry receiveBuffer;
+
+  // flag when the device checked for a device update
+  unsigned int avgLoopDuration = 0;
+  unsigned int loopCount = 1;
+
+  Protocol * currentProtocol;
+  Protocol * httpProtocol;
+
+  // void flushBuffer();
+  // void formatFileSystem();
+  void setChipID(String deviceID);
+  // returns true if currentProtocol is set (aka, not null)
+  bool checkProtocol();
+  bool saveWifiCredentials();
+  bool restoreWifiCredentials();
+  bool savePlatformCredentials();
+  bool restorePlatformCredentials();
+
+public:
+  KonkerDevice();
+  ~KonkerDevice();
+
+  void restartDevice();
+
+  // configuration functions
+  void setServer(String host, int port);
+  void setPlatformCredentials(String userid, String password);
+  void setPlatformCredentials(String deviceID, String userid, String password);
+
+  // WiFi operations
+  void addWifi(String ssid, String password);
+  void clearWifi(String ssid);
+  bool connectWifi();
+  bool checkWifiConnection();
+  int getNumWifiCredentials();
+
+  // Unique ID operations
+  void setUniqueID(String id);
+  String getUniqueID();
+
+  // Platform connection functions
+  void setDefaultConnectionType(ConnectionType c);
+  void setFallbackConnectionType(ConnectionType c);
+  ConnectionType getDefaultConnectionType();
+  ConnectionType getFallbackConnectionType();
+  void startConnection(bool afterReconnect);
+  void stopConnection();
+  int checkPlatformConnection();
+
+  // Credentials operations
+  bool saveAllCredentials();
+  bool restoreAllCredentials();
+  void resetALL();
+
+  void loopDuration(unsigned int duration); //measured in useconds
+  void loop();
+
+  // communication interface
+  void getCurrentTime(char * timestamp);
+
+  /* returns 1 if send is OK or <= 0 if error ocurred when sending data to the server */
+  int sendData(String channel, String payload);
+  int sendData();
+  int storeData(String channel, String payload);
+  BufferElement recoverData();
+
+  // int testSendHTTP();
+  // /* returns 1 if a message exists and is copied to the buffer or 0 if nothing exists */
+  // int receive(String *buffer);
+  //
+  // HTTPClient* getAPIClient();
+  //
+  // // internal interface
+  // // check if is there any update / reconfiguration for this device on the platform
+  // void checkForUpdates(); needed???
+};
+#endif /* __KONKER_H__ */

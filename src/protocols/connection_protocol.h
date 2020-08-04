@@ -1,27 +1,28 @@
 #ifndef __CONNECTION_PROTOCOL_H__
 #define __CONNECTION_PROTOCOL_H__
 
-#include <Arduino.h>
-#include "protocol.h"
 #include "base_protocol.h"
+#include "globals.h"
 
-class ConnectionProtocol: public BaseProtocol {
+class ConnectionProtocol: public BaseProtocol
+{
+protected:
+  void unimplemented(String method);
 
-  protected: 
+public:
+  ConnectionProtocol();
+  ~ConnectionProtocol();
+  void init();
 
-    void unimplemented(String method);
+  int send(const char * channel, String payload);
+  int receive(String *payload);
+  int request(String *retPayload, String endpoint);
 
-  public:
+  int connect();
+  int disconnect();
+  int checkConnection();
 
-    ~ConnectionProtocol();
-    void init();
-
-    int send(const char * channel, String payload);
-    int receive(String *payload);
-
-    int connect();
-    int disconnect();
-    bool checkConnection();
+  bool protocolLoop();
 };
 
 #endif
