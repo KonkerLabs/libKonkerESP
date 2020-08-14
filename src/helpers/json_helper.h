@@ -4,7 +4,10 @@
 #include <string>
 #include <unordered_map>
 #include <ArduinoJson.h>
+#include "LittleFS.h"
 #include "globals.h"
+
+typedef std::unordered_map<std::string, std::string> stringmap;
 
 class JsonHelper
 {
@@ -17,7 +20,10 @@ public:
   ~JsonHelper();
 
   char * createMessage(stringmap * content);
-  stringmap * parseJson(char  * content) {return nullptr;};
+  // stringmap * parseJson(char  * content) {return nullptr;};
+
+  bool saveCurrentFwInfo();
+  bool loadCurrentFwInfo(DynamicJsonDocument * fwInfo);
 };
 
 extern JsonHelper jsonHelper;

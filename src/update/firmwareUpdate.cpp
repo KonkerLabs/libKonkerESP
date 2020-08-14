@@ -8,7 +8,7 @@
 /**
  * Constructor
  */
-ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(Protocol *client, String currentVersion) : _fwEndpoint("/firmware/")
+ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(Protocol *client, String currentVersion) : _fwEndpoint("/firmware/"), _manifestEndpoint("/_update")
 {
   _httpProtocol = client;
   _currentVersion = currentVersion;
@@ -17,7 +17,7 @@ ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(Protocol *client, String currentVersion
   _last_time_update_check = 0;
 }
 
-ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _fwEndpoint("/firmware/")
+ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _fwEndpoint("/firmware/"), _manifestEndpoint("/_update")
 {
   _currentVersion = "";
   _newVersion = "";
@@ -30,6 +30,10 @@ ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _fwEndpoint("/firmware/")
  */
 ESPHTTPKonkerUpdate::~ESPHTTPKonkerUpdate()
 {
+  if (manifest != nullptr)
+  {
+    delete manifest;
+  }
   _currentVersion = "";
 }
 
@@ -37,11 +41,13 @@ void ESPHTTPKonkerUpdate::setProtocol(Protocol *client)
 {
   _httpProtocol = client;
   _fwEndpoint += _httpProtocol->getUser();
+  _manifestEndpoint = "sub/" + _httpProtocol->getUser() + _manifestEndpoint;
 }
 
 void ESPHTTPKonkerUpdate::setFWchannel(String id)
 {
   _fwEndpoint += id;
+  _manifestEndpoint = "sub/" + id + _manifestEndpoint;
 }
 
 /**
@@ -52,7 +58,7 @@ void ESPHTTPKonkerUpdate::setFWchannel(String id)
 t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
 {
   HTTPClient * pHttp;
-  void * pHttpVoid;
+  void * pHttpVoid = nullptr;
   t_httpUpdate_return ret = t_httpUpdate_return::HTTP_UPDATE_NO_UPDATES;
 
   if (_httpProtocol->checkConnection())
@@ -105,8 +111,6 @@ void ESPHTTPKonkerUpdate::updateSucessCallBack(const char newVersion[16])
   }else{
     Serial.println("[UPDT callback] Success\n\n");
   }
-
-  this->updateVersion(newVersion);
 }
 
 /**
@@ -170,41 +174,28 @@ void ESPHTTPKonkerUpdate::sendUpdateConfirmation(String newVersion)
 }
 
 /**
- * Get new version from plaftform
- * @param strPayload char*
- * @param recvVersion char*
- * @return none
+ * Validate manifest and populate manifest.newFwInfo
+ * @return true if manifest is valid
  */
-String ESPHTTPKonkerUpdate::getVersionFromPayload(String strPayload)
+bool ESPHTTPKonkerUpdate::validateUpdate()
 {
   char version[16];
-  //TODO fix
-  //if(parse_JSON_item(strPayload, "version", version))
-  if(true)
+
+  int ret = manifest->validateManiest();
+
+  if(ret)
   {
-    Log.trace("[UPDT] New version = %s\n", version);
-    return String(version);
+    Log.trace("[UPDT] Valid manifest\n", version);
+    return true;
   }
   else
   {
-    Log.trace("[UPDT] Failed to parse version\n");
-    return "";
+    Log.trace("[UPDT] Invalid manifest\n");
+    return false;
   }
-}
 
-/**
- * Update running version
- * @param newVersion char*
- * @return none
- */
-void ESPHTTPKonkerUpdate::updateVersion(String newVersion)
-{
-  if(newVersion != "")
-  {
-    _currentVersion = newVersion;
-  }
-  // TODO save new version to memory
-  // TODO update first boot flag in memory
+  // [MJ] put htis after update complete
+  // delete manifest;
 }
 
 /**
@@ -212,7 +203,7 @@ void ESPHTTPKonkerUpdate::updateVersion(String newVersion)
  * @param recvVersion char*
  * @return bool
  */
-bool ESPHTTPKonkerUpdate::querryPlatform(String recvVersion)
+int ESPHTTPKonkerUpdate::querryPlatform()
 {
   String retPayload;
 
@@ -221,28 +212,35 @@ bool ESPHTTPKonkerUpdate::querryPlatform(String recvVersion)
   if(!_httpProtocol->checkConnection())
   {
     Log.trace("[UPDT] No connection to platform\n");
-    return false;
+    return 1;
   }
 
-  Log.trace("[UPDT] Checking update at: %s\n", _fwEndpoint.c_str());
+  Log.trace("[UPDT] Checking update at: %s\n", _manifestEndpoint.c_str());
 
-  int retCode = _httpProtocol->request(&retPayload, _fwEndpoint);
+  int retCode = _httpProtocol->request(&retPayload, _manifestEndpoint);
 
-  if(!retCode)
+  if(!retCode ||
+      retPayload.equals("[]") ||
+      retPayload.equals("Resource not found for incoming device"))
   {
     Log.trace("[UPDT] No new FW version\n");
-    recvVersion = ""; // [MJ] Se update falha, string da versão preenchida com vazio
+    return 1;
   }
   else
   {
-    Log.trace("[UPDT] New version exist\n\n");
+    Log.trace("[UPDT] New version exist\n");
 
-    Log.trace("[UPDT] trPayload=%s", retPayload.c_str());
-    if (retPayload != "[]")
+    Log.trace("[UPDT] Payload received = %s\n\n", retPayload.c_str());
+    this->manifest = new ManifestHandler();
+    if(!this->manifest->startHandler())
     {
-      recvVersion = this->getVersionFromPayload(retPayload);
+      Log.notice("[UPDT] Failed to load current FW info from flash!");
     }
-    // retCode = this->parseManifest(&retPayload);
+    if(this->manifest->parseManifest(retPayload.c_str()))
+    {
+      return 0;
+    }
+    return 2;
   }
 
   return retCode;
@@ -265,18 +263,81 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
     }
   }
 
-  char recvVersion[16];
-  if (this->querryPlatform(recvVersion)) //[rpi3] get_manifest
+  int hasManifest = this->querryPlatform();
+  if (hasManifest == 0) //[rpi3] get_manifest
   {
+    this->sendStatusMessage(MSG_MANIFEST_RECEIVED); // [MJ] this is probably causing some kind of memory overflow and overwriting manifestJson hmmmm
     _last_time_update_check = millis();
-    if(this->validateUpdate()) //[rpi3] parse_manifet
+    if(this->validateUpdate()) //[rpi3] parse_manifest
     {
-      this->sendStatusMessage();
+      this->sendStatusMessage(MSG_MANIFEST_CORRECT);
       return true;
     }
-    this->sendExceptionMessage();
+    this->sendExceptionMessage(EXPT_MANIFEST_INCORRECT);
     return false;
+  }
+  else if(hasManifest == 2)
+  {
+    this->sendExceptionMessage(EXPT_COULD_NOT_GET_MAN);
   }
   _last_time_update_check = millis();
   return false;
+}
+
+void ESPHTTPKonkerUpdate::sendStatusMessage(int msgIndex)
+{
+  const char * messages[6] =
+  {
+    "Manifest received",
+    "Manifest correct",
+    "Firmware received",
+    "Checksum OK",
+    "Update done",
+    "Update correct"
+  };
+
+  Log.trace("[UPDT] MESSAGE: %s\n", messages[msgIndex]);
+
+  String smsg=String("{\"update_stage\": \"" + String(messages[msgIndex]) + "\"}");
+  int retCode = _httpProtocol->send("_update", smsg);
+
+  Log.trace("[UPDT] Message sent to: _update; Body: %s; httpCode: %d\n", _manifestEndpoint.c_str(), smsg.c_str(), retCode);
+
+  if (retCode == 1)
+  {
+    Log.trace("[UPDT] Success sending message\n");
+  }
+  else
+  {
+    Log.trace("[UPDT] Failed to send message\n");
+  }
+}
+
+void ESPHTTPKonkerUpdate::sendExceptionMessage(int exptIndex)
+{
+  const char * messages[6] =
+  {
+    "Could not get manifest",
+    "Manifest incorrect",
+    "Did not receive firmware",
+    "Checksum NOK",
+    "Update failed",
+    "New firmware started incorrectly"
+  };
+
+  Log.trace("[UPDT] MESSAGE: %s\n", messages[exptIndex]);
+
+  String smsg=String("{\"update_exception\": \"" + String(messages[exptIndex]) + "\"}");
+  int retCode = _httpProtocol->send("_update", smsg);
+
+  Log.trace("[UPDT] Exception sent to: _update; Body: %s; httpCode: %d\n", _manifestEndpoint.c_str(), smsg.c_str(), retCode);
+
+  if (retCode == 1)
+  {
+    Log.trace("[UPDT] Success sending exception\n");
+  }
+  else
+  {
+    Log.trace("[UPDT] Failed to send exception\n");
+  }
 }

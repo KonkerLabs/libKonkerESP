@@ -33,6 +33,7 @@ KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), w
 KonkerDevice::~KonkerDevice()
 {
   deviceMonitor.saveHealthInfo();
+  // delete currentProtocol;
 }
 
 void KonkerDevice::restartDevice()
@@ -209,7 +210,10 @@ void KonkerDevice::loop()
       restartDevice();
     }
   }
-  deviceUpdate.checkForUpdate();
+  if (deviceUpdate.checkForUpdate())
+  {
+    // deviceUpdate.performUpdate();
+  }
   deviceMonitor.healthUpdate(this->avgLoopDuration);
   this->avgLoopDuration = 0;
   this->loopCount = 1;

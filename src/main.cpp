@@ -10,9 +10,9 @@ int mqtt_port = 1883; //32768;
 // int http_port = 8082;
 // int fw_port = 8081;
 
-String DEV_ID = "node10";
-String USER = "pgdmna95n2o2"; //"t97pvjblbeas";
-String PWD = "HnWDYsNGdlcb"; //"YJ2GskQvqU8S";
+String DEV_ID = "node02";
+String USER = "j761nvqo5qoq"; //"pgdmna95n2o2"; //"t97pvjblbeas";
+String PWD = "8FVki75P8AAy"; //"HnWDYsNGdlcb"; //"YJ2GskQvqU8S";
 
 String PUB = "temp";
 
@@ -57,6 +57,7 @@ void setup()
 
   device.saveAllCredentials();
   Serial.println("====== Setup finished ======");
+  // Serial.println("====== NEW VERSION ======");
 
   lasttimeSend = millis();
 }
@@ -66,7 +67,7 @@ void loop()
   unsigned int loop_duration = micros();
   count = count + 1;
   connected = device.checkWifiConnection();
-  // Serial.println("WiFi is " + String(connected));
+  if (!connected) device.connectWifi();
 
   if(count % 4 == 0)
   {

@@ -130,8 +130,7 @@ int HTTPProtocol::request(String * retPayload, String endpoint)
 	passwd[this->getPassword().length()] = '\0';
 
   char buffer[100];
-  String bufferStr = "http://" + this->getHost() + ":"
-                      + String(this->getPort()) + "/" + endpoint;
+  String bufferStr = "http://" + this->getHost() + "/" + endpoint;
   strcpy(buffer, bufferStr.c_str());
 
   this->http_client.addHeader("Content-Type", "application/json");

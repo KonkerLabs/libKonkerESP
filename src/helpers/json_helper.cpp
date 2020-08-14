@@ -32,4 +32,67 @@ char * JsonHelper::createMessage(stringmap * content)
   return bufferChar;
 }
 
+bool JsonHelper::saveCurrentFwInfo()
+{
+  // [MJ] for testing
+  const char * jsonBuffer = "{\"version\":\"1.0.0\", \"sequence_number\":\"3796729686678\", \"device\":\"node02\"}";
+
+  // fw_info_t information;
+  // strcpy(information.version, "1.0.0");
+  // strcpy(information.deviceID, "node02");
+  // information.seqNumber = (unsigned long)3796729686678;
+
+  if(LittleFS.begin())
+  {
+    Log.trace("[JSON] Saving current FW info: %s\n", jsonBuffer);
+    File fwFile = LittleFS.open("firmware_info.json", "w");
+    if(fwFile)
+    {
+      fwFile.seek(0, SeekSet);
+      int bytesWritten = fwFile.print(jsonBuffer);
+      // int bytesWritten = fwFile.print(information);
+      Log.trace("[JSON] Bytes written: %d\n", bytesWritten);
+      fwFile.close();
+
+      LittleFS.end();
+
+      return true;
+    }
+    return false;
+  }
+
+  return false;
+}
+
+bool JsonHelper::loadCurrentFwInfo(DynamicJsonDocument * fwInfo)
+{
+  char fileBuffer[256];
+
+  if(LittleFS.begin())
+  {
+    Log.trace("[JSON] Recovering current FW info\n");
+    if(LittleFS.exists("firmware_info.json"))
+    {
+      File fwFile = LittleFS.open("firmware_info.json", "r");
+      if(fwFile)
+      {
+        fwFile.seek(0, SeekSet);
+        fwFile.readBytes(fileBuffer, fwFile.size());
+        fwFile.close();
+
+        // fileBuffer[sizeBytes] = '\0';
+        Log.trace("[JSON] Recovered FW info: %s\n", fileBuffer);
+        deserializeJson(*fwInfo, fileBuffer);
+        LittleFS.end();
+
+        return true;
+      }
+      return false;
+    }
+    return false;
+  }
+
+  return false;
+}
+
 JsonHelper jsonHelper;

@@ -13,6 +13,25 @@
 
 enum State {RUNNING, UPDATING, REBOOT, UPDATED};
 
+enum StatusMessages
+{
+  MSG_MANIFEST_RECEIVED = 0,
+  MSG_MANIFEST_CORRECT,
+  MSG_FIRMEWARE_RECEIVED,
+  MSG_CHECKSUM_OK,
+  MSG_UPDATE_DONE,
+  MSG_UPDATE_CORRECT
+};
+
+enum ExceptionMessages
+{
+  EXPT_COULD_NOT_GET_MAN = 0,
+  EXPT_MANIFEST_INCORRECT,
+  EXPT_FW_NOT_FOUND,
+  EXPT_CHECKSUM_NOK,
+  EXPT_INCORRECT_START
+};
+
 // Usar?
 // void onStart(HTTPUpdateStartCB cbOnStart)          { _cbStart = cbOnStart; }
 // void onEnd(HTTPUpdateEndCB cbOnEnd)                { _cbEnd = cbOnEnd; }
@@ -23,25 +42,34 @@ enum State {RUNNING, UPDATING, REBOOT, UPDATED};
 // using HTTPUpdateErrorCB = std::function<void(int)>;
 // using HTTPUpdateProgressCB = std::function<void(int, int)>;
 
-class ESPHTTPKonkerUpdate: public ESP8266HTTPUpdate, ManifestHandler
+class ESPHTTPKonkerUpdate: public ESP8266HTTPUpdate
 {
 private:
   Protocol * _httpProtocol;
   String _fwEndpoint;
+  String _manifestEndpoint;
   String _currentVersion;
   String _newVersion;
   State _deviceState;
   unsigned long _last_time_update_check;
 
-  fw_info currentFwInfo;
+  ManifestHandler * manifest;
 
-  String getVersionFromPayload(String strPayload);
-  void updateVersion(String newVersion);
-  bool querryPlatform(String recvVersion);
+  Protocol *getClient();
+  // returns true if there is a new manifest
+  int querryPlatform();
+  bool validateUpdate();
 
   t_httpUpdate_return update(String newVersion);
   void updateSucessCallBack(const char newVersion[16]);
   void runUpdate(UPDATE_SUCCESS_CALLBACK_SIGNATURE);
+
+  int downloadFirmware();
+  int applyFirmware();
+
+  void sendStatusMessage(int msgIndex);
+  void sendUpdateConfirmation(String newVersion);
+  void sendExceptionMessage(int exptIndex);
 
 public:
   ESPHTTPKonkerUpdate(Protocol *client, String currentVersion);
@@ -49,23 +77,15 @@ public:
   ~ESPHTTPKonkerUpdate();
 
   void setProtocol(Protocol *client);
-  Protocol *getClient();
+
   void setVersion(String version);
   String getVersion();
   void setFWchannel(String id);
 
   bool checkForUpdate();
-  bool validateUpdate();
   void performUpdate();
   //To be called during setup
   bool checkFirstBoot();
-  void sendUpdateConfirmation(String newVersion);
-
-  int downloadFirmware();
-  int applyFirmware();
-
-  int sendStatusMessage();
-  int sendExceptionMessage();
 };
 
 #endif /* _FW_UPDATE_H_ */

@@ -4,12 +4,22 @@
 #include "globals.h"
 #include "json_helper.h"
 
-struct fw_info
+#define INFO_LOADED 0xABCDu
+
+// 36 bytes
+struct fw_info_t
 {
-  char version[6];
-  char seqNumber[14];
+  uint16_t loaded;
+  char version[9]; //mem
+  char deviceID[9]; //mem
+  char seqNumber[16]; //mem
+};
+
+// [MJ] all optional fields here?
+struct manifest_info_t
+{
+  fw_info_t essentialInfo;
   unsigned int size;
-  char deviceType[16];
   time_t expirationDate;
   char author[10];
   char * signature;
@@ -21,28 +31,39 @@ class ManifestHandler
 {
 private:
   bool valid;
-  fw_info newFwInfo;
+  manifest_info_t newFwInfo;
+  fw_info_t currentFwInfo;
+  DynamicJsonDocument manifestJson;
+
+  //from update_rpi3
+  void updateFwInfo();
+  // returns true if new > old
+  // version format must be XX.XX.XX
+  bool compareVersions(const char * newVersion, const char * oldVersion);
+  bool checkVersion(const char * newVersion);
+  bool checkDevice(const char * deviceID);
+  bool checkSeqNumber(const char * newSeqNumber);
+  bool checkKeyClaims(const char * key_claims);
+  bool checkSignature(const char * signature);
+  bool checkVendor(const char * vendor);
+  bool checkMemory(const int size);
+  bool checkPermissions(const char * author);
+  bool checkMinVersion(const char * reqVersion);
+  bool checkVersionList(const JsonArray versionList);
+  bool checkDependencies();
+  // bool checkChecksum();
+
+  bool validateRequiredFields();
+  bool validateOptionalFields();
 
 public:
   ManifestHandler();
+  ~ManifestHandler();
 
-  //from update_rpi3
-  // compareVersions()
-  int updateFwInfo(fw_info newInfo);
-  bool checkDependencies();
-  bool checkDevice(char * deviceType);
-  bool checkMemory(int fwSize);
-  bool checkMinVersion(char * reqVersion);
-  bool checkPermissions(char * author);
-  bool checkSeqNumber(char * newSeqNumber);
-  bool checkSignature();
-  bool checkVendor();
-  bool checkVersion(char * newVersion);
-  bool checkVersionList();
-  bool checkChecksum();
+  bool startHandler();
 
-  StaticJsonDocument * parseManifest(String * manifest);
-  int validateManiest();
+  bool parseManifest(const char * manifest);
+  bool validateManiest();
   int applyManifest();
 };
 
