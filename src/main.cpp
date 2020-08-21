@@ -5,14 +5,18 @@ const char ssid[20] = "dlink-C21E-114";
 const char pwd[20] = "bobesponja";
 
 // Dados do servidor
-String server_ip = "mqtt.prod.konkerlabs.net"; //"192.168.0.123";
-int mqtt_port = 1883; //32768;
-// int http_port = 8082;
+String server_ip = "192.168.0.123";
+int mqtt_port = 32768;
+// String server_ip = "mqtt.prod.konkerlabs.net";
+// int mqtt_port = 1883;
+int http_port = 8082;
 // int fw_port = 8081;
 
 String DEV_ID = "node02";
-String USER = "j761nvqo5qoq"; //"pgdmna95n2o2"; //"t97pvjblbeas";
-String PWD = "8FVki75P8AAy"; //"HnWDYsNGdlcb"; //"YJ2GskQvqU8S";
+String USER = "b2evd357tmgl";
+String PWD = "WpyGjpYKaDRS";
+// String USER = "j761nvqo5qoq"; //"pgdmna95n2o2"; //"t97pvjblbeas";
+// String PWD = "8FVki75P8AAy"; //"HnWDYsNGdlcb"; //"YJ2GskQvqU8S";
 
 String PUB = "temp";
 
@@ -47,7 +51,8 @@ void setup()
   Serial.println("====== Saving credentials ======");
   device.addWifi(ssid, pwd);
   device.setDefaultConnectionType(ConnectionType::MQTT);
-  device.setServer(server_ip, mqtt_port);
+  // device.setServer(server_ip, mqtt_port);
+  device.setServer(server_ip, mqtt_port, http_port);
   device.setPlatformCredentials(DEV_ID, USER, PWD);
 
   Serial.println("====== Connecting ======");

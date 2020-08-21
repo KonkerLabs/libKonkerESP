@@ -10,16 +10,22 @@ ManifestHandler::ManifestHandler() : manifestJson(1024)
 
 ManifestHandler::~ManifestHandler()
 {
+  Log.trace("[MNFT] Unloading ManifestHandler\n");
   // free(currentFwInfo.signature);
   // free(currentFwInfo.keyClaims);
 }
 
-bool ManifestHandler::startHandler()
+bool ManifestHandler::startHandler(fw_info_t * currentInfo)
 {
   DynamicJsonDocument currentFwInfoJson(1024);
-  Log.trace("[MNFT] Loading current FW info from memory\n");
+  Log.trace("[MNFT] Loading current FW info\n");
 
-  if(currentFwInfo.loaded == INFO_LOADED) return true;
+  if(currentInfo->loaded == INFO_LOADED)
+  {
+    Log.trace("[MNFT] Already loaded from flash\n");
+    memcpy(&currentFwInfo, currentInfo, sizeof(fw_info_t));
+    return true;
+  }
 
   if(jsonHelper.loadCurrentFwInfo(&currentFwInfoJson))
   {
@@ -28,8 +34,9 @@ bool ManifestHandler::startHandler()
     strcpy(currentFwInfo.seqNumber, currentFwInfoJson["sequence_number"]);
     currentFwInfo.loaded = INFO_LOADED;
 
-    Log.trace("[MNFT] Information read: %s / %s / %s\n", currentFwInfo.version, currentFwInfo.deviceID, currentFwInfo.seqNumber);
+    Log.trace("[MNFT] Information read: %s / %s / %s / %X\n", currentFwInfo.version, currentFwInfo.deviceID, currentFwInfo.seqNumber, currentFwInfo.loaded);
 
+    memcpy(currentInfo, &currentFwInfo, sizeof(fw_info_t));
     return true;
   }
 
@@ -38,17 +45,9 @@ bool ManifestHandler::startHandler()
 
 bool ManifestHandler::parseManifest(const char *manifest)
 {
-  DynamicJsonDocument tempJson(2048);
-  char tempChar[1024];
-
-  strcpy(tempChar, manifest);
-  char * begin = strstr(tempChar, "data");
-  begin += 6; //skip the word
-  int len = strlen(tempChar);
-  tempChar[len-2] = '\0';
-  Log.trace("[MNFT] Received = %s\n", begin);
-  Log.trace("[MNFT] JSON memory usage: %d; size: %d\n", this->manifestJson.memoryUsage(), this->manifestJson.size());
-  DeserializationError err = deserializeJson(this->manifestJson, begin);
+  Log.trace("[MNFT] Received = %s\n", manifest);
+  // Log.trace("[MNFT] JSON memory usage: %d; size: %d\n", this->manifestJson.memoryUsage(), this->manifestJson.size());
+  DeserializationError err = deserializeJson(this->manifestJson, manifest);
 
   if (err)
   {
@@ -56,7 +55,6 @@ bool ManifestHandler::parseManifest(const char *manifest)
     return false;
   }
 
-  validateManiest();
   return true;
 }
 
@@ -67,18 +65,19 @@ bool ManifestHandler::validateManiest()
     Log.trace("[MNFT] Current FW info not loaded! Please call ManifestHandler::startHandler\n");
   }
 
-  Log.trace("[MNFT] JSON memory usage: %d; size: %d\n", this->manifestJson.memoryUsage(), this->manifestJson.size());
+  // Log.trace("[MNFT] JSON memory usage: %d; size: %d\n", this->manifestJson.memoryUsage(), this->manifestJson.size());
   bool ret = validateRequiredFields();
   ret = ret && validateOptionalFields();
 
   // obs: this does not free memory, just clear fields
-  // manifestJson.clear();
+  manifestJson.clear();
 
   return ret;
 }
 
 int ManifestHandler::applyManifest()
 {
+  // TODO check addtional steps and perform them
   return 0;
 }
 
@@ -88,6 +87,21 @@ void ManifestHandler::updateFwInfo()
   // free(currentFwInfo.keyClaims);
 
   memcpy(&currentFwInfo, &newFwInfo.essentialInfo, sizeof(fw_info_t));
+}
+
+char * ManifestHandler::getCurrentVersion()
+{
+  return currentFwInfo.version;
+}
+
+char * ManifestHandler::getNewVersion()
+{
+  return newFwInfo.essentialInfo.version;
+}
+
+char * ManifestHandler::getMd5()
+{
+  return newFwInfo.ckSum;
 }
 
 bool ManifestHandler::validateRequiredFields()
@@ -271,7 +285,7 @@ bool ManifestHandler::validateOptionalFields()
   {
     if (checkVersionList(manifestJson["required_version_list"].as<JsonArray>()))
     {
-      Log.trace("[MNFT] Current version  in required versions list\n");
+      Log.trace("[MNFT] Current version in required versions list\n");
       this->valid = this->valid && true;
     }
     else
@@ -363,6 +377,14 @@ bool ManifestHandler::checkSignature(const char *signature)
   return true;
 }
 
+bool ManifestHandler::checkChecksum(String md5recv)
+{
+  Log.trace("[MNFT] Comparing checksums\n");
+  Log.trace("[MNFT] Manifest: %s\n", newFwInfo.ckSum);
+  Log.trace("[MNFT] Received: %s\n", md5recv.c_str());
+  return md5recv.equals(String(newFwInfo.ckSum));
+}
+
 bool ManifestHandler::checkVendor(const char * vendor)
 {
   // Check this with platform?
@@ -377,7 +399,6 @@ bool ManifestHandler::checkPermissions(const char * author)
 
 bool ManifestHandler::checkMemory(const int size)
 {
-  // Check this with platform?
   int freeSpace = ESP.getFreeSketchSpace();
 
   if(freeSpace < size)

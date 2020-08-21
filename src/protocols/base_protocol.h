@@ -37,7 +37,7 @@ public:
   int savePlatformCredentials();
   int restorePlatformCredentials();
 
-  void getClient(void *); // [TODO] Change this to use void*
+  void setupClient(void *, String);
 
   int connect();
   int disconnect();

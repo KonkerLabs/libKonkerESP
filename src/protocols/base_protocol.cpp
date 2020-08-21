@@ -62,7 +62,7 @@ void BaseProtocol::increaseConnFail()
   this->numConnFail++;
 }
 
-void BaseProtocol::getClient(void * http)
+void BaseProtocol::setupClient(void * http, String uri)
 {
   http = nullptr;
 }

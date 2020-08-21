@@ -51,7 +51,6 @@ private:
   bool checkMinVersion(const char * reqVersion);
   bool checkVersionList(const JsonArray versionList);
   bool checkDependencies();
-  // bool checkChecksum();
 
   bool validateRequiredFields();
   bool validateOptionalFields();
@@ -60,11 +59,16 @@ public:
   ManifestHandler();
   ~ManifestHandler();
 
-  bool startHandler();
+  bool startHandler(fw_info_t * currentInfo);
 
   bool parseManifest(const char * manifest);
   bool validateManiest();
+  bool checkChecksum(String md5recv);
   int applyManifest();
+
+  char * getCurrentVersion();
+  char * getNewVersion();
+  char * getMd5();
 };
 
 #endif /* __MANIFEST_H__ */

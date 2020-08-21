@@ -16,8 +16,18 @@ HTTPProtocol::~HTTPProtocol()
   }
 }
 
-void HTTPProtocol::getClient(void * http)
+void HTTPProtocol::setupClient(void * http, String uri)
 {
+  char user[PLAT_ADDR_ARRAY_SIZE];
+  char passwd[PLAT_ADDR_ARRAY_SIZE];
+
+  strncpy(user, this->getUser().c_str(), this->getUser().length());
+	user[this->getUser().length()] = '\0';
+	strncpy(passwd, this->getPassword().c_str(), this->getPassword().length());
+	passwd[this->getPassword().length()] = '\0';
+
+  this->http_client.setAuthorization(user, passwd);
+  this->http_client.begin(this->wifi_client, "http://"+this->getHost(), this->getPort(), this->registry + uri);
   http = &this->http_client;
 }
 
@@ -101,15 +111,15 @@ int HTTPProtocol::send(const char *channel, String payload)
   if (httpCode >= 0 && httpCode < 300)
   {
     Log.notice("[HTTP] Success. Code = %d\n", httpCode);
-    return CONNECTED;
+    return 1;
   }
   else
   {
     Log.notice("[HTTP] Failed. Code = %d\n", httpCode);
     this->numConnFail++;
     if(httpCode < 0)
-      return DISCONNECTED;
-    return NOT_CONNECTED;
+      return 0;
+    return httpCode;
   }
 }
 
@@ -130,7 +140,7 @@ int HTTPProtocol::request(String * retPayload, String endpoint)
 	passwd[this->getPassword().length()] = '\0';
 
   char buffer[100];
-  String bufferStr = "http://" + this->getHost() + "/" + endpoint;
+  String bufferStr = "http://" + this->getHost() + "/" + this->registry + endpoint;
   strcpy(buffer, bufferStr.c_str());
 
   this->http_client.addHeader("Content-Type", "application/json");

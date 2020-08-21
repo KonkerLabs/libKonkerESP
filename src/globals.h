@@ -3,6 +3,8 @@
 
 #include <ArduinoLog.h>
 
+#define _STATUS_LED 2
+
 //#define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (*succes_update_callback)(char[16])
 #define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (ESPHTTPKonkerUpdate::* updateSucessCallBack_t)(const char[16])
 

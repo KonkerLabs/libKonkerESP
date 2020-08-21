@@ -17,14 +17,14 @@ private:
   unsigned long _last_time_http_request = 0;
   // unsigned long _millis_delay_per_http_request = 5000;
 
-  String registry = "";
+  String registry = "registry-data/";
 
 public:
 
   HTTPProtocol();
   ~HTTPProtocol();
 
-  void getClient(void * http);
+  void setupClient(void * http, String uri);
 
   int send(const char * channel, String payload);
   int receive(String *payload);

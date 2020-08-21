@@ -18,7 +18,7 @@ public:
   virtual int getNumConnFail();
   virtual void setNumConnFail(uint16_t count);
   virtual void increaseConnFail();
-  virtual void getClient(void *);
+  virtual void setupClient(void *, String);
 
   virtual void setPlatformCredentials(String userid, String password);
   virtual String getUser();

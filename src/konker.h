@@ -22,8 +22,6 @@
 #include "helpers/NTP_helper.h"
 #include "update/firmwareUpdate.h"
 
-#define _STATUS_LED 2
-
 // debug levels
 /*
 // 0 - OFF	The lowest possible rank and is intended to turn off logging.
@@ -98,6 +96,7 @@ public:
 
   // configuration functions
   void setServer(String host, int port);
+  void setServer(String host, int port, int httpPort);
   void setPlatformCredentials(String userid, String password);
   void setPlatformCredentials(String deviceID, String userid, String password);
 

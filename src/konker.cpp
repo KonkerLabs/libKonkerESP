@@ -4,7 +4,7 @@
 
 // ---------------------------------------------------------------------------//
 
-KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), webServer(80)//, update()
+KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), webServer(80), deviceUpdate()
 {
   if (DEBUG_LEVEL>0 && !Serial)
   {
@@ -212,7 +212,7 @@ void KonkerDevice::loop()
   }
   if (deviceUpdate.checkForUpdate())
   {
-    // deviceUpdate.performUpdate();
+    deviceUpdate.performUpdate();
   }
   deviceMonitor.healthUpdate(this->avgLoopDuration);
   this->avgLoopDuration = 0;
@@ -242,6 +242,15 @@ void KonkerDevice::setServer(String host, int port)
   {
     this->currentProtocol->setConnection(host, port);
     this->httpProtocol->setConnection("data.prod.konkerlabs.net", 80);
+  }
+}
+
+void KonkerDevice::setServer(String host, int port, int httpPort)
+{
+  if (checkProtocol())
+  {
+    this->currentProtocol->setConnection(host, port);
+    this->httpProtocol->setConnection(host, httpPort);
   }
 }
 
