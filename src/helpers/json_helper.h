@@ -22,7 +22,7 @@ public:
   char * createMessage(stringmap * content);
   // stringmap * parseJson(char  * content) {return nullptr;};
 
-  bool saveCurrentFwInfo();
+  bool saveCurrentFwInfo(const char * jsonBuffer);
   bool loadCurrentFwInfo(DynamicJsonDocument * fwInfo);
 };
 

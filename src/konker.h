@@ -20,7 +20,7 @@
 #include "file_system/manage_eeprom.h"
 #include "health/health_monitor.h"
 #include "helpers/NTP_helper.h"
-#include "update/firmwareUpdate.h"
+#include "update/firmware_update.h"
 
 // debug levels
 /*

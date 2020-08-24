@@ -2,17 +2,6 @@
 
 EEPROMManager::EEPROMManager()
 {
-  this->wifiCredSizeBytes = WIFI_CRED_SIZE_BYTES;
-  this->platCredSizeBytes = PLAT_CRED_SIZE_BYTES;
-
-  mem_cred.begin(4096);
-}
-
-EEPROMManager::EEPROMManager(int wifiCredSizeBytes, int platCredSizeBytes)
-{
-  this->wifiCredSizeBytes = wifiCredSizeBytes;
-  this->platCredSizeBytes = platCredSizeBytes;
-
   mem_cred.begin(4096);
 }
 
@@ -71,6 +60,7 @@ int EEPROMManager::storeWifiCredentials(uint8_t * wifiBuffer)
     Log.trace("[FS] Enabled = %x\n", enabled);
     if (enabled != ENABLED_PATTERN)
     {
+      // fill wifiBuffer with 0s at position not enabled
       clearWiFiCredential(wifiBuffer, i);
     }
   }
@@ -100,6 +90,13 @@ int EEPROMManager::storePlatformCredentials(uint8_t * platBuffer)
 int EEPROMManager::storeHealthInfo(uint8_t * infoBuffer)
 {
   return write(infoBuffer, HLTH_INFO_SIZE_BYTES, HLTH_INFO_INIT_ADDR);
+}
+
+int EEPROMManager::storeBootInfo(uint8_t firstBoot)
+{
+  //writes a single byte
+  mem_cred.write(BOOT_INFO_INIT_ADDR, firstBoot);
+  return mem_cred.commit() ? 1 : 0;
 }
 
 int EEPROMManager::read(uint8_t * retBuffer, unsigned int size, unsigned int initAddr)
@@ -158,6 +155,14 @@ int EEPROMManager::recoverHealthInfo(uint8_t * retBuffer)
   return ret;
 }
 
+int EEPROMManager::recoverBootInfo(uint8_t * firstBootRet)
+{
+  // reads a single byte
+  *firstBootRet = mem_cred.read(BOOT_INFO_INIT_ADDR);
+
+  return 1;
+}
+
 
 uint16_t EEPROMManager::crc_16(uint8_t *buffer, unsigned int length)
 {
@@ -183,13 +188,13 @@ uint16_t EEPROMManager::crc_16(uint8_t *buffer, unsigned int length)
 void EEPROMManager::clearWiFiCredential(uint8_t * buffer, int credIndex)
 {
   Log.trace("[FS] Cleaning credential %d\n", credIndex);
-  memset(&buffer[credIndex * this->wifiCredSizeBytes], 0xFFu, this->wifiCredSizeBytes);
+  memset(&buffer[credIndex * WIFI_CRED_SIZE_BYTES], 0xFFu, WIFI_CRED_SIZE_BYTES);
 }
 
 void EEPROMManager::clearPlatformCredential(uint8_t * buffer)
 {
   Log.trace("[FS] Cleaning credential\n");
-  memset(buffer, 0xFFu, this->platCredSizeBytes);
+  memset(buffer, 0xFFu, PLAT_CRED_SIZE_BYTES);
 }
 
 void EEPROMManager::printBuffer(uint8_t * buffer, int size)

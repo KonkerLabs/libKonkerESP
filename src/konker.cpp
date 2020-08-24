@@ -166,6 +166,12 @@ void KonkerDevice::startConnection(bool afterReconnect)
     }
 		this->currentProtocol->connect();
     this->httpProtocol->connect();
+
+    // at this point, device connections are initialized
+    if(!afterReconnect)
+    {
+      deviceUpdate.checkFirstBoot();
+    }
 	}
 }
 
@@ -189,6 +195,7 @@ int KonkerDevice::checkPlatformConnection()
 	return NOT_CONNECTED;
 }
 
+// calculate moving average of main loop duration
 void KonkerDevice::loopDuration(unsigned int duration)
 {
   this->avgLoopDuration = this->avgLoopDuration + ((duration - this->avgLoopDuration)/this->loopCount);
@@ -217,7 +224,7 @@ void KonkerDevice::loop()
   deviceMonitor.healthUpdate(this->avgLoopDuration);
   this->avgLoopDuration = 0;
   this->loopCount = 1;
-  delay(1000);
+  delay(100);
 }
 
 void KonkerDevice::getCurrentTime(char *timestamp)

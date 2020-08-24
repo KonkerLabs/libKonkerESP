@@ -35,8 +35,6 @@ private:
   fw_info_t currentFwInfo;
   DynamicJsonDocument manifestJson;
 
-  //from update_rpi3
-  void updateFwInfo();
   // returns true if new > old
   // version format must be XX.XX.XX
   bool compareVersions(const char * newVersion, const char * oldVersion);
@@ -55,6 +53,10 @@ private:
   bool validateRequiredFields();
   bool validateOptionalFields();
 
+  //from update_rpi3
+  void updateFwInfo();
+  bool saveNewFwInfo();
+
 public:
   ManifestHandler();
   ~ManifestHandler();
@@ -62,7 +64,7 @@ public:
   bool startHandler(fw_info_t * currentInfo);
 
   bool parseManifest(const char * manifest);
-  bool validateManiest();
+  bool validateManifest();
   bool checkChecksum(String md5recv);
   int applyManifest();
 

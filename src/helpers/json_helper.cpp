@@ -32,10 +32,10 @@ char * JsonHelper::createMessage(stringmap * content)
   return bufferChar;
 }
 
-bool JsonHelper::saveCurrentFwInfo()
+bool JsonHelper::saveCurrentFwInfo(const char * jsonBuffer)
 {
   // [MJ] for testing
-  const char * jsonBuffer = "{\"version\":\"1.0.0\", \"sequence_number\":\"3796729686678\", \"device\":\"node02\"}";
+  // const char * jsonBuffer = "{\"version\":\"1.0.0\", \"sequence_number\":\"3796729686678\", \"device\":\"node02\"}";
 
   // fw_info_t information;
   // strcpy(information.version, "1.0.0");

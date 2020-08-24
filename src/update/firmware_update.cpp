@@ -3,7 +3,13 @@
   @author Maria Júlia Berriel de Sousa
 */
 
-#include "firmwareUpdate.h"
+#include "firmware_update.h"
+
+namespace updateGlobals
+{
+  Protocol * httpProtocolGlobal = nullptr;
+  String * manifestEndpointGlobal = nullptr;
+}
 
 /**
  * Constructors
@@ -59,89 +65,6 @@ void ESPHTTPKonkerUpdate::setProtocol(Protocol *client)
   _manifestEndpoint = "sub/" + _httpProtocol->getUser() + _manifestEndpoint;
 }
 
-// void ESPHTTPKonkerUpdate::setFWchannel(String id)
-// {
-//   _fwEndpoint += id;
-//   _manifestEndpoint = "sub/" + id + _manifestEndpoint;
-// }
-
-/** TODO still need this?
- * Perform FW update
- * @param version char*
- * @return success t_httpUpdate_return
- */
-t_httpUpdate_return ESPHTTPKonkerUpdate::update(String newVersion)
-{
-  HTTPClient * pHttp;
-  void * pHttpVoid = nullptr;
-  t_httpUpdate_return ret = t_httpUpdate_return::HTTP_UPDATE_NO_UPDATES;
-
-  if (_httpProtocol->checkConnection())
-  {
-    _httpProtocol->setupClient(pHttpVoid, _fwEndpoint + String("/binary "));
-    pHttp = static_cast<HTTPClient *>(pHttpVoid);
-    if(!pHttp)
-    {
-      pHttp = new HTTPClient;
-    }
-    Log.trace("[UPDT] Fetching binary at: %s/binary\n", _fwEndpoint.c_str());
-    // pHttp->setURL(String("registry-data/") + _fwEndpoint + String("/binary "));
-
-    updateGlobals::httpProtocolGlobal = _httpProtocol;
-    updateGlobals::manifestEndpointGlobal = &_manifestEndpoint;
-    ret = this->handleUpdate(*pHttp, manifest->getCurrentVersion(), false);
-
-    if(ret == HTTP_UPDATE_OK)
-    {
-      if(manifest->checkChecksum(Update.md5String()))
-      {
-        this->sendStatusMessage(MSG_CHECKSUM_OK);
-      }
-      else
-      {
-        this->sendExceptionMessage(EXPT_CHECKSUM_NOK);
-      }
-    }
-    Log.trace("[UPDT] Return message = %s\n", this->getLastErrorString().c_str());
-  }
-
-  return ret;
-}
-
-/**
- * Send FW update confirmation to platform
- * @param none
- * @return none
- */
-void ESPHTTPKonkerUpdate::sendUpdateConfirmation()
-{
-  char * newVersion = manifest->getNewVersion();
-
-  if(!_httpProtocol->checkConnection())
-  {
-    Log.trace("[UPDT] Cannot send confirmation\n");
-    return;
-  }
-
-  Log.trace("[UPDT] Update ok, sending confirmation\n");
-
-  // TODO change to REBOOTING
-  String smsg=String("{\"version\": \"" + String(newVersion) + "\",\"status\":\"UPDATED\"}");
-  int retCode = _httpProtocol->send("_update", String(smsg));
-
-
-  Log.trace("Confirmantion sent: %s; Body: %s; httpCode: %d\n", _fwEndpoint.c_str(), smsg.c_str(), retCode);
-
-  if (retCode == 1)
-  {
-    Serial.println("[UPDT callback] Success\n\n");
-  }
-  else
-  {
-    Serial.println("[UPDT callback] Failed\n\n");
-  }
-}
-
 /**
  * Callbacks that'll be called during ESP8266HTTPUpdate.update
  */
@@ -160,7 +83,7 @@ void ESPHTTPKonkerUpdate::sendFwReceivedMessage()
 {
   ESPHTTPKonkerUpdate updateTemp = ESPHTTPKonkerUpdate(updateGlobals::httpProtocolGlobal, updateGlobals::manifestEndpointGlobal);
   updateTemp.sendStatusMessage(MSG_FIRMWARE_RECEIVED);
-  Log.trace("[UPDT callback] manifest = %X\n", updateTemp.manifest);
+  Log.trace("[UPDT callback] Message sent\n");
   // implicit ~updateTemp() here;
 }
 
@@ -168,6 +91,28 @@ void atUpdateEnd()
 {
   Log.trace("[UPDT callback] Update done!!!\n");
   ESPHTTPKonkerUpdate::sendFwReceivedMessage();
+}
+
+/**
+ * Setup ESPhttpUpdate object for update
+ * @param none
+ * @return none
+ */
+void ESPHTTPKonkerUpdate::prepareUpdate()
+{
+  String user = _httpProtocol->getUser();
+  String password = _httpProtocol->getPassword();
+
+  ESPhttpUpdate.rebootOnUpdate(false);
+  ESPhttpUpdate.setLedPin(_STATUS_LED, LOW);
+  ESPhttpUpdate.onStart(&atUpdateStart);
+  ESPhttpUpdate.onProgress(&atUpdateProgress);
+  ESPhttpUpdate.onEnd(&atUpdateEnd);
+  Update.setMD5(manifest->getMd5());
+  ESPhttpUpdate.setAuthorization(user, password);
+
+  updateGlobals::httpProtocolGlobal = _httpProtocol;
+  updateGlobals::manifestEndpointGlobal = &_manifestEndpoint;
 }
 
 /**
@@ -180,18 +125,8 @@ void ESPHTTPKonkerUpdate::performUpdate()
   WiFiClient wifiClient;
   Log.trace("[UPDT] UPDATING....\n");
   _deviceState = UPDATING;
-  String user = _httpProtocol->getUser();
-  String password = _httpProtocol->getPassword();
 
-  ESPhttpUpdate.rebootOnUpdate(false);
-  ESPhttpUpdate.setLedPin(_STATUS_LED, LOW);
-  ESPhttpUpdate.onStart(&atUpdateStart);
-  ESPhttpUpdate.onProgress(&atUpdateProgress);
-  ESPhttpUpdate.onEnd(&atUpdateEnd);
-  updateGlobals::httpProtocolGlobal = _httpProtocol;
-  updateGlobals::manifestEndpointGlobal = &_manifestEndpoint;
-  Update.setMD5(manifest->getMd5());
-  ESPhttpUpdate.setAuthorization(user, password);
+  this->prepareUpdate();
   String updateURL = "http://" + _httpProtocol->getHost() + ":" + _httpProtocol->getPort() + "/registry-data" + _fwEndpoint + "/binary";
 
   Log.trace("[UPDT] Fetching binary from %s\n", updateURL.c_str());
@@ -209,18 +144,15 @@ void ESPHTTPKonkerUpdate::performUpdate()
       break;
     case HTTP_UPDATE_OK:
       Log.trace("[UPDT] Complete!\n\n");
-      if(manifest->checkChecksum(Update.md5String()))
+      if(this->finalizingSteps())
       {
-        this->sendStatusMessage(MSG_CHECKSUM_OK);
-        this->addtionalSteps(true);
+        Log.trace("[UPDT] restarting device\n\n");
+        ESP.restart();
       }
       else
       {
-        this->sendExceptionMessage(EXPT_CHECKSUM_NOK);
-        this->addtionalSteps(false);
+        Log.trace("[UPDT] Failed to finalize update. Ending\n\n");
       }
-      Log.trace("[UPDT] restarting device\n\n");
-      ESP.restart();
       break;
   }
 
@@ -233,19 +165,46 @@ void ESPHTTPKonkerUpdate::performUpdate()
  * @param correct true if update correct so far
  * @return bool
  */
-bool ESPHTTPKonkerUpdate::addtionalSteps(bool correct)
+bool ESPHTTPKonkerUpdate::finalizingSteps()
 {
-  if(correct)
+  bool done = false;
+
+  if(manifest->checkChecksum(Update.md5String()))
+  {
+    this->sendStatusMessage(MSG_CHECKSUM_OK);
+    done = true;
+  }
+  else
+  {
+    this->sendExceptionMessage(EXPT_CHECKSUM_NOK);
+    Log.trace("[UPDT] Checksum is incorrect. Update not complete\n");
+  }
+
+  if(done)
+  {
+    Log.trace("[UPDT] Checksum is correct. Performing finalizing steps\n");
+    // save new information to memory and perform addtional steps, if any
+    done = manifest->applyManifest();
+  }
+
+  if(done)
+  {
+    uint8_t firstBoot = FIRST_BOOT_FLAG;
+    Log.trace("[UPDT] Saving first boot flag\n");
+    done = deviceEEPROM.storeBootInfo(firstBoot);
+  }
+
+  if(done)
   {
     this->sendStatusMessage(MSG_UPDATE_DONE);
     this->sendUpdateConfirmation();
   }
+  else
+  {
+    Log.trace("[UPDT] Could not save information to memory. Update not complete\n");
+  }
 
-  manifest->applyManifest();
-  // TODO set first boot flag
-  // TODO save currentFwInfo to memory
-
-  return true;
+  return done;
 }
 
 /**
@@ -256,8 +215,18 @@ bool ESPHTTPKonkerUpdate::addtionalSteps(bool correct)
  */
 bool ESPHTTPKonkerUpdate::checkFirstBoot()
 {
-  //TODO Code
-  // this->sendStatusMessage(MSG_UPDATE_CORRECT)
+  uint8_t firstBoot;
+  deviceEEPROM.recoverBootInfo(&firstBoot);
+
+  if(firstBoot == FIRST_BOOT_FLAG)
+  {
+    Log.trace("[UPDT] Device started correctly after update!\n");
+    this->sendStatusMessage(MSG_UPDATE_CORRECT);
+    firstBoot = 0x00u;
+    deviceEEPROM.storeBootInfo(firstBoot);
+    return true;
+  }
+
   return false;
 }
 
@@ -269,7 +238,7 @@ bool ESPHTTPKonkerUpdate::validateUpdate()
 {
   char version[16];
 
-  int ret = manifest->validateManiest();
+  int ret = manifest->validateManifest();
 
   if(ret)
   {
@@ -353,7 +322,7 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
   int hasManifest = this->querryPlatform();
   if (hasManifest == 0) //[rpi3] get_manifest
   {
-    this->sendStatusMessage(MSG_MANIFEST_RECEIVED); // [MJ] this is probably causing some kind of memory overflow and overwriting manifestJson hmmmm
+    this->sendStatusMessage(MSG_MANIFEST_RECEIVED);
     _last_time_update_check = millis();
     if(this->validateUpdate()) //[rpi3] parse_manifest
     {
@@ -439,5 +408,39 @@ void ESPHTTPKonkerUpdate::sendExceptionMessage(int exptIndex)
   else
   {
     Log.trace("[UPDT] Failed to send exception\n");
+  }
+}
+
+/**
+ * Send FW update confirmation to platform (for backwards compatibility)
+ * @param none
+ * @return none
+ */
+void ESPHTTPKonkerUpdate::sendUpdateConfirmation()
+{
+  char * newVersion = manifest->getNewVersion();
+
+  if(!_httpProtocol->checkConnection())
+  {
+    Log.trace("[UPDT] Cannot send confirmation\n");
+    return;
+  }
+
+  Log.trace("[UPDT] Update ok, sending confirmation\n");
+
+  // TODO change to REBOOTING
+  String smsg=String("{\"version\": \"" + String(newVersion) + "\",\"status\":\"UPDATED\"}");
+  int retCode = _httpProtocol->send("_update", String(smsg));
+
+
+  Log.trace("[UPDT] Confirmantion sent: %s; Body: %s; httpCode: %d\n", _fwEndpoint.c_str(), smsg.c_str(), retCode);
+
+  if (retCode == 1)
+  {
+    Serial.println("[UPDT] Success\n");
+  }
+  else
+  {
+    Serial.println("[UPDT] Failed\n");
   }
 }

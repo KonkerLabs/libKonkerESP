@@ -58,7 +58,7 @@ bool ManifestHandler::parseManifest(const char *manifest)
   return true;
 }
 
-bool ManifestHandler::validateManiest()
+bool ManifestHandler::validateManifest()
 {
   if (currentFwInfo.loaded != INFO_LOADED)
   {
@@ -77,8 +77,25 @@ bool ManifestHandler::validateManiest()
 
 int ManifestHandler::applyManifest()
 {
+  int ret = 0;
+  ret = this->saveNewFwInfo();
   // TODO check addtional steps and perform them
-  return 0;
+
+  return ret;
+}
+
+bool ManifestHandler::saveNewFwInfo()
+{
+  DynamicJsonDocument newFwInfoJson(1024);
+  char newFwInfoBuffer[1024];
+
+  Log.trace("[MNFT] Saving new firmware information to memory\n");
+  newFwInfoJson["version"] = this->newFwInfo.essentialInfo.version;
+  newFwInfoJson["device"] = this->newFwInfo.essentialInfo.deviceID;
+  newFwInfoJson["sequence_number"] = this->newFwInfo.essentialInfo.seqNumber;
+
+  serializeJson(newFwInfoJson, newFwInfoBuffer);
+  return jsonHelper.saveCurrentFwInfo(newFwInfoBuffer);
 }
 
 void ManifestHandler::updateFwInfo()
