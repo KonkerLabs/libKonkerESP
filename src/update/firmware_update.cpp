@@ -331,6 +331,7 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
     }
     this->sendExceptionMessage(EXPT_MANIFEST_INCORRECT);
     delete manifest;
+    
     return false;
   }
   else if(hasManifest == 2)
@@ -360,6 +361,7 @@ void ESPHTTPKonkerUpdate::sendStatusMessage(int msgIndex)
     "Update correct"
   };
 
+  Log.trace("[UPDT] Sending from: %X\n", _httpProtocol);
   Log.trace("[UPDT] MESSAGE: %s\n", messages[msgIndex]);
 
   String smsg=String("{\"update_stage\": \"" + String(messages[msgIndex]) + "\"}");

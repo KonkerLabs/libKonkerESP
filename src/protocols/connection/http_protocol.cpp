@@ -43,7 +43,7 @@ int HTTPProtocol::connect()
 		{
 			Log.warning("[HTTP] Credentials not found! Aborting\n");
       this->numConnFail++;
-			return NOT_CONNECTED;
+			return NO_CREDENTIALS;
 		}
 	}
 
@@ -84,43 +84,36 @@ int HTTPProtocol::send(const char *channel, String payload)
 	strncpy(passwd, this->getPassword().c_str(), this->getPassword().length());
 	passwd[this->getPassword().length()] = '\0';
 
-  this->http_client.addHeader("Content-Type", "application/json");
-  this->http_client.addHeader("Accept", "application/json");
-  Log.trace("[HTTP] Authorization: %s<>%s\n", user, passwd);
-  this->http_client.setAuthorization(user, passwd);
-
-  char buffer[100];
-
   String bufferStr = "http://" + this->getHost() + ":"
                       + String(this->getPort()) + "/" + this->registry
                       + "pub/" + this->getUser() + "/" + channel;
-  strcpy(buffer, bufferStr.c_str());
 
-  Log.trace("[HTTP] Publishing to %s\n", buffer);
+  this->http_client.begin(this->wifi_client, bufferStr);
+  Log.trace("[HTTP] Publishing to %s\n", bufferStr.c_str());
   Log.trace("[HTTP] Body %s\n", payload.c_str());
 
+  Log.trace("[HTTP] Authorization: %s<>%s\n", user, passwd);
+  this->http_client.setAuthorization(user, passwd);
   this->http_client.setTimeout(10000);
-  this->http_client.begin(this->wifi_client, bufferStr);
+  this->http_client.addHeader("Content-Type", "application/json");
+  this->http_client.addHeader("Accept", "application/json");
 
   Log.notice("[HTTP] (B) POST TO DATA\n");
 
   int httpCode = this->http_client.POST(payload);
   Log.notice("[HTTP] (E) POST TO DATA\n");
-  // this->http_client.end();
+  this->http_client.end();
 
   if (httpCode >= 0 && httpCode < 300)
   {
-    Log.notice("[HTTP] Success. Code = %d\n", httpCode);
+    Log.notice("[HTTP] Success. Code(%d)\n", httpCode);
     return 1;
   }
-  else
-  {
-    Log.notice("[HTTP] Failed. Code = %d\n", httpCode);
-    this->numConnFail++;
-    if(httpCode < 0)
-      return 0;
-    return httpCode;
-  }
+  Log.notice("[HTTP] Failed. Code(%d): %s\n", httpCode, this->http_client.errorToString(httpCode).c_str());
+  this->numConnFail++;
+  if(httpCode < 0)
+    return 0;
+  return httpCode;
 }
 
 int HTTPProtocol::receive(String *payload)
@@ -130,7 +123,6 @@ int HTTPProtocol::receive(String *payload)
 
 int HTTPProtocol::request(String * retPayload, String endpoint)
 {
-  int ret = 0;
   char user[PLAT_ADDR_ARRAY_SIZE];
   char passwd[PLAT_ADDR_ARRAY_SIZE];
 
@@ -139,32 +131,32 @@ int HTTPProtocol::request(String * retPayload, String endpoint)
 	strncpy(passwd, this->getPassword().c_str(), this->getPassword().length());
 	passwd[this->getPassword().length()] = '\0';
 
-  char buffer[100];
-  String bufferStr = "http://" + this->getHost() + "/" + this->registry + endpoint;
-  strcpy(buffer, bufferStr.c_str());
+  String bufferStr = "http://" + this->getHost() + ":" + String(this->getPort())
+                      + "/" + this->registry + endpoint;
 
-  this->http_client.addHeader("Content-Type", "application/json");
+  this->http_client.begin(this->wifi_client, bufferStr.c_str());
+  Log.trace("[HTTP] Requesting from %s\n", bufferStr.c_str());
+
   this->http_client.setTimeout(2000);
   this->http_client.setAuthorization(user, passwd);
-  this->http_client.begin(this->wifi_client, buffer);  //Specify request destination
+  this->http_client.addHeader("Content-Type", "application/json");
+  this->http_client.addHeader("Accept", "application/json");
+
   int httpCode = this->http_client.GET();
 
   if (httpCode >= 0 && httpCode < 300)
   {
-    Log.trace("[HTTP] Request sucess. Code = %d\n", httpCode);
+    Log.trace("[HTTP] Request sucess. Code(%d)\n", httpCode);
 
     *retPayload = this->http_client.getString();
-    Log.trace("[HTTP] retPayload = %s\n", retPayload->c_str());
-    // int playloadSize=this->http_client.getSize();
+    Log.trace("[HTTP] retPayload[%d bytes] = %s\n", this->http_client.getSize(), retPayload->c_str());
+    this->http_client.end();
 
-    // getCurrentTime(ts, ms);
     return 1;
   }
-  else
-  {
-    Log.trace("[HTTP] Request failed. Code = %d\n", httpCode);
+  Log.trace("[HTTP] Request failed. Code(%d): %s\n", httpCode, this->http_client.errorToString(httpCode).c_str());
+  this->http_client.end();
+  if(httpCode < 0)
     return 0;
-  }
-
-  return ret;
+  return httpCode;
 }
