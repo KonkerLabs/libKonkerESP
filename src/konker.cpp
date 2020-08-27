@@ -15,7 +15,8 @@ KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), w
   // Third parameter is showLevel
   Log.begin(DEBUG_LEVEL, &Serial, true);
 
-  Log.trace("BUILD: %s", BUILD_ID);
+  Log.trace("BUILD: %s\n", BUILD_ID);
+  this->chipID = ESP.getChipId();
 
   this->defaultConnectionType = ConnectionType::MQTT;
 
@@ -62,6 +63,31 @@ void KonkerDevice::resetALL()
   restartDevice();
 }
 
+void KonkerDevice::loop()
+{
+  deviceNTP.updateNTP();
+  if (this->currentProtocol == nullptr)
+  {
+    Log.error("Protocol not set! Please call KonkerDevice::setDefaultConnectionType at setup!");
+  }
+  else
+  {
+    if(this->currentProtocol->protocolLoop())
+    {
+      Log.trace("\n\n!!!!! Restart here !!!!!!\n\n");
+      restartDevice();
+    }
+  }
+  if (deviceUpdate.checkForUpdate())
+  {
+    deviceUpdate.performUpdate();
+  }
+  deviceMonitor.healthUpdate(this->avgLoopDuration);
+  this->avgLoopDuration = 0;
+  this->loopCount = 1;
+  delay(100);
+}
+
 void KonkerDevice::addWifi(String ssid, String password)
 {
   deviceWifi.setConfig(ssid, password);
@@ -93,11 +119,6 @@ bool KonkerDevice::checkWifiConnection()
 {
   return deviceWifi.checkConnectionStatus();
 }
-
-// void KonkerDevice::checkForUpdates()
-// {
-//   update.checkForUpdate();
-// }
 
 void KonkerDevice::setDefaultConnectionType(ConnectionType c)
 {
@@ -157,14 +178,31 @@ void KonkerDevice::startConnection(bool afterReconnect)
     }
     else
     {
-  		if (this->currentProtocol->isConnectionOriented())
+      if(!this->currentProtocol->isCredentialSet())
       {
-  			deviceMonitor.setProtocol(this->currentProtocol, this->httpProtocol);
+        String deviceid, user, password;
+        int ret = this->getCredentialsForPlatform(&deviceid, &user, &password);
+        if(ret == 2)
+        {
+          Log.trace("Credentials received from gateway: %s/%s/%s\n", deviceid.c_str(), user.c_str(), password.c_str());
+          this->setPlatformCredentials(deviceid, user, password);
+        }
+        else if (ret == 0)
+        {
+          Log.error("No platform credentials!!! Restarting...\n\n");
+          this->restartDevice();
+        }
+      }
+
+      if (this->currentProtocol->isConnectionOriented())
+      {
+        deviceMonitor.setProtocol(this->currentProtocol, this->httpProtocol);
         // update the ESP update client with this new connection
-    		deviceUpdate.setProtocol(this->httpProtocol);
-  		}
+        deviceUpdate.setProtocol(this->httpProtocol);
+      }
     }
-		this->currentProtocol->connect();
+
+    this->currentProtocol->connect();
     this->httpProtocol->connect();
 
     // at this point, device connections are initialized
@@ -200,31 +238,6 @@ void KonkerDevice::loopDuration(unsigned int duration)
 {
   this->avgLoopDuration = this->avgLoopDuration + ((duration - this->avgLoopDuration)/this->loopCount);
   this->loopCount++;
-}
-
-void KonkerDevice::loop()
-{
-  deviceNTP.updateNTP();
-  if (this->currentProtocol == nullptr)
-  {
-    Log.error("Protocol not set! Please call KonkerDevice::setDefaultConnectionType at setup!");
-  }
-  else
-  {
-    if(this->currentProtocol->protocolLoop())
-    {
-      Log.trace("\n\n!!!!! Restart here !!!!!!\n\n");
-      restartDevice();
-    }
-  }
-  if (deviceUpdate.checkForUpdate())
-  {
-    deviceUpdate.performUpdate();
-  }
-  deviceMonitor.healthUpdate(this->avgLoopDuration);
-  this->avgLoopDuration = 0;
-  this->loopCount = 1;
-  delay(100);
 }
 
 void KonkerDevice::getCurrentTime(char *timestamp)
@@ -264,43 +277,42 @@ void KonkerDevice::setServer(String host, int port, int httpPort)
 void KonkerDevice::setChipID(String deviceID)
 {
 #ifndef ESP32
-  this->chipID = deviceID + ESP.getChipId();
+  this->chipID = deviceID + "_" + ESP.getChipId();
 #else
-  this->chipID = deviceID + ESP.getEfuseMac();
+  this->chipID = deviceID + "_" + ESP.getEfuseMac();
 #endif
 }
 
-void KonkerDevice::setUniqueID(String id)
+void KonkerDevice::setDeviceIds(String id)
 {
   this->deviceID = id;
   setChipID(this->deviceID);
 }
 
-String KonkerDevice::getUniqueID()
+String KonkerDevice::getDeviceId()
 {
   return this->deviceID;
 }
 
 void KonkerDevice::setPlatformCredentials(String userid, String password)
 {
-  this->deviceID = DEFAULT_NAME;
-  setChipID(this->deviceID);
+  this->setDeviceIds(DEFAULT_NAME);
 
   if (checkProtocol())
   {
     this->currentProtocol->setPlatformCredentials(userid, password);
-    this->httpProtocol->setCredentialStatus(true);
+    this->httpProtocol->setPlatformCredentials(userid, password);
   }
 }
 
 void KonkerDevice::setPlatformCredentials(String deviceID, String userid, String password)
 {
-  this->deviceID = deviceID;
-  setChipID(this->deviceID);
+  this->setDeviceIds(deviceID);
+
   if (checkProtocol())
   {
     this->currentProtocol->setPlatformCredentials(userid, password);
-    this->httpProtocol->setCredentialStatus(true);
+    this->httpProtocol->setPlatformCredentials(userid, password);
   }
 }
 
@@ -368,6 +380,40 @@ bool KonkerDevice::restoreAllCredentials()
   return ret;
 }
 
+// returns true if recovered credentials from server, false otherwise
+int KonkerDevice::getCredentialsForPlatform(String * deviceid, String * user, String * password)
+{
+  String response;
+
+  Log.trace("Trying to recover credentials from memmory\n");
+  if(this->restorePlatformCredentials())
+  {
+    Log.trace("Device credentials recovered from memory\n");
+    // TODO store deviceid in eeprom
+    this->setDeviceIds(DEFAULT_NAME);
+    return 1;
+  }
+
+  Log.trace("Trying to recover credentials from server for device %s\n", this->chipID.c_str());
+  if(this->httpProtocol->getPlatformCredentials(&response, this->chipID))
+  {
+    Log.trace("Credentials received from server\n");
+    DynamicJsonDocument responseJson(256);
+    DeserializationError err = deserializeJson(responseJson, response);
+    if (err)
+    {
+      Log.notice("[JSON] Failed to desirialize json document. Code = %s\n", err.c_str());
+      return 0;
+    }
+    *deviceid = responseJson["device_id"].as<String>();
+    *user = responseJson["username"].as<String>();
+    *password = responseJson["password"].as<String>();
+    return 2;
+  }
+
+  return 0;
+}
+
 int KonkerDevice::storeData(String channel, String payload)
 {
   Log.trace("Storing data in buffer\n");
@@ -425,34 +471,3 @@ int KonkerDevice::sendData()
 
   return res;
 }
-
-// TODO maybe get rid of this
-// int KonkerDevice::testSendHTTP()
-// {
-//   StaticJsonDocument<512> jsonMSG;
-//   char bufferJson[1024];
-//   HTTPProtocol httpObj;
-//   int conn = 0, res = 0;
-//
-//   String ssid = deviceWifi.getWifiSSID();
-//   String ip = deviceWifi.getLocalIP().toString();
-//   int rssi = deviceWifi.getWifiStrenght();
-//
-//   httpObj.setConnection("data.prod.konkerlabs.net", 80);
-//   httpObj.setCredentials(this->userid.c_str(), this->password.c_str());
-//
-//   conn = httpObj.connect();
-//   if (conn)
-//   {
-//     jsonMSG["ssid"] = ssid;
-//     jsonMSG["ip"] = ip;
-//     jsonMSG["rssi"] = String(rssi);
-//
-//     serializeJson(jsonMSG, bufferJson);
-//
-//     Log.trace("[Health] Sending message: %s\n", bufferJson);
-//     res = httpObj.send(this->_health_channel.c_str(), String(bufferJson));
-//   }
-//
-//   return res;
-// }

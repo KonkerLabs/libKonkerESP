@@ -27,7 +27,7 @@ class PlatformManager
 private:
   plat_addr_st_t platformAddress;
   static plat_cred_st_t platformCredential;
-  bool credentialSet = false;
+  bool credentialSet;
 
 public:
 
@@ -39,11 +39,11 @@ public:
   int getPort();
 
   void setPlatformCredentials(String user, String password);
+  bool isPlatformCredsEnabled();
   String getUser();
   String getPassword();
 
   bool isCredentialSet();
-  void setCredentialStatus(bool status);
   int savePlatformCredentials();
   // overwrites existing credentials (if any)
   int restorePlatformCredentials();

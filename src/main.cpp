@@ -12,9 +12,9 @@ int mqtt_port = 32768;
 int http_port = 8082;
 // int fw_port = 8081;
 
-String DEV_ID = "node02";
-String USER = "b2evd357tmgl";
-String PWD = "WpyGjpYKaDRS";
+// String DEV_ID = "node02";
+// String USER = "b2evd357tmgl";
+// String PWD = "WpyGjpYKaDRS";
 // String USER = "j761nvqo5qoq"; //"pgdmna95n2o2"; //"t97pvjblbeas";
 // String PWD = "8FVki75P8AAy"; //"HnWDYsNGdlcb"; //"YJ2GskQvqU8S";
 
@@ -33,10 +33,13 @@ char *jsonMQTTmsgDATA(const char *device_id, const char *metric, long value)
 {
   const int capacity = 1024; // JSON_OBJECT_SIZE(200);
   StaticJsonDocument<capacity> jsonMSG;
+  char ts[20];
 
+  device.getCurrentTime(ts);
   jsonMSG["deviceId"] = device_id;
   jsonMSG["metric"] = metric;
   jsonMSG["value"] = value;
+  jsonMSG["ts"] = ts;
   serializeJson(jsonMSG, bufferJson);
 
   Serial.print("Mensagem >> ");
@@ -53,7 +56,7 @@ void setup()
   device.setDefaultConnectionType(ConnectionType::MQTT);
   // device.setServer(server_ip, mqtt_port);
   device.setServer(server_ip, mqtt_port, http_port);
-  device.setPlatformCredentials(DEV_ID, USER, PWD);
+  // device.setPlatformCredentials(DEV_ID, USER, PWD);
 
   Serial.println("====== Connecting ======");
   device.connectWifi();
@@ -76,7 +79,7 @@ void loop()
 
   if(count % 4 == 0)
   {
-    mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
+    mensagem = jsonMQTTmsgDATA(device.getDeviceId().c_str(), "Celsius", count);
     device.storeData(PUB, mensagem);
   }
 
@@ -95,15 +98,12 @@ void loop()
     if (ok)
     {
       Serial.println("YAAAAY");
+      lasttimeSend = millis();
     }
     else
     {
       Serial.println("NOPE");
     }
-
-    // char ts[20];
-    // device.getCurrentTime(ts);
-    // Serial.println("TIME TIME TIME " + String(ts));
   }
 
   // if((millis() - lasttimeSend) > 5000) //ms
@@ -115,7 +115,6 @@ void loop()
   //   Serial.print(data.payload);
   //   Serial.print(" | ");
   //   Serial.println(data.channel);
-  //   lasttimeSend = millis();
   // }
 
   device.loop();

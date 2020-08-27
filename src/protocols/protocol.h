@@ -2,31 +2,31 @@
 #define __PROTOCOL_H__
 
 #include <Arduino.h>
-#include <ESP8266HTTPClient.h>
+#include <WiFiClient.h>
 
 class Protocol
 {
 public:
   virtual void init() = 0;
-  virtual int send(const char* channel, String payload) = 0;
-  virtual int receive(String *payload) = 0;
-  virtual int request(String *retPayload, String endpoint) = 0;
+  virtual int send(const char* , String) = 0;
+  virtual int receive(String *) = 0;
+  virtual int request(String *, String) = 0;
 
-  virtual void setConnection(String host, int port);
+  virtual void setConnection(String, int);
   virtual String getHost();
   virtual int getPort();
   virtual int getNumConnFail();
-  virtual void setNumConnFail(uint16_t count);
+  virtual void setNumConnFail(uint16_t);
   virtual void increaseConnFail();
-  virtual void setupClient(void *, String);
 
-  virtual void setPlatformCredentials(String userid, String password);
+  virtual void setPlatformCredentials(String, String);
   virtual String getUser();
   virtual String getPassword();
   virtual bool isCredentialSet();
-  virtual void setCredentialStatus(bool status);
+
   virtual int savePlatformCredentials();
   virtual int restorePlatformCredentials();
+  virtual bool getPlatformCredentials(String *, String);
 
   virtual int connect();
   virtual int disconnect(); //return connection status from globals.h

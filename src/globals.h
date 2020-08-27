@@ -42,5 +42,6 @@ Obs: To fully remove all logging code, uncomment #define DISABLE_LOGGING in Ardu
 #define CONNECTED           1
 #define DISCONNECTED        2
 #define UNKNOWN             3
+#define NO_CREDENTIALS      4
 
 #endif /* __GLOBALS_H__ */

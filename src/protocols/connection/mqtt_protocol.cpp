@@ -47,7 +47,7 @@ int MQTTProtocol::connect()
 		{
 			Log.warning("[MQTT] Credentials not found! Aborting\n");
 			this->numConnFail++;
-			return 0;
+			return NO_CREDENTIALS;
 		}
 	}
 

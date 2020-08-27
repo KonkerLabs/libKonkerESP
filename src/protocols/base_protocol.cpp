@@ -62,11 +62,6 @@ void BaseProtocol::increaseConnFail()
   this->numConnFail++;
 }
 
-void BaseProtocol::setupClient(void * http, String uri)
-{
-  http = nullptr;
-}
-
 void BaseProtocol::setPlatformCredentials(String userid, String password)
 {
   platformManager.setPlatformCredentials(userid, password);
@@ -75,6 +70,13 @@ void BaseProtocol::setPlatformCredentials(String userid, String password)
 int BaseProtocol::savePlatformCredentials()
 {
   return platformManager.savePlatformCredentials();
+}
+
+bool BaseProtocol::getPlatformCredentials(String * response, String id)
+{
+  *response = "";
+
+  return false;
 }
 
 int BaseProtocol::restorePlatformCredentials()
@@ -95,11 +97,6 @@ String BaseProtocol::getPassword()
 bool BaseProtocol::isCredentialSet()
 {
   return platformManager.isCredentialSet();
-}
-
-void BaseProtocol::setCredentialStatus(bool status)
-{
-  platformManager.setCredentialStatus(status);
 }
 
 int BaseProtocol::connect()

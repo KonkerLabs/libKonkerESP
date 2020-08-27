@@ -79,11 +79,16 @@ bool JsonHelper::loadCurrentFwInfo(DynamicJsonDocument * fwInfo)
         fwFile.seek(0, SeekSet);
         fwFile.readBytes(fileBuffer, fwFile.size());
         fwFile.close();
+        LittleFS.end();
 
         // fileBuffer[sizeBytes] = '\0';
         Log.trace("[JSON] Recovered FW info: %s\n", fileBuffer);
-        deserializeJson(*fwInfo, fileBuffer);
-        LittleFS.end();
+        DeserializationError err = deserializeJson(*fwInfo, fileBuffer);
+        if (err)
+        {
+          Log.notice("[JSON] Failed to desirialize json document. Code = %s\n", err.c_str());
+          return false;
+        }
 
         return true;
       }

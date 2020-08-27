@@ -29,6 +29,7 @@ ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _manifestEndpoint("/_update"), _fwE
   _last_time_update_check = 0;
   manifest = nullptr;
 
+  // TODO why this again? is currentFwInfo used somewhere
   DynamicJsonDocument currentFwInfoJson(512);
 
   if(jsonHelper.loadCurrentFwInfo(&currentFwInfoJson))
@@ -287,7 +288,8 @@ int ESPHTTPKonkerUpdate::querryPlatform()
     this->manifest = new ManifestHandler();
     if(!this->manifest->startHandler(&currentFwInfo))
     {
-      Log.notice("[UPDT] Failed to load current FW info!");
+      Log.notice("[UPDT] Failed to load current FW info!\n");
+      return 2;
     }
     int begin = retPayload.indexOf("data");
     retPayload.remove(0, begin+6);
@@ -331,7 +333,7 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
     }
     this->sendExceptionMessage(EXPT_MANIFEST_INCORRECT);
     delete manifest;
-    
+
     return false;
   }
   else if(hasManifest == 2)

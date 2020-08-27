@@ -16,36 +16,21 @@ HTTPProtocol::~HTTPProtocol()
   }
 }
 
-void HTTPProtocol::setupClient(void * http, String uri)
-{
-  char user[PLAT_ADDR_ARRAY_SIZE];
-  char passwd[PLAT_ADDR_ARRAY_SIZE];
-
-  strncpy(user, this->getUser().c_str(), this->getUser().length());
-	user[this->getUser().length()] = '\0';
-	strncpy(passwd, this->getPassword().c_str(), this->getPassword().length());
-	passwd[this->getPassword().length()] = '\0';
-
-  this->http_client.setAuthorization(user, passwd);
-  this->http_client.begin(this->wifi_client, "http://"+this->getHost(), this->getPort(), this->registry + uri);
-  http = &this->http_client;
-}
-
 int HTTPProtocol::connect()
 {
   bool conn = false;
 
-  if (!this->isCredentialSet())
-	{
-    Log.trace("[HTTP] Platform credentials are missing!\n");
-    Log.trace("[HTTP] Trying to restore from EEPROM\n");
-		if(!this->restorePlatformCredentials())
-		{
-			Log.warning("[HTTP] Credentials not found! Aborting\n");
-      this->numConnFail++;
-			return NO_CREDENTIALS;
-		}
-	}
+  // if (!this->isCredentialSet())
+	// {
+  //   Log.trace("[HTTP] Platform credentials are missing!\n");
+  //   Log.trace("[HTTP] Trying to restore from EEPROM\n");
+	// 	if(!this->restorePlatformCredentials())
+	// 	{
+	// 		Log.warning("[HTTP] Credentials not found! Aborting\n");
+  //     this->numConnFail++;
+	// 		return NO_CREDENTIALS;
+	// 	}
+	// }
 
   conn = this->http_client.begin(wifi_client, "http://"+this->getHost()+":"+this->getPort());
 
@@ -159,4 +144,44 @@ int HTTPProtocol::request(String * retPayload, String endpoint)
   if(httpCode < 0)
     return 0;
   return httpCode;
+}
+
+bool HTTPProtocol::getPlatformCredentials(String * response, String id)
+{
+  Log.trace("[HTTP] Getting platform credentials from gateway\n");
+
+  String server = "192.168.0.105";
+  // char user[PLAT_ADDR_ARRAY_SIZE];
+  // char passwd[PLAT_ADDR_ARRAY_SIZE];
+  //
+  // strncpy(user, this->getUser().c_str(), this->getUser().length());
+	// user[this->getUser().length()] = '\0';
+	// strncpy(passwd, this->getPassword().c_str(), this->getPassword().length());
+	// passwd[this->getPassword().length()] = '\0';
+
+  String bufferStr = "http://" + server + ":" + "8089"
+                      + "/credentials?id=" + id;
+
+  this->http_client.begin(this->wifi_client, bufferStr.c_str());
+  Log.trace("[HTTP] Requesting from %s\n", bufferStr.c_str());
+
+  this->http_client.setTimeout(5000);
+  this->http_client.addHeader("Content-Type", "application/json");
+  this->http_client.addHeader("Accept", "application/json");
+  int httpCode = this->http_client.GET();
+
+  if (httpCode >= 0 && httpCode < 300)
+  {
+    Log.trace("[HTTP] Request sucess. Code(%d)\n", httpCode);
+
+    *response = this->http_client.getString();
+    Log.trace("[HTTP] response[%d bytes] = %s\n", this->http_client.getSize(), response->c_str());
+    this->http_client.end();
+
+    return true;
+  }
+  Log.trace("[HTTP] Request failed. Code(%d): %s\n", httpCode, this->http_client.errorToString(httpCode).c_str());
+  this->http_client.end();
+
+  return false;
 }

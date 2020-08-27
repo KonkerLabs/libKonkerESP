@@ -32,12 +32,10 @@ public:
   String getUser();
   String getPassword();
   bool isCredentialSet();
-  void setCredentialStatus(bool status);
 
   int savePlatformCredentials();
   int restorePlatformCredentials();
-
-  void setupClient(void *, String);
+  bool getPlatformCredentials(String *, String);
 
   int connect();
   int disconnect();

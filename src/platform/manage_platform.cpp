@@ -3,11 +3,11 @@
 PlatformManager::PlatformManager()
 {
   // Log.trace("[PLAT] Initializing\n");
+  this->credentialSet = false;
 }
 
 PlatformManager::~PlatformManager()
 {
-  // Log.trace("[PLAT] Initializing\n");
 }
 
 void PlatformManager::setServer(String host, int port)
@@ -69,10 +69,10 @@ void PlatformManager::setPlatformCredentials(String user, String password)
   PlatformManager::platformCredential.passwd[size] = '\0';
 
   PlatformManager::platformCredential.enabled = ENABLED_PATTERN;
-
-  Log.trace("[PLAT] Setting %s<>%s as platform credential\n", PlatformManager::platformCredential.user, PlatformManager::platformCredential.passwd);
-
   this->credentialSet = true;
+
+  Log.trace("[PLAT] Setting %s<>%s as platform credential (%d)\n", PlatformManager::platformCredential.user, PlatformManager::platformCredential.passwd, this->credentialSet);
+
 }
 
 String PlatformManager::getUser()
@@ -88,11 +88,6 @@ String PlatformManager::getPassword()
 bool PlatformManager::isCredentialSet()
 {
   return this->credentialSet;
-}
-
-void PlatformManager::setCredentialStatus(bool status)
-{
-  this->credentialSet = status;
 }
 
 int PlatformManager::savePlatformCredentials()
