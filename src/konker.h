@@ -85,6 +85,8 @@ public:
   KonkerDevice();
   ~KonkerDevice();
 
+  void init();
+
   void restartDevice();
   void resetALL();
   String getDeviceId();

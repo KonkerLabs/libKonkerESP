@@ -19,9 +19,11 @@ public:
   virtual void setNumConnFail(uint16_t);
   virtual void increaseConnFail();
 
+  virtual void setDeviceId(String);
   virtual void setPlatformCredentials(String, String);
   virtual String getUser();
   virtual String getPassword();
+  virtual String getDeviceId();
   virtual bool isCredentialSet();
 
   virtual int savePlatformCredentials();

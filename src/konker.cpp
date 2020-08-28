@@ -37,10 +37,18 @@ KonkerDevice::~KonkerDevice()
   // delete currentProtocol;
 }
 
+void KonkerDevice::init()
+{
+  this->connectWifi();
+  this->startConnection(false);
+  deviceUpdate.setDeviceId(this->deviceID.c_str());
+}
+
 void KonkerDevice::restartDevice()
 {
   // save stuff to memory
   deviceMonitor.saveHealthInfo();
+  this->saveAllCredentials();
 
   delay(3000);
 #ifndef ESP32
@@ -285,8 +293,13 @@ void KonkerDevice::setChipID(String deviceID)
 
 void KonkerDevice::setDeviceIds(String id)
 {
+  Log.trace("Device ID = %s\n", id.c_str());
   this->deviceID = id;
   setChipID(this->deviceID);
+  if(checkProtocol())
+  {
+    this->currentProtocol->setDeviceId(id);
+  }
 }
 
 String KonkerDevice::getDeviceId()
@@ -376,11 +389,16 @@ bool KonkerDevice::restoreAllCredentials()
   {
     Log.warning("Could not restore credentials from memory!\n");
   }
+  else
+  {
+    this->setDeviceIds(this->currentProtocol->getDeviceId());
+  }
 
   return ret;
 }
 
-// returns true if recovered credentials from server, false otherwise
+// returns 0 if could not recover credentials, 1 if recovered from memory
+// and 2 if recovered from gateway
 int KonkerDevice::getCredentialsForPlatform(String * deviceid, String * user, String * password)
 {
   String response;
@@ -390,19 +408,19 @@ int KonkerDevice::getCredentialsForPlatform(String * deviceid, String * user, St
   {
     Log.trace("Device credentials recovered from memory\n");
     // TODO store deviceid in eeprom
-    this->setDeviceIds(DEFAULT_NAME);
+    this->setDeviceIds(this->currentProtocol->getDeviceId());
     return 1;
   }
 
   Log.trace("Trying to recover credentials from server for device %s\n", this->chipID.c_str());
   if(this->httpProtocol->getPlatformCredentials(&response, this->chipID))
   {
-    Log.trace("Credentials received from server\n");
+    Log.trace("Credentials received from gateway\n");
     DynamicJsonDocument responseJson(256);
     DeserializationError err = deserializeJson(responseJson, response);
     if (err)
     {
-      Log.notice("[JSON] Failed to desirialize json document. Code = %s\n", err.c_str());
+      Log.notice("[JSON] Failed to deserialize json document. Error = %s\n", err.c_str());
       return 0;
     }
     *deviceid = responseJson["device_id"].as<String>();

@@ -62,6 +62,11 @@ void BaseProtocol::increaseConnFail()
   this->numConnFail++;
 }
 
+void BaseProtocol::setDeviceId(String id)
+{
+  platformManager.setDeviceId(id);
+}
+
 void BaseProtocol::setPlatformCredentials(String userid, String password)
 {
   platformManager.setPlatformCredentials(userid, password);
@@ -92,6 +97,11 @@ String BaseProtocol::getUser()
 String BaseProtocol::getPassword()
 {
   return platformManager.getPassword();
+}
+
+String BaseProtocol::getDeviceId()
+{
+  return platformManager.getDeviceId();
 }
 
 bool BaseProtocol::isCredentialSet()

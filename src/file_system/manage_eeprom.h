@@ -15,7 +15,7 @@ Sketch    OTA update   File system   >EEPROM<  WiFi config (SDK)
 #define WIFI_CRED_SIZE_BYTES  34    //total size = 34 bytes x 3
 //#define PLAT_CRED_INIT_ADDR   512
 #define PLAT_CRED_INIT_ADDR   WIFI_CRED_SIZE_BYTES * MAX_NUM_WIFI_CRED + 3
-#define PLAT_CRED_SIZE_BYTES  50
+#define PLAT_CRED_SIZE_BYTES  74
 //#define HLTH_INFO_INIT_ADDR   1024
 #define HLTH_INFO_INIT_ADDR   PLAT_CRED_INIT_ADDR + PLAT_CRED_SIZE_BYTES + 3
 #define HLTH_INFO_SIZE_BYTES  6

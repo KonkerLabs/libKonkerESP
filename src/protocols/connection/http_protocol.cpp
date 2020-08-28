@@ -41,7 +41,7 @@ int HTTPProtocol::connect()
     return NOT_CONNECTED;
   }
 
-  Log.trace("[HTTP] Connected to platform\n");
+  Log.trace("[HTTP] Connected to platform\n\n");
   return CONNECTED;
 }
 

@@ -28,9 +28,11 @@ public:
   void setNumConnFail(uint16_t count);
   void increaseConnFail();
 
+  void setDeviceId(String id);
   void setPlatformCredentials(String userid, String password);
   String getUser();
   String getPassword();
+  String getDeviceId();
   bool isCredentialSet();
 
   int savePlatformCredentials();

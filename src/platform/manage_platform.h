@@ -14,10 +14,11 @@ struct plat_addr_st_t
   int port;
 };
 
-// 50 bytes
+// 74 bytes
 struct plat_cred_st_t
 {
   uint16_t enabled;
+  char id[PLAT_CRED_ARRAY_SIZE];
   char user[PLAT_CRED_ARRAY_SIZE];
   char passwd[PLAT_CRED_ARRAY_SIZE];
 };
@@ -38,10 +39,12 @@ public:
   String getHost();
   int getPort();
 
+  void setDeviceId(String id);
   void setPlatformCredentials(String user, String password);
   bool isPlatformCredsEnabled();
   String getUser();
   String getPassword();
+  String getDeviceId();
 
   bool isCredentialSet();
   int savePlatformCredentials();

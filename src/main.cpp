@@ -59,9 +59,10 @@ void setup()
   // device.setPlatformCredentials(DEV_ID, USER, PWD);
 
   Serial.println("====== Connecting ======");
-  device.connectWifi();
-  // start platform connection
-  device.startConnection(false);
+  // device.connectWifi();
+  // // start platform connection
+  // device.startConnection(false);
+  device.init();
 
   device.saveAllCredentials();
   Serial.println("====== Setup finished ======");
@@ -92,7 +93,7 @@ void loop()
   // Serial.println("Connection to platform " + String(connected));
 
   // TODO mover para device.loop()
-  if((connected) && ((millis() - lasttimeSend) > 10000))
+  if((connected) && ((millis() - lasttimeSend) > 5000))
   {
     int ok = device.sendData();
     if (ok)

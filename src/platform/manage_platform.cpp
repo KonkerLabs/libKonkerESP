@@ -30,20 +30,34 @@ void PlatformManager::setServer(String host, int port)
   }
 
   strncpy(platformAddress.host, host.c_str(), size);
-  platformAddress.host[size] = '\0';
-  platformAddress.port = port;
+  this->platformAddress.host[size] = '\0';
+  this->platformAddress.port = port;
 
-  Log.trace("[PLAT] Setting %s:%d as platform address\n", platformAddress.host, platformAddress.port);
+  Log.trace("[PLAT] Setting %s:%d as platform address\n", this->platformAddress.host, this->platformAddress.port);
 }
 
 String PlatformManager::getHost()
 {
-  return String(platformAddress.host);
+  return String(this->platformAddress.host);
 }
 
 int PlatformManager::getPort()
 {
-  return platformAddress.port;
+  return this->platformAddress.port;
+}
+
+void PlatformManager::setDeviceId(String id)
+{
+  int size;
+
+  size = id.length();
+  if(size > PLAT_CRED_ARRAY_SIZE)
+  {
+    Log.warning("[PLAT] Caution! ID size too big!\n");
+    size = PLAT_CRED_ARRAY_SIZE;
+  }
+  strncpy(this->platformCredential.id, id.c_str(), size);
+  this->platformCredential.id[size] = '\0';
 }
 
 void PlatformManager::setPlatformCredentials(String user, String password)
@@ -56,8 +70,8 @@ void PlatformManager::setPlatformCredentials(String user, String password)
     Log.warning("[PLAT] Caution! User size too big!\n");
     size = PLAT_CRED_ARRAY_SIZE;
   }
-  strncpy(PlatformManager::platformCredential.user, user.c_str(), size);
-  PlatformManager::platformCredential.user[size] = '\0';
+  strncpy(this->platformCredential.user, user.c_str(), size);
+  this->platformCredential.user[size] = '\0';
 
   size = password.length();
   if(size > PLAT_CRED_ARRAY_SIZE)
@@ -65,24 +79,29 @@ void PlatformManager::setPlatformCredentials(String user, String password)
     Log.warning("[PLAT] Caution! Password size too big!\n");
     size = PLAT_CRED_ARRAY_SIZE;
   }
-  strncpy(PlatformManager::platformCredential.passwd, password.c_str(), size);
-  PlatformManager::platformCredential.passwd[size] = '\0';
+  strncpy(this->platformCredential.passwd, password.c_str(), size);
+  this->platformCredential.passwd[size] = '\0';
 
-  PlatformManager::platformCredential.enabled = ENABLED_PATTERN;
+  this->platformCredential.enabled = ENABLED_PATTERN;
   this->credentialSet = true;
 
-  Log.trace("[PLAT] Setting %s<>%s as platform credential (%d)\n", PlatformManager::platformCredential.user, PlatformManager::platformCredential.passwd, this->credentialSet);
+  Log.trace("[PLAT] Setting %s<>%s as platform credential (%d)\n", this->platformCredential.user, this->platformCredential.passwd, this->credentialSet);
 
 }
 
 String PlatformManager::getUser()
 {
-  return String(PlatformManager::platformCredential.user);
+  return String(this->platformCredential.user);
 }
 
 String PlatformManager::getPassword()
 {
-  return String(PlatformManager::platformCredential.passwd);
+  return String(this->platformCredential.passwd);
+}
+
+String PlatformManager::getDeviceId()
+{
+  return String(this->platformCredential.id);
 }
 
 bool PlatformManager::isCredentialSet()
@@ -127,8 +146,9 @@ int PlatformManager::restorePlatformCredentials()
       Log.trace("[PLAT] Setting %s<>%s as platform credential\n", temp_cred.user, temp_cred.passwd);
 
       this->platformCredential.enabled = ENABLED_PATTERN;
-      strcpy(platformCredential.user, temp_cred.user);
-      strcpy(platformCredential.passwd, temp_cred.passwd);
+      strcpy(this->platformCredential.id, temp_cred.id);
+      strcpy(this->platformCredential.user, temp_cred.user);
+      strcpy(this->platformCredential.passwd, temp_cred.passwd);
       this->credentialSet = true;
     }
   }

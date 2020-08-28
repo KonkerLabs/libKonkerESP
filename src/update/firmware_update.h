@@ -36,6 +36,7 @@ public:
   ~ESPHTTPKonkerUpdate();
 
   void setProtocol(Protocol *client);
+  void setDeviceId(const char * id);
   // void setFWchannel(String id);
 
   bool checkForUpdate();

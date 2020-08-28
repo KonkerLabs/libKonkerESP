@@ -68,6 +68,8 @@ public:
   bool checkChecksum(String md5recv);
   int applyManifest();
 
+  bool updateCurrentFwInfo(fw_info_t *);
+
   char * getCurrentVersion();
   char * getNewVersion();
   char * getMd5();

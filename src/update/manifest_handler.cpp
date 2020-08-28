@@ -81,6 +81,11 @@ int ManifestHandler::applyManifest()
   ret = this->saveNewFwInfo();
   // TODO check addtional steps and perform them
 
+  if(ret)
+  {
+    this->updateFwInfo();
+  }
+
   return ret;
 }
 
@@ -104,6 +109,21 @@ void ManifestHandler::updateFwInfo()
   // free(currentFwInfo.keyClaims);
 
   memcpy(&currentFwInfo, &newFwInfo.essentialInfo, sizeof(fw_info_t));
+}
+
+bool ManifestHandler::updateCurrentFwInfo(fw_info_t * info)
+{
+  DynamicJsonDocument infoJson(1024);
+  char infoBuffer[1024];
+
+  Log.trace("[MNFT] Updating current firmware information in memory\n");
+  infoJson["version"] = info->version;
+  infoJson["device"] = info->deviceID;
+  infoJson["sequence_number"] = info->seqNumber;
+
+  serializeJson(infoJson, infoBuffer);
+  Log.trace("[MNFT] Information: %s\n", infoBuffer);
+  return jsonHelper.saveCurrentFwInfo(infoBuffer);
 }
 
 char * ManifestHandler::getCurrentVersion()
@@ -137,6 +157,7 @@ bool ManifestHandler::validateRequiredFields()
     else
     {
       Log.notice("[MNFT] Older version! Current = %s\n", currentFwInfo.version);
+      this->valid = false;
     }
   }
   else
@@ -155,7 +176,8 @@ bool ManifestHandler::validateRequiredFields()
     }
     else
     {
-      Log.notice("[MNFT] Update for different device! Received = %s\n", manifestJson["device"]);
+      Log.notice("[MNFT] Update for different device! Current = %s\n", currentFwInfo.deviceID);
+      this->valid = false;
     }
   }
   else
@@ -175,6 +197,7 @@ bool ManifestHandler::validateRequiredFields()
     else
     {
       Log.notice("[MNFT] Older version! Current = %s\n", currentFwInfo.seqNumber);
+      this->valid = false;
     }
   }
   else
@@ -194,6 +217,7 @@ bool ManifestHandler::validateRequiredFields()
     else
     {
       Log.notice("[MNFT] Invalid key claims!\n");
+      this->valid = false;
     }
   }
   else
@@ -215,6 +239,7 @@ bool ManifestHandler::validateRequiredFields()
     else
     {
       Log.notice("[MNFT] Invalid signature!\n");
+      this->valid = false;
     }
   }
   else
@@ -228,6 +253,7 @@ bool ManifestHandler::validateRequiredFields()
     // this is checked later
     strcpy(newFwInfo.ckSum, manifestJson["checksum"]);
     Log.trace("[MNFT] Checksum received: %s\n", newFwInfo.ckSum);
+    this->valid = this->valid && true;
   }
   else
   {

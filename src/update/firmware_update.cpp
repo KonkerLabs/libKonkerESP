@@ -29,7 +29,7 @@ ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _manifestEndpoint("/_update"), _fwE
   _last_time_update_check = 0;
   manifest = nullptr;
 
-  // TODO why this again? is currentFwInfo used somewhere
+  // load here and send info to manifest when needed
   DynamicJsonDocument currentFwInfoJson(512);
 
   if(jsonHelper.loadCurrentFwInfo(&currentFwInfoJson))
@@ -64,6 +64,15 @@ void ESPHTTPKonkerUpdate::setProtocol(Protocol *client)
   _httpProtocol = client;
   _fwEndpoint += _httpProtocol->getUser();
   _manifestEndpoint = "sub/" + _httpProtocol->getUser() + _manifestEndpoint;
+}
+
+void ESPHTTPKonkerUpdate::setDeviceId(const char *id)
+{
+  if(strcmp(id, currentFwInfo.deviceID) != 0)
+  {
+    strcpy(currentFwInfo.deviceID, id);
+    manifest->updateCurrentFwInfo(&currentFwInfo);
+  }
 }
 
 /**
