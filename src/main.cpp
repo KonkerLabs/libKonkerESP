@@ -6,11 +6,10 @@ const char pwd[20] = "bobesponja";
 
 // Dados do servidor
 String server_ip = "192.168.0.123";
-int mqtt_port = 32768;
 // String server_ip = "mqtt.prod.konkerlabs.net";
+int mqtt_port = 32768;
 // int mqtt_port = 1883;
 int http_port = 8082;
-// int fw_port = 8081;
 
 // String DEV_ID = "node02";
 // String USER = "b2evd357tmgl";
@@ -59,9 +58,7 @@ void setup()
   // device.setPlatformCredentials(DEV_ID, USER, PWD);
 
   Serial.println("====== Connecting ======");
-  // device.connectWifi();
-  // // start platform connection
-  // device.startConnection(false);
+  // start wifi and platform connection
   device.init();
 
   device.saveAllCredentials();

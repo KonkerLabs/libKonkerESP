@@ -186,6 +186,11 @@ void KonkerDevice::startConnection(bool afterReconnect)
     }
     else
     {
+      if (this->currentProtocol->isConnectionOriented())
+      {
+        deviceMonitor.setProtocol(this->currentProtocol, this->httpProtocol);
+      }
+
       if(!this->currentProtocol->isCredentialSet())
       {
         String deviceid, user, password;
@@ -202,12 +207,8 @@ void KonkerDevice::startConnection(bool afterReconnect)
         }
       }
 
-      if (this->currentProtocol->isConnectionOriented())
-      {
-        deviceMonitor.setProtocol(this->currentProtocol, this->httpProtocol);
-        // update the ESP update client with this new connection
-        deviceUpdate.setProtocol(this->httpProtocol);
-      }
+      // update the ESP update client with this new connection
+      deviceUpdate.setProtocol(this->httpProtocol);
     }
 
     this->currentProtocol->connect();
@@ -407,7 +408,6 @@ int KonkerDevice::getCredentialsForPlatform(String * deviceid, String * user, St
   if(this->restorePlatformCredentials())
   {
     Log.trace("Device credentials recovered from memory\n");
-    // TODO store deviceid in eeprom
     this->setDeviceIds(this->currentProtocol->getDeviceId());
     return 1;
   }

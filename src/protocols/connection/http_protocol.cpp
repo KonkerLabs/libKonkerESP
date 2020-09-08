@@ -150,7 +150,7 @@ bool HTTPProtocol::getPlatformCredentials(String * response, String id)
 {
   Log.trace("[HTTP] Getting platform credentials from gateway\n");
 
-  String server = "192.168.0.105";
+  String server = "192.168.0.102";
   // char user[PLAT_ADDR_ARRAY_SIZE];
   // char passwd[PLAT_ADDR_ARRAY_SIZE];
   //
