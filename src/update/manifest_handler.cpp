@@ -24,6 +24,7 @@ bool ManifestHandler::startHandler(fw_info_t * currentInfo)
   {
     Log.trace("[MNFT] Already loaded from flash\n");
     memcpy(&currentFwInfo, currentInfo, sizeof(fw_info_t));
+    Log.trace("[MNFT] Current information: %s / %s / %s / %X\n", currentFwInfo.version, currentFwInfo.deviceID, currentFwInfo.seqNumber, currentFwInfo.loaded);
     return true;
   }
 

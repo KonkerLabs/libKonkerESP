@@ -33,6 +33,7 @@ int HTTPProtocol::connect()
 	// }
 
   conn = this->http_client.begin(wifi_client, "http://"+this->getHost()+":"+this->getPort());
+  this->http_client.end();
 
   if(!conn)
   {
@@ -81,7 +82,7 @@ int HTTPProtocol::send(const char *channel, String payload)
   this->http_client.setAuthorization(user, passwd);
   this->http_client.setTimeout(10000);
   this->http_client.addHeader("Content-Type", "application/json");
-  this->http_client.addHeader("Accept", "application/json");
+  this->http_client.addHeader("Content-Length", String(payload.length()));
 
   Log.notice("[HTTP] (B) POST TO DATA\n");
 
@@ -150,7 +151,7 @@ bool HTTPProtocol::getPlatformCredentials(String * response, String id)
 {
   Log.trace("[HTTP] Getting platform credentials from gateway\n");
 
-  String server = "192.168.0.102";
+  // String server = "192.168.0.105";
   // char user[PLAT_ADDR_ARRAY_SIZE];
   // char passwd[PLAT_ADDR_ARRAY_SIZE];
   //
@@ -159,7 +160,7 @@ bool HTTPProtocol::getPlatformCredentials(String * response, String id)
 	// strncpy(passwd, this->getPassword().c_str(), this->getPassword().length());
 	// passwd[this->getPassword().length()] = '\0';
 
-  String bufferStr = "http://" + server + ":" + "8089"
+  String bufferStr = "http://" + this->getHost() + ":" + "8089"
                       + "/credentials?id=" + id;
 
   this->http_client.begin(this->wifi_client, bufferStr.c_str());

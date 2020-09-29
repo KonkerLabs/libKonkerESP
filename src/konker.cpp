@@ -88,6 +88,7 @@ void KonkerDevice::loop()
   }
   if (deviceUpdate.checkForUpdate())
   {
+    delay(100);
     deviceUpdate.performUpdate();
   }
   deviceMonitor.healthUpdate(this->avgLoopDuration);

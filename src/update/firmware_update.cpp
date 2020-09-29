@@ -100,6 +100,7 @@ void ESPHTTPKonkerUpdate::sendFwReceivedMessage()
 void atUpdateEnd()
 {
   Log.trace("[UPDT callback] Update done!!!\n");
+  delay(500); //0,5s
   ESPHTTPKonkerUpdate::sendFwReceivedMessage();
 }
 
@@ -119,6 +120,7 @@ void ESPHTTPKonkerUpdate::prepareUpdate()
   ESPhttpUpdate.onProgress(&atUpdateProgress);
   ESPhttpUpdate.onEnd(&atUpdateEnd);
   Update.setMD5(manifest->getMd5());
+  ESPhttpUpdate.closeConnectionsOnUpdate(false);
   ESPhttpUpdate.setAuthorization(user, password);
 
   updateGlobals::httpProtocolGlobal = _httpProtocol;
@@ -323,7 +325,7 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
   if (_last_time_update_check != 0)
   {
     //throtle this call at maximum 1 per minute
-    if ((millis() - _last_time_update_check) < 6500)
+    if ((millis() - _last_time_update_check) < 30000) //30s
     {
       //Serial.println("checkForUpdates maximum calls is 1/minute. Please wait more to call again");
       return false;

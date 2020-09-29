@@ -90,7 +90,7 @@ void WifiManager::setConfig(String ssid, String password)
   //   new credential is stored at position 0 (may overwrite)
   if(this->numWifiCredentials > 0 &&  this->numWifiCredentials < MAX_NUM_WIFI_CRED)
   {
-    index = this->numWifiCredentials + 1;
+    index = this->numWifiCredentials; // + 1 - 1
   }
 
   Log.notice("[WiFi] Setting new WiFi credentials at index %d\n", index);
@@ -178,6 +178,8 @@ bool WifiManager::tryConnectClientWifi()
     Log.notice("[WiFi] Trying to connect to SSID: %s\n", this->wifiCredentials[i].SSID);
 
     conn = this->tryConnectSSID(String(this->wifiCredentials[i].SSID), String(this->wifiCredentials[i].PASSWD), 2);
+
+    if (conn) break;
   }
 
   if(!conn) this->numConnFail++;

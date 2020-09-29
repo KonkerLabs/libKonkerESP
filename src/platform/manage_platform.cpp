@@ -150,10 +150,12 @@ int PlatformManager::restorePlatformCredentials()
       strcpy(this->platformCredential.passwd, temp_cred.passwd);
       this->credentialSet = true;
     }
-
-    Log.notice("[PLAT] Credentials recovered but not set. Enabled = %X\n", temp_cred.enabled);
-    this->credentialSet = false;
-    ret = false;
+    else
+    {
+      Log.notice("[PLAT] Credentials recovered but not set. Enabled = %X\n", temp_cred.enabled);
+      this->credentialSet = false;
+      ret = false;
+    }
   }
   else
   {

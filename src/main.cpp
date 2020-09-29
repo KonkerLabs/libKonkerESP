@@ -3,6 +3,8 @@ ADC_MODE(ADC_VCC);
 
 const char ssid[20] = "dlink-C21E-114";
 const char pwd[20] = "bobesponja";
+const char ssid2[20] = "maju_iot";
+const char pwd2[20] = "unicamp123";
 
 // Dados do servidor
 String server_ip = "192.168.0.123";
@@ -51,6 +53,7 @@ void setup()
 {
   Serial.println("\nStarting setup!");
   Serial.println("====== Saving credentials ======");
+  device.addWifi(ssid2, pwd2);
   device.addWifi(ssid, pwd);
   device.setDefaultConnectionType(ConnectionType::MQTT);
   // device.setServer(server_ip, mqtt_port);
@@ -61,7 +64,7 @@ void setup()
   // start wifi and platform connection
   device.init();
 
-  device.saveAllCredentials();
+  // device.saveAllCredentials();
   Serial.println("====== Setup finished ======");
   // Serial.println("====== NEW VERSION ======");
 
