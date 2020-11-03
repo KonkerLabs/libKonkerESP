@@ -49,6 +49,11 @@ private:
 
   int pingPlatform();
   void collectHealthInfo(unsigned int loopDuration);
+  void collectDeviceInfo(stringmap * info);
+  void printDeviceStatus();
+  void printStatusAddresses();
+
+  friend class ESPHTTPKonkerUpdate;
 
 public:
   HealthMonitor();
@@ -62,6 +67,8 @@ public:
 
   // heart beat to the server to send status information for the device
   void healthUpdate(unsigned int loopDuration);
+  bool collectDeviceStatus(int stageKey);
+  void clearDeviceStatus();
 };
 
 #endif /* __HEALTH_H__ */

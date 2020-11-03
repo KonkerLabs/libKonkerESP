@@ -52,7 +52,7 @@ char *jsonMQTTmsgDATA(const char *device_id, const char *metric, long value)
 void setup()
 {
   Serial.println("\nStarting setup!");
-  Serial.println("====== Saving credentials ======");
+  Serial.println("====== Setting up credentials ======");
   device.addWifi(ssid2, pwd2);
   device.addWifi(ssid, pwd);
   device.setDefaultConnectionType(ConnectionType::MQTT);
@@ -66,7 +66,7 @@ void setup()
 
   // device.saveAllCredentials();
   Serial.println("====== Setup finished ======");
-  // Serial.println("====== NEW VERSION ======");
+  Serial.println("====== NEW VERSION ======");
 
   lasttimeSend = millis();
 }
@@ -106,17 +106,6 @@ void loop()
       Serial.println("NOPE");
     }
   }
-
-  // if((millis() - lasttimeSend) > 5000) //ms
-  // {
-  //   mensagem = jsonMQTTmsgDATA(DEV_ID.c_str(), "Celsius", count);
-  //   device.sendData(PUB, String(mensagem));
-  //   data = device.recoverData();
-  //   Serial.print("Removed from buffer >>> ");
-  //   Serial.print(data.payload);
-  //   Serial.print(" | ");
-  //   Serial.println(data.channel);
-  // }
 
   device.loop();
   device.loopDuration(micros() - loop_duration);

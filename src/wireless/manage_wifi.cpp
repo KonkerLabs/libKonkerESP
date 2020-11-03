@@ -30,7 +30,7 @@ String getConnectMessage(int status_code)
 
 bool WifiManager::tryConnect(String ssid, String password)
 {
-  int counter = 100;
+  int counter = 50;
 
 	WiFi.mode(WIFI_OFF);
 	delay(500);

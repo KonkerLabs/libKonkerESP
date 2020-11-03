@@ -34,14 +34,6 @@ char * JsonHelper::createMessage(stringmap * content)
 
 bool JsonHelper::saveCurrentFwInfo(const char * jsonBuffer)
 {
-  // [MJ] for testing
-  // const char * jsonBuffer = "{\"version\":\"1.0.0\", \"sequence_number\":\"3796729686678\", \"device\":\"node02\"}";
-
-  // fw_info_t information;
-  // strcpy(information.version, "1.0.0");
-  // strcpy(information.deviceID, "node02");
-  // information.seqNumber = (unsigned long)3796729686678;
-
   if(LittleFS.begin())
   {
     Log.trace("[JSON] Saving current FW info: %s\n", jsonBuffer);
@@ -98,6 +90,57 @@ bool JsonHelper::loadCurrentFwInfo(DynamicJsonDocument * fwInfo)
   }
 
   return false;
+}
+
+bool JsonHelper::addInfoObject(int key, stringmap * content)
+{
+  Log.trace("[JSON] Adding %d stage key to JSON\n", key);
+
+  JsonObject obj = this->jsonHealth.createNestedObject(String(key));
+
+  if (obj.isNull())
+  {
+    Log.notice("[JSON] Failed to allocate memory for JSON object\n");
+    return false;
+  }
+
+  for(stringmap::iterator it = content->begin(); it!=content->end(); ++it)
+  {
+    Log.trace("[JSON] INFO %s : %s\n", it->first.c_str(), it->second.c_str());
+    obj[String(it->first.c_str())] = it->second.c_str();
+  }
+
+  Log.trace("[JSON] jsonHealth size[%d bytes] = %d\n", jsonHealth.memoryUsage(), jsonHealth.size());
+  return true;
+}
+
+void JsonHelper::printStatus()
+{
+  char healthBuffer[512];
+
+  serializeJson(jsonHealth, healthBuffer);
+  Log.trace("[JSON] Device information[%d bytes]: %s\n", jsonHealth.memoryUsage(), healthBuffer);
+  for(int i=0; i < jsonHealth.size(); i++)
+  {
+    Log.trace("[JSON] Address: 0x%X 0x%X: {0x%X, 0x%X, 0x%X}\n", 
+                &jsonHealth, &jsonHealth[(char)i], &jsonHealth[(char)i]["vcc"], 
+                &jsonHealth[(char)i]["mem"], &jsonHealth[(char)i]["rssi"]);
+  }
+}
+
+void JsonHelper::printAddresses()
+{
+  for(int i=0; i < jsonHealth.size(); i++)
+  {
+    Log.trace("[JSON] Address: 0x%X 0x%X: {0x%X, 0x%X, 0x%X}\n", 
+                &jsonHealth, &jsonHealth[(char)i], &jsonHealth[(char)i]["vcc"], 
+                &jsonHealth[(char)i]["mem"], &jsonHealth[(char)i]["rssi"]);
+  }
+}
+
+void JsonHelper::clearInfo()
+{
+  jsonHealth.clear();
 }
 
 JsonHelper jsonHelper;

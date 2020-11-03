@@ -19,6 +19,8 @@ private:
   fw_info_t currentFwInfo;
   ManifestHandler * manifest;
 
+  HealthMonitor * pDeviceHealth;
+
   // returns true if there is a new manifest
   int querryPlatform();
   bool validateUpdate();
@@ -31,12 +33,14 @@ private:
   void sendUpdateConfirmation();
 
 public:
-  ESPHTTPKonkerUpdate(Protocol *client, String * manifestEndpoint);
   ESPHTTPKonkerUpdate();
+  ESPHTTPKonkerUpdate(HealthMonitor * health);
+  ESPHTTPKonkerUpdate(Protocol *client, String * manifestEndpoint);
   ~ESPHTTPKonkerUpdate();
 
   void setProtocol(Protocol *client);
   void setDeviceId(const char * id);
+  char * getCurrentVersion();
   // void setFWchannel(String id);
 
   bool checkForUpdate();

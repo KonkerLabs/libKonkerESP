@@ -4,7 +4,7 @@
 
 // ---------------------------------------------------------------------------//
 
-KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), webServer(80), deviceUpdate()
+KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), webServer(80), deviceUpdate(&this->deviceMonitor)
 {
   if (DEBUG_LEVEL>0 && !Serial)
   {
@@ -17,6 +17,7 @@ KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), w
 
   Log.trace("BUILD: %s\n", BUILD_ID);
   this->chipID = ESP.getChipId();
+  Log.trace("Current version: %s\n", deviceUpdate.getCurrentVersion());
 
   this->defaultConnectionType = ConnectionType::MQTT;
 
@@ -92,8 +93,8 @@ void KonkerDevice::loop()
     deviceUpdate.performUpdate();
   }
   deviceMonitor.healthUpdate(this->avgLoopDuration);
-  this->avgLoopDuration = 0;
-  this->loopCount = 1;
+  // this->avgLoopDuration = 0;
+  // this->loopCount = 1;
   delay(100);
 }
 
@@ -246,8 +247,13 @@ int KonkerDevice::checkPlatformConnection()
 // calculate moving average of main loop duration
 void KonkerDevice::loopDuration(unsigned int duration)
 {
-  this->avgLoopDuration = this->avgLoopDuration + ((duration - this->avgLoopDuration)/this->loopCount);
+  // this->avgLoopDuration = this->avgLoopDuration + ((duration - this->avgLoopDuration)/this->loopCount);
+  float tempAvg = (float)this->avgLoopDuration;
+  float a = 1 / (float)this->loopCount;
+  tempAvg = (a * tempAvg) + ((1 - a) * duration);
+  this->avgLoopDuration = tempAvg;
   this->loopCount++;
+  Log.trace("Moving average: %d, duration = %d, n = %d\n", this->avgLoopDuration, duration, this->loopCount);
 }
 
 void KonkerDevice::getCurrentTime(char *timestamp)

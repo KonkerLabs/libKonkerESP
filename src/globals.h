@@ -3,6 +3,8 @@
 
 #include <ArduinoLog.h>
 
+#define LOCAL_BUILD
+
 #define _STATUS_LED 2
 
 //#define UPDATE_SUCCESS_CALLBACK_SIGNATURE void (*succes_update_callback)(char[16])

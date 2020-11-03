@@ -14,15 +14,6 @@ namespace updateGlobals
 /**
  * Constructors
  */
-ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(Protocol *client, String * manifestEndpoint) : _fwEndpoint("/firmware/")
-{
-  _httpProtocol = client;
-  _manifestEndpoint = *manifestEndpoint;
-  _deviceState = RUNNING;
-  _last_time_update_check = 0;
-  manifest = nullptr;
-}
-
 ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _manifestEndpoint("/_update"), _fwEndpoint("/firmware/")
 {
   _deviceState = RUNNING;
@@ -46,6 +37,20 @@ ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate() : _manifestEndpoint("/_update"), _fwE
   {
     memset(&currentFwInfo, 0, sizeof(fw_info_t));
   }
+}
+
+ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(HealthMonitor * health) : ESPHTTPKonkerUpdate()
+{
+  pDeviceHealth = health;
+}
+
+ESPHTTPKonkerUpdate::ESPHTTPKonkerUpdate(Protocol *client, String * manifestEndpoint) : _fwEndpoint("/firmware/")
+{
+  _httpProtocol = client;
+  _manifestEndpoint = *manifestEndpoint;
+  _deviceState = RUNNING;
+  _last_time_update_check = 0;
+  manifest = nullptr;
 }
 
 /**
@@ -75,6 +80,11 @@ void ESPHTTPKonkerUpdate::setDeviceId(const char *id)
   }
 }
 
+char * ESPHTTPKonkerUpdate::getCurrentVersion()
+{
+  return currentFwInfo.version;
+}
+
 /**
  * Callbacks that'll be called during ESP8266HTTPUpdate.update
  */
@@ -86,6 +96,10 @@ void atUpdateStart()
 void atUpdateProgress(int progress, int total)
 {
   Log.trace("%d..", progress * 100 / total);
+  if((progress * 100 / total) % 50 == 0)
+  {
+    // TODO
+  }
   if(progress == total) Serial.println("");
 }
 
@@ -139,6 +153,7 @@ void ESPHTTPKonkerUpdate::performUpdate()
   _deviceState = UPDATING;
 
   this->prepareUpdate();
+  // STATUS save data collected so far in memory
   String updateURL = "http://" + _httpProtocol->getHost() + ":" + _httpProtocol->getPort() + "/registry-data" + _fwEndpoint + "/binary";
 
   Log.trace("[UPDT] Fetching binary from %s\n", updateURL.c_str());
@@ -156,9 +171,13 @@ void ESPHTTPKonkerUpdate::performUpdate()
       break;
     case HTTP_UPDATE_OK:
       Log.trace("[UPDT] Complete!\n\n");
+      // STATUS collect here and save again
+      pDeviceHealth->collectDeviceStatus(3);
       if(this->finalizingSteps())
       {
-        Log.trace("[UPDT] restarting device\n\n");
+        // TODO do things before restart?
+        pDeviceHealth->printDeviceStatus();
+        Log.trace("[UPDT] Restarting device\n\n");
         ESP.restart();
       }
       else
@@ -204,6 +223,7 @@ bool ESPHTTPKonkerUpdate::finalizingSteps()
     uint8_t firstBoot = FIRST_BOOT_FLAG;
     Log.trace("[UPDT] Saving first boot flag\n");
     done = deviceEEPROM.storeBootInfo(firstBoot);
+    // STATUS maybe save device information to memory here
   }
 
   if(done)
@@ -233,6 +253,8 @@ bool ESPHTTPKonkerUpdate::checkFirstBoot()
   if(firstBoot == FIRST_BOOT_FLAG)
   {
     Log.trace("[UPDT] Device started correctly after update!\n");
+    // STATUS collect here and send all
+    pDeviceHealth->collectDeviceStatus(4);
     this->sendStatusMessage(MSG_UPDATE_CORRECT);
     firstBoot = 0x00u;
     deviceEEPROM.storeBootInfo(firstBoot);
@@ -317,8 +339,8 @@ int ESPHTTPKonkerUpdate::querryPlatform()
 
 /**
  * Check if there is an update and validade manifest
- * @param callback function*
- * @return bool
+ * @param none
+ * @return bool if there is a manifest and it is valid
  */
 bool ESPHTTPKonkerUpdate::checkForUpdate()
 {
@@ -331,18 +353,25 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
       return false;
     }
   }
+  _last_time_update_check = millis();
 
+  // STATUS collect here
+  pDeviceHealth->collectDeviceStatus(0);
   int hasManifest = this->querryPlatform();
   if (hasManifest == 0) //[rpi3] get_manifest
   {
+    // STATUS collect here
+    pDeviceHealth->collectDeviceStatus(1);
     this->sendStatusMessage(MSG_MANIFEST_RECEIVED);
-    _last_time_update_check = millis();
     if(this->validateUpdate()) //[rpi3] parse_manifest
     {
+      // STATUS collect here
+      pDeviceHealth->collectDeviceStatus(2);
       this->sendStatusMessage(MSG_MANIFEST_CORRECT);
       return true;
     }
     this->sendExceptionMessage(EXPT_MANIFEST_INCORRECT);
+    pDeviceHealth->clearDeviceStatus();
     delete manifest;
 
     return false;
@@ -352,8 +381,8 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
     this->sendExceptionMessage(EXPT_COULD_NOT_GET_MAN);
     delete manifest;
   }
-  // else no new manifest, keep running
-  _last_time_update_check = millis();
+  // else hasManifest == 0, no new manifest, keep running
+  pDeviceHealth->clearDeviceStatus();
   return false;
 }
 

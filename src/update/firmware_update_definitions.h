@@ -6,6 +6,7 @@
 #include "globals.h"
 #include "manifest_handler.h"
 #include "manage_eeprom.h"
+#include "health_monitor.h"
 #include "../protocols/connection/http_protocol.h"
 
 #define FIRST_BOOT_FLAG 0xFFu

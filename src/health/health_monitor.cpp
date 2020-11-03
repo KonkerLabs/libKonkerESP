@@ -77,7 +77,11 @@ int HealthMonitor::pingPlatform()
 {
   int ping_ms = 0;
 
+#ifdef LOCAL_BUILD
+  if(Ping.ping("192.168.0.123"))
+#else
   if(Ping.ping("konkerlabs.com"))
+#endif
   {
     ping_ms = Ping.averageTime();
     // Log.trace("[HMON] Ping = %d\n", ping_ms);
@@ -155,4 +159,57 @@ void HealthMonitor::healthUpdate(unsigned int loopDuration)
     // maybe try to reconnect here, or reset
   }
   this->httpObj->send(this->health_channel, String(payload));
+}
+
+void HealthMonitor::collectDeviceInfo(stringmap * info)
+{
+  char intBuffer[5];
+  auto& map = *info;
+
+  Log.trace("[HMON] info is %d\n", info->empty());
+  sprintf(intBuffer, "%d", pDeviceWifi->getWifiStrenght());
+  // info->insert({"rssi", std::string(intBuffer)});
+  map["rssi"] = std::string(intBuffer);
+  Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
+  sprintf(intBuffer, "%u", ESP.getFreeHeap());
+  // info->insert({"mem", std::string(intBuffer)});
+  map["mem"] = std::string(intBuffer);
+  Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
+  sprintf(intBuffer, "%u", ESP.getVcc());
+  // info->insert({"vcc", std::string(intBuffer)});
+  map["vcc"] = std::string(intBuffer);
+  Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
+
+  Log.trace("[HMON] Device information collected\n");
+}
+
+bool HealthMonitor::collectDeviceStatus(int stageKey)
+{
+  stringmap deviceInfo;
+
+  Log.trace("[HMON] Collecting device usage information\n");
+  collectDeviceInfo(&deviceInfo);
+
+  if(jsonHelper.addInfoObject(stageKey, &deviceInfo))
+  {
+    Log.trace("[HMON] Device usage information stored\n");
+    printStatusAddresses();
+    return true;
+  }
+  return false;
+}
+
+void HealthMonitor::printDeviceStatus()
+{
+  jsonHelper.printStatus();
+}
+
+void HealthMonitor::printStatusAddresses()
+{
+  jsonHelper.printAddresses();
+}
+
+void HealthMonitor::clearDeviceStatus()
+{
+  jsonHelper.clearInfo();
 }

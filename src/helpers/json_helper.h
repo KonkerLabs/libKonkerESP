@@ -13,6 +13,7 @@ class JsonHelper
 {
 private:
   char bufferChar[1024];
+  StaticJsonDocument<512> jsonHealth;
 
   void clearBuffer();
 public:
@@ -24,6 +25,11 @@ public:
 
   bool saveCurrentFwInfo(const char * jsonBuffer);
   bool loadCurrentFwInfo(DynamicJsonDocument * fwInfo);
+
+  bool addInfoObject(int key, stringmap * content);
+  void printStatus();
+  void printAddresses();
+  void clearInfo();
 };
 
 extern JsonHelper jsonHelper;

@@ -1,6 +1,10 @@
 #include "NTP_helper.h"
 
+#ifdef LOCAL_BUILD
+NTPHelper::NTPHelper() : timeClient(ntpUDP, "192.168.0.123")
+#else
 NTPHelper::NTPHelper() : timeClient(ntpUDP, "br.pool.ntp.org")
+#endif
 {
 }
 
@@ -28,6 +32,6 @@ void NTPHelper::getTimeNTP(char * timestamp)
 
   r = timeClient.getEpochTimeMs(&ms);
   // Log.trace("From NTPClient [long uint]: %l\n", r);
-  sprintf(timestamp, "%lu%u", r, ms);
+  sprintf(timestamp, "%lu%03u", r, ms);
   // Log.trace("From NTPClient: %s\n", timestamp);
 }
