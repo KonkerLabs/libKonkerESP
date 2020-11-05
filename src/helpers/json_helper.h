@@ -15,7 +15,10 @@ private:
   char bufferChar[1024];
   StaticJsonDocument<512> jsonHealth;
 
+  bool saveFile(const char *, const char *);
+  bool readFile(const char *, char *);
   void clearBuffer();
+
 public:
   JsonHelper();
   ~JsonHelper();
@@ -25,8 +28,11 @@ public:
 
   bool saveCurrentFwInfo(const char * jsonBuffer);
   bool loadCurrentFwInfo(DynamicJsonDocument * fwInfo);
-
+  
+  bool saveStatusInfo();
+  bool loadStatusInfo();
   bool addInfoObject(int key, stringmap * content);
+  void getStatusCollected(char *);
   void printStatus();
   void printAddresses();
   void clearInfo();

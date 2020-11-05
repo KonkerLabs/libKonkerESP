@@ -49,7 +49,12 @@ private:
 
   int pingPlatform();
   void collectHealthInfo(unsigned int loopDuration);
+
+  // collect and handle data for testing OTA
   void collectDeviceInfo(stringmap * info);
+  bool saveDeviceStatus();
+  bool recoverDeviceStatus();
+  void getDeviceStatusCollected(char * buffer);
   void printDeviceStatus();
   void printStatusAddresses();
 

@@ -253,7 +253,7 @@ void KonkerDevice::loopDuration(unsigned int duration)
   tempAvg = (a * tempAvg) + ((1 - a) * duration);
   this->avgLoopDuration = tempAvg;
   this->loopCount++;
-  Log.trace("Moving average: %d, duration = %d, n = %d\n", this->avgLoopDuration, duration, this->loopCount);
+  // Log.trace("Moving average: %d, duration = %d, n = %d\n", this->avgLoopDuration, duration, this->loopCount);
 }
 
 void KonkerDevice::getCurrentTime(char *timestamp)

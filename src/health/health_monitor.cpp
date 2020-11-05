@@ -166,17 +166,14 @@ void HealthMonitor::collectDeviceInfo(stringmap * info)
   char intBuffer[5];
   auto& map = *info;
 
-  Log.trace("[HMON] info is %d\n", info->empty());
+  // Log.trace("[HMON] info is %d\n", info->empty());
   sprintf(intBuffer, "%d", pDeviceWifi->getWifiStrenght());
-  // info->insert({"rssi", std::string(intBuffer)});
   map["rssi"] = std::string(intBuffer);
   Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
   sprintf(intBuffer, "%u", ESP.getFreeHeap());
-  // info->insert({"mem", std::string(intBuffer)});
   map["mem"] = std::string(intBuffer);
   Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
   sprintf(intBuffer, "%u", ESP.getVcc());
-  // info->insert({"vcc", std::string(intBuffer)});
   map["vcc"] = std::string(intBuffer);
   Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
 
@@ -193,10 +190,42 @@ bool HealthMonitor::collectDeviceStatus(int stageKey)
   if(jsonHelper.addInfoObject(stageKey, &deviceInfo))
   {
     Log.trace("[HMON] Device usage information stored\n");
-    printStatusAddresses();
+    // printDeviceStatus();
     return true;
   }
+  // else if(stageKey == 4 && jsonHelper.mergeInfo(stageKey, &deviceInfo))
+  // {
+  //   Log.trace("[HMON] Device usage information merged\n");
+  //   printDeviceStatus();
+  //   return true;
+  // }
   return false;
+}
+
+bool HealthMonitor::saveDeviceStatus()
+{
+  return jsonHelper.saveStatusInfo();
+}
+
+bool HealthMonitor::recoverDeviceStatus()
+{
+  bool ret = jsonHelper.loadStatusInfo();
+  if(ret)
+  {
+    Log.trace("[HMON] Device usage information recovered from memory\n");
+    printDeviceStatus();
+  }
+  else
+  {
+    Log.warning("[HMON] Could not recover device usage information from memory\n");
+  }
+  
+  return ret;
+}
+
+void HealthMonitor::getDeviceStatusCollected(char * buffer)
+{
+  jsonHelper.getStatusCollected(buffer);
 }
 
 void HealthMonitor::printDeviceStatus()

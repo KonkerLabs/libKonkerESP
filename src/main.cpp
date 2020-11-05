@@ -66,7 +66,7 @@ void setup()
 
   // device.saveAllCredentials();
   Serial.println("====== Setup finished ======");
-  Serial.println("====== NEW VERSION ======");
+  // Serial.println("====== NEW VERSION = =====");
 
   lasttimeSend = millis();
 }

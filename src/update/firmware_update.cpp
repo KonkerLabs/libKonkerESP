@@ -96,10 +96,6 @@ void atUpdateStart()
 void atUpdateProgress(int progress, int total)
 {
   Log.trace("%d..", progress * 100 / total);
-  if((progress * 100 / total) % 50 == 0)
-  {
-    // TODO
-  }
   if(progress == total) Serial.println("");
 }
 
@@ -114,7 +110,7 @@ void ESPHTTPKonkerUpdate::sendFwReceivedMessage()
 void atUpdateEnd()
 {
   Log.trace("[UPDT callback] Update done!!!\n");
-  delay(500); //0,5s
+  delay(100); //0,5s
   ESPHTTPKonkerUpdate::sendFwReceivedMessage();
 }
 
@@ -153,7 +149,6 @@ void ESPHTTPKonkerUpdate::performUpdate()
   _deviceState = UPDATING;
 
   this->prepareUpdate();
-  // STATUS save data collected so far in memory
   String updateURL = "http://" + _httpProtocol->getHost() + ":" + _httpProtocol->getPort() + "/registry-data" + _fwEndpoint + "/binary";
 
   Log.trace("[UPDT] Fetching binary from %s\n", updateURL.c_str());
@@ -177,12 +172,19 @@ void ESPHTTPKonkerUpdate::performUpdate()
       {
         // TODO do things before restart?
         pDeviceHealth->printDeviceStatus();
+        // STATUS save data collected so far in memory
+        if(pDeviceHealth->saveDeviceStatus())
+        {
+          Log.trace("[UPDT] Information collected saved to memory\n");
+          // pDeviceHealth->clearDeviceStatus();
+        }
         Log.trace("[UPDT] Restarting device\n\n");
         ESP.restart();
       }
       else
       {
         Log.trace("[UPDT] Failed to finalize update. Ending\n\n");
+        // TODO find a way to reverse update here
       }
       break;
   }
@@ -229,6 +231,7 @@ bool ESPHTTPKonkerUpdate::finalizingSteps()
   if(done)
   {
     this->sendStatusMessage(MSG_UPDATE_DONE);
+    delay(100);
     this->sendUpdateConfirmation();
   }
   else
@@ -253,9 +256,14 @@ bool ESPHTTPKonkerUpdate::checkFirstBoot()
   if(firstBoot == FIRST_BOOT_FLAG)
   {
     Log.trace("[UPDT] Device started correctly after update!\n");
-    // STATUS collect here and send all
+    // STATUS recover from memory, collect and send all
+    pDeviceHealth->recoverDeviceStatus();
     pDeviceHealth->collectDeviceStatus(4);
     this->sendStatusMessage(MSG_UPDATE_CORRECT);
+    // pDeviceHealth->printDeviceStatus();
+    delay(100);
+    this->sendDeviceStatus();
+    pDeviceHealth->clearDeviceStatus();
     firstBoot = 0x00u;
     deviceEEPROM.storeBootInfo(firstBoot);
     return true;
@@ -308,7 +316,9 @@ int ESPHTTPKonkerUpdate::querryPlatform()
 
   if(!retCode ||
       retPayload.equals("[]") ||
-      retPayload.equals("Resource not found for incoming device"))
+      retPayload.equals("Resource not found for incoming device") ||
+      retPayload.indexOf("update_stage") != -1 ||
+      retPayload.indexOf("update_exception") != -1)
   {
     Log.trace("[UPDT] No new FW version\n");
     return 1;
@@ -387,7 +397,7 @@ bool ESPHTTPKonkerUpdate::checkForUpdate()
 }
 
 /**
- * Send a message to channel _update with current update stage
+ * Send a message to channel _in with current update stage
  * @param msgIndex int corresponding to StatusMessages
  * @return none
  */
@@ -407,7 +417,7 @@ void ESPHTTPKonkerUpdate::sendStatusMessage(int msgIndex)
   Log.trace("[UPDT] MESSAGE: %s\n", messages[msgIndex]);
 
   String smsg=String("{\"update_stage\": \"" + String(messages[msgIndex]) + "\"}");
-  int retCode = _httpProtocol->send("_update", smsg);
+  int retCode = _httpProtocol->send("_in", smsg);
 
   Log.trace("[UPDT] Message sent to: _update; Body: %s; httpCode: %d\n", smsg.c_str(), retCode);
 
@@ -422,7 +432,7 @@ void ESPHTTPKonkerUpdate::sendStatusMessage(int msgIndex)
 }
 
 /**
- * Send a message to channel _update with current update exception
+ * Send a message to channel _in with current update exception
  * @param msgIndex int corresponding to StatusMessages
  * @return none
  */
@@ -441,7 +451,7 @@ void ESPHTTPKonkerUpdate::sendExceptionMessage(int exptIndex)
   Log.trace("[UPDT] MESSAGE: %s\n", messages[exptIndex]);
 
   String smsg=String("{\"update_exception\": \"" + String(messages[exptIndex]) + "\"}");
-  int retCode = _httpProtocol->send("_update", smsg);
+  int retCode = _httpProtocol->send("_in", smsg);
 
   Log.trace("[UPDT] Exception sent to: _update; Body: %s; httpCode: %d\n", smsg.c_str(), retCode);
 
@@ -486,5 +496,31 @@ void ESPHTTPKonkerUpdate::sendUpdateConfirmation()
   else
   {
     Serial.println("[UPDT] Failed\n");
+  }
+}
+
+/**
+ * Send a message to channel _update with current update exception
+ * @param none
+ * @return none
+ */
+void ESPHTTPKonkerUpdate::sendDeviceStatus()
+{
+  char payload[512];
+
+  pDeviceHealth->getDeviceStatusCollected(payload);
+  Log.trace("[UPDT] MESSAGE[%d bytes]: %s\n", strlen(payload), payload);
+
+  int retCode = _httpProtocol->send("_update", payload);
+
+  Log.trace("[UPDT] Message sent to: _update; Body: %s; httpCode: %d\n", payload, retCode);
+
+  if (retCode == 1)
+  {
+    Log.trace("[UPDT] Success sending status information\n");
+  }
+  else
+  {
+    Log.trace("[UPDT] Failed to send status information\n");
   }
 }

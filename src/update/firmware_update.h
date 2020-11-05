@@ -31,6 +31,7 @@ private:
   void sendStatusMessage(int msgIndex);
   void sendExceptionMessage(int exptIndex);
   void sendUpdateConfirmation();
+  void sendDeviceStatus();
 
 public:
   ESPHTTPKonkerUpdate();
