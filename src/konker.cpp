@@ -15,7 +15,7 @@ KonkerDevice::KonkerDevice() : deviceWifi(), deviceMonitor(&this->deviceWifi), w
   // Third parameter is showLevel
   Log.begin(DEBUG_LEVEL, &Serial, true);
 
-  Log.trace("BUILD: %s\n", BUILD_ID);
+  Log.trace("\nBUILD: %s\n", BUILD_ID);
   this->chipID = ESP.getChipId();
   Log.trace("Current version: %s\n", deviceUpdate.getCurrentVersion());
 
@@ -470,6 +470,7 @@ int KonkerDevice::sendData()
 {
   int res = 0;
   int dataPosition;
+  char timestamp[20];
   BufferElement data;
 
   if(sendBuffer.isEmpty())
@@ -479,9 +480,13 @@ int KonkerDevice::sendData()
   }
 
   dataPosition = sendBuffer.getData(&data);
+  deviceNTP.getTimeNTP(timestamp);
   if(dataPosition >= 0)
   {
-    res = this->currentProtocol->send(data.channel, String(data.payload));
+    String payload = String(data.payload).substring(0, String(data.payload).lastIndexOf("}")) 
+                      + ",\"ts_sent\":\"" + String(timestamp) + "\"}";
+    // Log.trace("PAYLOAD w/ TS: %s\n", payload.c_str());
+    res = this->currentProtocol->send(data.channel, payload);
     if(res)
     {
       Log.trace("Payload sent to platform\n");

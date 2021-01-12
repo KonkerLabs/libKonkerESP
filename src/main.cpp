@@ -13,9 +13,9 @@ int mqtt_port = 32768;
 // int mqtt_port = 1883;
 int http_port = 8082;
 
-// String DEV_ID = "node02";
-// String USER = "b2evd357tmgl";
-// String PWD = "WpyGjpYKaDRS";
+// String DEV_ID = "node10";
+// String USER = "t97pvjblbeas";
+// String PWD = "YJ2GskQvqU8S";
 // String USER = "j761nvqo5qoq"; //"pgdmna95n2o2"; //"t97pvjblbeas";
 // String PWD = "8FVki75P8AAy"; //"HnWDYsNGdlcb"; //"YJ2GskQvqU8S";
 
@@ -32,15 +32,15 @@ long lasttimeSend=0;
 
 char *jsonMQTTmsgDATA(const char *device_id, const char *metric, long value)
 {
-  const int capacity = 1024; // JSON_OBJECT_SIZE(200);
+  const int capacity = 1024;
   StaticJsonDocument<capacity> jsonMSG;
   char ts[20];
 
   device.getCurrentTime(ts);
   jsonMSG["deviceId"] = device_id;
-  jsonMSG["metric"] = metric;
+  // jsonMSG["metric"] = metric;
   jsonMSG["value"] = value;
-  jsonMSG["ts"] = ts;
+  jsonMSG["ts_queued"] = ts;
   serializeJson(jsonMSG, bufferJson);
 
   Serial.print("Mensagem >> ");

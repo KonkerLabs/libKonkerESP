@@ -15,8 +15,8 @@ public:
 	MQTTProtocol();
 
 	int connect() override;
-  int disconnect() override;
-  int checkConnection() override;
+	int disconnect() override;
+	int checkConnection() override;
 
 	int send(const char * channel, String payload);
 

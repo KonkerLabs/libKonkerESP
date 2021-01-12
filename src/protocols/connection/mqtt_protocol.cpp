@@ -24,9 +24,9 @@ int MQTTProtocol::checkConnection()
 
 void callback(char* topic, byte* payload, unsigned int length)
 {
-  Serial.print("Message received [");
-  Serial.print(topic);
-  Serial.print("] ");
+	Serial.print("Message received [");
+	Serial.print(topic);
+	Serial.print("] ");
 
 	// TODO this callSubChannelCallback
   // callSubChannelCallback(topic, payload, length);
@@ -62,47 +62,47 @@ int MQTTProtocol::connect()
 	if(mqttClient.connected())
 	{
 		Log.trace("[MQTT] Already connected to MQTT broker\n");
-    return CONNECTED;
-  }
+		return CONNECTED;
+	}
 	else
 	{
 		Log.trace("[MQTT] Going to connect to MQTT broker\n");
-  }
+	}
 
 	Log.trace("[MQTT] URI: %s Port: %d\n", host, this->getPort());
 
-  mqttClient.setServer(host, this->getPort());
-  mqttClient.setCallback(callback);
+	mqttClient.setServer(host, this->getPort());
+	mqttClient.setCallback(callback);
 
 	Log.trace("[MQTT] USER: %s PASSWD: %s\n", user, pwd);
 
 	for(int i=0; i<5; i++)
-  {
+	{
 		Log.trace("[MQTT] Connection attempts left %d\n", 5 - i);
 		connRes = mqttClient.connect(user, user, pwd);
     // connRes = mqttClient.connect(this->getUser().c_str(),
-		// 														 this->getUser().c_str(),
-		// 														 this->getPassword().c_str());
-    if(connRes) break;
-    delay(1500);
-  }
+		// this->getUser().c_str(),
+		// this->getPassword().c_str());
+		if(connRes) break;
+		delay(1500);
+	}
 
 	Log.trace("[MQTT] Connection response = %d\n", connRes);
 
 	//Check the returning code
 	if (connRes == 1)
 	{
-    Log.trace("[MQTT] Connected to MQTT broker\n\n");
-    return CONNECTED;
-  }
+		Log.trace("[MQTT] Connected to MQTT broker\n\n");
+		return CONNECTED;
+	}
 	else
 	{
-    Log.trace("[MQTT] Failed to connect to MQTT broker.\n");
-    Log.trace("[MQTT] State = %d\n\n", mqttClient.state());
-    this->numConnFail++;
+		Log.trace("[MQTT] Failed to connect to MQTT broker.\n");
+		Log.trace("[MQTT] State = %d\n\n", mqttClient.state());
+		this->numConnFail++;
 
-    return NOT_CONNECTED;
-  }
+		return NOT_CONNECTED;
+	}
 }
 
 int MQTTProtocol::disconnect()
@@ -117,22 +117,22 @@ int MQTTProtocol::send(const char * channel, String payload)
 	char topic[32];
 	String topicStr = this->prefix + "/" + this->getUser() + "/pub/" + channel;
 
-  strcpy(topic, topicStr.c_str());
-	Log.notice("[MQTT] Publishing to: %s | Message: %s\n", topic, payload.c_str());
+	strcpy(topic, topicStr.c_str());
+	Log.notice("[MQTT] Publishing to: %s | Message[%d bytes]: %s\n", topic, payload.length(), payload.c_str());
 
 	pubCode = mqttClient.publish(topic, payload.c_str(), payload.length());
 
 	if (pubCode)
 	{
 		Log.notice("[MQTT] Sucess. Code = %d\n", pubCode);
-  }
+	}
 	else
 	{
 		Log.notice("[MQTT] Failed. Code = %d\n", pubCode);
 		this->numConnFail++;
 		if(mqttClient.state() < 0)
 			return DISCONNECTED;
-  }
+	}
 
 	return pubCode;
 }

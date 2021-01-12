@@ -169,13 +169,13 @@ void HealthMonitor::collectDeviceInfo(stringmap * info)
   // Log.trace("[HMON] info is %d\n", info->empty());
   sprintf(intBuffer, "%d", pDeviceWifi->getWifiStrenght());
   map["rssi"] = std::string(intBuffer);
-  Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
+  // Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
   sprintf(intBuffer, "%u", ESP.getFreeHeap());
   map["mem"] = std::string(intBuffer);
-  Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
+  // Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
   sprintf(intBuffer, "%u", ESP.getVcc());
   map["vcc"] = std::string(intBuffer);
-  Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
+  // Log.trace("[HMON] %d elements: %s\n", info->size(), intBuffer);
 
   Log.trace("[HMON] Device information collected\n");
 }

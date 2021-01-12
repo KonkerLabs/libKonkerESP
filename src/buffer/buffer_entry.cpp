@@ -58,17 +58,17 @@ void BufferEntry::decrementPosition(int * position)
 
 int BufferEntry::collectData(String channel, String payload)
 {
-  BufferElement el;
+  BufferElement * el = &dataBuffer[this->currentPosition];
   int ret = 1;
 
-  el.type = 1;
-  strcpy(el.payload, payload.c_str());
-  el.retries = 0;
-  el.protocol = (uint8_t)this->connectionType;
-  strcpy(el.channel, channel.c_str());
+  el->type = 1;
+  strcpy(el->payload, payload.c_str());
+  el->retries = 0;
+  el->protocol = (uint8_t)this->connectionType;
+  strcpy(el->channel, channel.c_str());
 
   Log.trace("[Buffer] Add element %s @ %d\n", toString(el).c_str(), this->currentPosition);
-  dataBuffer[this->currentPosition] = el;
+  // dataBuffer[this->currentPosition] = el;
 
   // case current data overrides older data, which is lost
   if(((this->currentPosition + 1 == this->firstPosition) || (this->currentPosition + 1 == BUFFER_SIZE && this->firstPosition == 0)) && (!this->empty))
@@ -101,7 +101,7 @@ BufferElement BufferEntry::consumeData()
   {
     el = dataBuffer[this->firstPosition];
 
-    Log.trace("[Buffer] Removing data from buffer: %s @ %d\n", toString(el).c_str(), this->firstPosition);
+    Log.trace("[Buffer] Removing data from buffer: %s @ %d\n", toString(&el).c_str(), this->firstPosition);
     // removeData(this->firstPosition);
 
     // case only one element left in buffer
@@ -133,7 +133,7 @@ int BufferEntry::getData(BufferElement *data)
   {
     *data = dataBuffer[this->firstPosition];
 
-    Log.trace("[Buffer] Getting data from buffer: %s @ %d\n", toString(*data).c_str(), this->firstPosition);
+    Log.trace("[Buffer] Getting data from buffer: %s @ %d\n", toString(data).c_str(), this->firstPosition);
     // removeData(this->firstPosition);
   }
 
@@ -200,9 +200,10 @@ void BufferEntry::incrementRetries(int position)
   }
 }
 
-String BufferEntry::toString(BufferElement element)
+String BufferEntry::toString(BufferElement * element)
 {
-  String ret = "T:" + String(element.type) + ";P:" + String(element.payload) + ";L:" + element.protocol + ";C:" + element.channel;
+  String ret = "T:" + String(element->type) + ";P:" + String(element->payload) + 
+                ";L:" + element->protocol + ";C:" + element->channel;
 
   return ret;
 }

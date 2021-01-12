@@ -33,7 +33,7 @@ private:
   void incrementPosition(int * position);
   void decrementPosition(int * position);
 
-  String toString(BufferElement element);
+  String toString(BufferElement * element);
 public:
   BufferEntry();
   BufferEntry(ConnectionType type);

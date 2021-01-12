@@ -314,7 +314,7 @@ int ESPHTTPKonkerUpdate::querryPlatform()
 
   int retCode = _httpProtocol->request(&retPayload, _manifestEndpoint);
 
-  if(!retCode ||
+  if(retCode != 1 ||
       retPayload.equals("[]") ||
       retPayload.equals("Resource not found for incoming device") ||
       retPayload.indexOf("update_stage") != -1 ||
@@ -323,7 +323,7 @@ int ESPHTTPKonkerUpdate::querryPlatform()
     Log.trace("[UPDT] No new FW version\n");
     return 1;
   }
-  else
+  else //retCode == 1
   {
     Log.trace("[UPDT] New version exists\n");
 
