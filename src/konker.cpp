@@ -121,6 +121,7 @@ bool KonkerDevice::connectWifi()
   else
   {
     Log.trace("Failed to connected to WiFi\n");
+    this->restartDevice();
   }
   return res;
 }
@@ -486,7 +487,11 @@ int KonkerDevice::sendData()
     String payload = String(data.payload).substring(0, String(data.payload).lastIndexOf("}")) 
                       + ",\"ts_sent\":\"" + String(timestamp) + "\"}";
     // Log.trace("PAYLOAD w/ TS: %s\n", payload.c_str());
+    deviceNTP.getTimeNTP(timestamp);
+    Log.trace("Timestamp before: %s\n", timestamp);
     res = this->currentProtocol->send(data.channel, payload);
+    deviceNTP.getTimeNTP(timestamp);
+    Log.trace("Timestamp after: %s\n", timestamp);
     if(res)
     {
       Log.trace("Payload sent to platform\n");

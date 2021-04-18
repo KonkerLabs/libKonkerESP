@@ -194,12 +194,23 @@ unsigned long NTPClient::getEpochTime() const {
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
-unsigned long NTPClient::getEpochTimeMs(unsigned int * ms) const {
+unsigned long NTPClient::getEpochTimeMs(unsigned int * ms) const 
+{
   unsigned int msSinceLast = millis() - this->_lastUpdate;
-  *ms = (this->_currentEpochMs + msSinceLast) % 1000;
-  return this->_timeOffset + // User offset
+  // (this->_currentEpochMs + msSinceLast) % 1000
+  unsigned int tempMs = this->_currentEpochMs + (msSinceLast % 1000);
+  unsigned int extraSecond = (int)tempMs / 1000;
+  *ms = tempMs % 1000;
+#ifdef DEBUG_NTPClient
+  Serial.print("Changed lib: ");
+  Serial.print(msSinceLast);
+  Serial.print(" extra s: ");
+  Serial.println(extraSecond);
+#endif
+  return this->_timeOffset +  // User offset
          this->_currentEpoc + // Epoc returned by the NTP server
-         ((millis() - this->_lastUpdate) / 1000); // Time since last update
+         extraSecond +        // Carryover from ms
+         (msSinceLast / 1000); // Time since last update
 }
 
 int NTPClient::getDay() const {

@@ -1,7 +1,7 @@
 #include "NTP_helper.h"
 
 #ifdef LOCAL_BUILD
-NTPHelper::NTPHelper() : timeClient(ntpUDP, "192.168.0.123")
+NTPHelper::NTPHelper() : timeClient(ntpUDP, "192.168.1.123")
 #else
 NTPHelper::NTPHelper() : timeClient(ntpUDP, "br.pool.ntp.org")
 #endif

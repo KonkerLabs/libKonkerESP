@@ -2,12 +2,13 @@
 ADC_MODE(ADC_VCC);
 
 const char ssid[20] = "dlink-C21E-114";
-const char pwd[20] = "bobesponja";
-const char ssid2[20] = "maju_iot";
-const char pwd2[20] = "unicamp123";
+const char pwd[20] = "nope"; //"bobesponja";
+const char ssid2[20] = "OpenWrt"; //"maju_iot";
+const char pwd2[20] = "konkerkonker";
+ //"unicamp123";
 
 // Dados do servidor
-String server_ip = "192.168.0.123";
+String server_ip = "192.168.1.123";
 // String server_ip = "mqtt.prod.konkerlabs.net";
 int mqtt_port = 32768;
 // int mqtt_port = 1883;
@@ -66,7 +67,7 @@ void setup()
 
   // device.saveAllCredentials();
   Serial.println("====== Setup finished ======");
-  // Serial.println("====== NEW VERSION = =====");
+  Serial.println("====== NEW VERSION ======");
 
   lasttimeSend = millis();
 }

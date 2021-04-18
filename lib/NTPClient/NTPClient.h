@@ -23,7 +23,7 @@ class NTPClient {
     unsigned long _updateInterval = 60000;  // In ms
 
     unsigned long _currentEpoc    = 0;      // In s
-    unsigned int _currentEpochMs = 0;       // In ms
+    unsigned int _currentEpochMs = 0;       // In ms between (0 and 999)
     unsigned long _lastUpdate     = 0;      // In ms
 
     byte          _packetBuffer[NTP_PACKET_SIZE];

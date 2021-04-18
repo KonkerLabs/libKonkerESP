@@ -78,7 +78,7 @@ int HealthMonitor::pingPlatform()
   int ping_ms = 0;
 
 #ifdef LOCAL_BUILD
-  if(Ping.ping("192.168.0.123"))
+  if(Ping.ping("192.168.1.123"))
 #else
   if(Ping.ping("konkerlabs.com"))
 #endif
