@@ -8,3 +8,4 @@
 .vscode/ipch
 .clang_complete
 .gcc-flags.json
+data/firmware_info.json
